@@ -70,7 +70,12 @@ npm run check
 npm run lint
 npm run typecheck
 npx expo-doctor
+npm audit --audit-level=low
 ```
+
+`package.json` 中对 `xcode` 的 `uuid` 依赖做了定向覆盖，用于修复 Expo SDK 57
+工具链中的间接依赖告警，同时保持 Expo 57 不降级。升级 Expo 后应重新运行完整审计，
+如果上游已经更新该依赖即可移除覆盖。
 
 ## 目录结构
 
