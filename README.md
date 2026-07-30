@@ -75,13 +75,22 @@ npx expo-doctor
 ## 目录结构
 
 ```text
-src/app/          Expo Router 页面和布局
-src/components/   通用 UI 组件
-src/constants/    主题等常量
-src/hooks/        通用 React Hooks
-src/types/        项目类型声明
-assets/           图标、启动图和静态资源
+src/app/          Expo Router 路由页面和根布局
+assets/           应用图标、启动图和静态资源
 ```
+
+当前项目仅保留可运行的最小页面骨架。开始开发业务后，可按实际需要新增：
+
+```text
+src/components/   跨业务复用的 UI 组件
+src/features/     按业务领域组织的功能模块
+src/services/     API、存储等基础服务
+src/store/        全局状态
+src/types/        公共类型声明
+src/utils/        无业务状态的工具函数
+```
+
+不要为了预设目录而创建空文件，目录应随业务代码一起增加。
 
 ## Android 包名
 
