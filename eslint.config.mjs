@@ -15,6 +15,9 @@ export default tseslint.config(
     languageOptions: {
       globals: globals.node,
     },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
   },
   {
     files: ['**/*.{ts,tsx}'],

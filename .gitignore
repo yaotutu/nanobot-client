@@ -21,6 +21,9 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
+# local acceptance artifacts (may contain device logs or screenshots)
+/artifacts/
+
 # debug
 npm-debug.*
 yarn-debug.*

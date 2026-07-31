@@ -45,7 +45,6 @@ if (!i18n.isInitialized) {
       initAsync: false,
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.warn('🟦 i18n init failed, using fallback', error instanceof Error ? error.message : String(error));
   }
 }

@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { DebugOverlay } from './debug-overlay';
@@ -26,7 +26,7 @@ export class RootErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  override componentDidCatch(error: Error, info: ErrorInfo): void {
+  override componentDidCatch(error: Error): void {
     debugLog('ERROR_BOUNDARY', `${error.name}: ${error.message}`);
     if (error.stack) {
       // Log first few lines of stack

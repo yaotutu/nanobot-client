@@ -24,7 +24,6 @@ import { DEFAULT_SERVER_URL } from "@/lib/config";
 import {
   clearBootstrapSecret,
   loadBootstrapSecret,
-  loadDevBootstrapSecret,
   saveBootstrapSecret,
 } from "@/lib/credentials";
 import { NanobotSocket } from "@/lib/nanobot-socket";
@@ -855,55 +854,28 @@ export function useNanobotApp() {
     [requestBootstrap],
   );
 
+  // Bootstrap with the SecureStore credential when one exists. An empty
+  // credential is still attempted first-class so servers with authentication
+  // disabled can open directly without ever showing the login screen.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const savedSecret = await loadBootstrapSecret();
-      debugLog("AUTH", "savedSecret=" + (savedSecret ? "yes" : "no"));
       if (cancelled) return;
-      if (!savedSecret) {
-        const devSecret = loadDevBootstrapSecret();
-        debugLog("AUTH", "devSecret=" + (devSecret ? "yes" : "no"));
-        if (devSecret) {
-          try {
-            debugLog("AUTH", "requesting bootstrap with dev secret");
-            await requestBootstrap(devSecret, true);
-            debugLog("AUTH", "bootstrap success");
-            return;
-          } catch (caught) {
-            debugLog("AUTH", "dev secret failed: " + (caught instanceof Error ? caught.message : String(caught)));
-            if (cancelled) return;
-            if (caught instanceof BootstrapAuthRequiredError) {
-              debugLog("AUTH", "dev secret rejected, falling to manual");
-            } else {
-              setError(
-                caught instanceof Error
-                  ? caught.message
-                  : i18n.t("app.error.title"),
-              );
-              setPhase("unreachable");
-              return;
-            }
-          }
-        }
-        setPhase("authentication");
-        return;
-      }
+      debugLog("AUTH", "savedSecret=" + (savedSecret ? "yes" : "no"));
       try {
         await requestBootstrap(savedSecret, false);
       } catch (caught) {
         if (cancelled) return;
         if (caught instanceof BootstrapAuthRequiredError) {
-          await clearBootstrapSecret();
+          if (savedSecret) await clearBootstrapSecret();
           setPhase("authentication");
-        } else {
-          setError(
-            caught instanceof Error
-              ? caught.message
-              : i18n.t("app.error.title"),
-          );
-          setPhase("unreachable");
+          return;
         }
+        setError(
+          caught instanceof Error ? caught.message : i18n.t("app.error.title"),
+        );
+        setPhase("unreachable");
       }
     })();
     return () => {
@@ -2075,19 +2047,33 @@ export function useNanobotApp() {
     modelPresetOverrideRef.current = null;
     setAuthenticationFailed(false);
     setError(null);
-    setPhase("authentication");
-  }, [cancelCanonicalRetry, resetStreamingRuntime]);
+    // When the server does not require authentication, signing out simply
+    // refreshes the anonymous bootstrap credentials. Auth-enabled servers fall
+    // back to the login screen.
+    setPhase("booting");
+    void requestBootstrap("", false).catch((caught) => {
+      if (caught instanceof BootstrapAuthRequiredError) {
+        setPhase("authentication");
+        return;
+      }
+      setError(
+        caught instanceof Error ? caught.message : i18n.t("app.error.title"),
+      );
+      setPhase("unreachable");
+    });
+  }, [cancelCanonicalRetry, resetStreamingRuntime, requestBootstrap]);
 
   const retryConnection = useCallback(async () => {
-    const savedSecret = secretRef.current || (await loadBootstrapSecret());
-    if (!savedSecret) {
-      setPhase("authentication");
-      return;
-    }
+    const secret = secretRef.current || (await loadBootstrapSecret());
     setPhase("booting");
     try {
-      await requestBootstrap(savedSecret, false);
+      await requestBootstrap(secret, false);
     } catch (caught) {
+      if (caught instanceof BootstrapAuthRequiredError) {
+        if (secret) await clearBootstrapSecret();
+        setPhase("authentication");
+        return;
+      }
       setError(
         caught instanceof Error ? caught.message : i18n.t("app.error.title"),
       );

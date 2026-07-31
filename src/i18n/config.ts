@@ -54,7 +54,6 @@ export function resolveDeviceLocale(): SupportedLocale {
     // expo-localization can throw on some release builds / older devices.
     // Fall back to the default locale rather than crashing the entire app
     // during synchronous module evaluation (which produces a black screen).
-    // eslint-disable-next-line no-console
     console.warn('🟦 resolveDeviceLocale fallback', error instanceof Error ? error.message : String(error));
     return fallbackLocale;
   }

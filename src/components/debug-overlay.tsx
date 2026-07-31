@@ -9,7 +9,7 @@ import { getDebugEntries, getDebugVersion, subscribeDebug, type DebugEntry } fro
  * when the __DEBUG_OVERLAY flag is set (toggle via shake or dev menu).
  */
 
-let overlayVisible = true;
+let overlayVisible = false;
 
 export function setDebugOverlayVisible(visible: boolean): void {
   overlayVisible = visible;

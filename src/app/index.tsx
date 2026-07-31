@@ -5,15 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { AuthScreen } from '@/components/auth-screen';
 import { NanobotScreen } from '@/components/nanobot-screen';
 import { useNanobotApp } from '@/hooks/use-nanobot-app';
-import { debugLog } from '@/lib/debug-log';
 
 export default function HomeScreen() {
-  // eslint-disable-next-line no-console
-  debugLog('HOME', 'HomeScreen render start');
   const app = useNanobotApp();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  debugLog('HOME', 'phase=' + app.phase);
 
   if (app.phase === 'authentication') {
     return <AuthScreen failed={app.authenticationFailed} onSubmit={app.authenticate} />;
