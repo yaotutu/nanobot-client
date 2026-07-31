@@ -17,7 +17,7 @@ jobs:
   build:
     name: Build Android APK + Web and Release
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -60,10 +60,24 @@ jobs:
       - name: Generate native Android project (CNG)
         run: npx expo prebuild --platform android --no-install --clean
 
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
       - name: Build Android Release APK
         working-directory: android
         env:
-          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx4g"
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx3g"
+          # The hosted runner has 2 cores / 7GB RAM. Compiling React Native's
+          # C++ (Hermes/JSI/Fabric) for multiple ABIs in parallel exhausts
+          # memory and the job is killed. Constrain to a single ABI and limit
+          # the native build parallelism so peak memory stays under the limit.
+          ORG_GRADLE_PROJECT_reactNativeArchitectures: "arm64-v8a"
+          CMAKE_BUILD_PARALLEL_LEVEL: "2"
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Build Web (static export)
