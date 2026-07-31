@@ -1,0 +1,83 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Android APK + Web and Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platforms;android-36
+            build-tools;36.0.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Provide dev-only secret stub (CI only)
+        run: |
+          # src/lib/dev-secret.ts is git-ignored (local dev convenience only).
+          # On a clean CI checkout the module must exist for the import in
+          # src/lib/credentials.ts to resolve; an empty value matches the
+          # documented "clean checkout" behavior (normal auth screen shown).
+          printf 'export const DEV_BOOTSTRAP_SECRET = "";\n' > src/lib/dev-secret.ts
+
+      - name: Generate native Android project (CNG)
+        run: npx expo prebuild --platform android --no-install --clean
+
+      - name: Build Android Release APK
+        working-directory: android
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx4g"
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Build Web (static export)
+        run: npx expo export --platform web
+
+      - name: Prepare release artifacts
+        run: |
+          mkdir -p release-assets
+          VERSION="${GITHUB_REF_NAME:-manual}"
+          cp android/app/build/outputs/apk/release/app-release.apk \
+             "release-assets/nanobot-${VERSION}.apk"
+          cd dist && zip -r "../release-assets/nanobot-${VERSION}-web.zip" . && cd ..
+          ( cd release-assets && ls -la && sha256sum *.apk *.zip > checksums.txt )
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release-assets/*.apk
+            release-assets/*.zip
+            release-assets/checksums.txt

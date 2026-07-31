@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "nanobot-client",
+    "name": "nanobot",
     "slug": "nanobot-client",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,7 +18,10 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.nanobotclient"
+      "package": "com.anonymous.nanobotclient",
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
     },
     "web": {
       "output": "static",
@@ -33,11 +36,31 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "允许 nanobot 访问照片，以便将照片添加到消息中。",
+          "cameraPermission": false
+        }
+      ],
+      "expo-document-picker",
+      "./plugins/with-nanobot-network-security",
+      "@react-native-community/datetimepicker",
+      "expo-video",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "允许 nanobot 使用麦克风进行语音输入。"
+        }
+      ],
+      "expo-asset",
+      "expo-localization"
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     }
   }
 }
