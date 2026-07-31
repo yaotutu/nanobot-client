@@ -109,7 +109,7 @@ function eventTurnId(event: InboundEvent): string | null {
     : null;
 }
 
-function isSystemCommandTurnId(
+export function isSystemCommandTurnId(
   value: string | null | undefined,
 ): value is string {
   return (

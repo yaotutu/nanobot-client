@@ -1224,7 +1224,9 @@
     "cliRunRan": "Đã dùng",
     "cliRunFailed": "Thất bại",
     "automationSourceFallback": "Tự động hóa",
-    "automationTriggered": "Tự động kích hoạt"
+    "automationTriggered": "Tự động kích hoạt",
+    "retry": "Retry",
+    "retryFailed": "Could not retry this message"
   },
   "lightbox": {
     "title": "Xem trước ảnh",

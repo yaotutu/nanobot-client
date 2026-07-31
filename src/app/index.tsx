@@ -58,6 +58,7 @@ export default function HomeScreen() {
       onDeleteSession={app.removeSession}
       onGetSessionAutomations={app.getSessionAutomations}
       onForkFromMessage={app.forkFromMessage}
+      onRetryFromMessage={app.retryFromMessage}
       onLoadOlder={app.loadOlder}
       onModelPresetChange={app.changeModelPreset}
       onLogout={app.logout}

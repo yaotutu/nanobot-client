@@ -1224,7 +1224,9 @@
     "cliRunRan": "Usado",
     "cliRunFailed": "Falló",
     "automationSourceFallback": "Automatización",
-    "automationTriggered": "Activada automáticamente"
+    "automationTriggered": "Activada automáticamente",
+    "retry": "Retry",
+    "retryFailed": "Could not retry this message"
   },
   "lightbox": {
     "title": "Vista previa de imagen",

@@ -30,6 +30,7 @@ import { NanobotSocket } from "@/lib/nanobot-socket";
 import { useDeferredTitleRefresh } from "@/hooks/use-deferred-title-refresh";
 import { resolveRuntimeClientPolicy } from "@/lib/runtime-capabilities";
 import { sessionTitle } from "@/lib/format";
+import { projectWebuiThreadMessages } from "@/lib/thread-display-compat";
 import { hasPendingAgentActivity } from "@/lib/activity-timeline";
 import { normalizeWorkspaceScope, projectNameFromPath } from "@/lib/workspace";
 import {
@@ -90,7 +91,7 @@ const DEFAULT_SIDEBAR_STATE: SidebarStatePayload = {
 type AppPhase = "booting" | "authentication" | "ready" | "unreachable";
 
 function normalizedMessages(messages: UIMessage[]): UIMessage[] {
-  return messages;
+  return projectWebuiThreadMessages(messages);
 }
 
 function normalizedForkBoundary(
@@ -517,6 +518,7 @@ export function useNanobotApp() {
   const modelPresetOverrideRef = useRef<string | null>(null);
   const messagesRef = useRef<UIMessage[]>([]);
   const connectionStatusRef = useRef<ConnectionStatus>("idle");
+  const turnActiveRef = useRef(false);
   const lastStreamErrorRef = useRef<StreamError | null>(null);
   const canonicalRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -854,21 +856,27 @@ export function useNanobotApp() {
     [requestBootstrap],
   );
 
-  // Bootstrap with the SecureStore credential when one exists. An empty
-  // credential is still attempted first-class so servers with authentication
-  // disabled can open directly without ever showing the login screen.
+  // Bootstrap with the saved SecureStore credential when present; otherwise
+  // require the user to enter the runtime password on the login screen.
+  // We do not auto-attempt an empty credential against auth-required servers
+  // because the gateway rejects it with 401/403, which would then drop the
+  // user into the auth screen anyway — we just take the shorter path.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const savedSecret = await loadBootstrapSecret();
       if (cancelled) return;
       debugLog("AUTH", "savedSecret=" + (savedSecret ? "yes" : "no"));
+      if (!savedSecret) {
+        setPhase("authentication");
+        return;
+      }
       try {
         await requestBootstrap(savedSecret, false);
       } catch (caught) {
         if (cancelled) return;
         if (caught instanceof BootstrapAuthRequiredError) {
-          if (savedSecret) await clearBootstrapSecret();
+          await clearBootstrapSecret();
           setPhase("authentication");
           return;
         }
@@ -1178,9 +1186,14 @@ export function useNanobotApp() {
 
       if (sideChannelEvent) {
         if (event.event === "message") {
-          setMessages((current) =>
-            appendSideChannelMessage(current, event, streamFoldRef.current),
-          );
+          setMessages((current) => {
+            const next = appendSideChannelMessage(
+              current, event, streamFoldRef.current,
+            );
+            return next === current
+              ? current
+              : projectWebuiThreadMessages(next);
+          });
           if (turnId) sideChannelTurnIdsRef.current.delete(turnId);
         } else if (event.event === "turn_end") {
           if (turnId) sideChannelTurnIdsRef.current.delete(turnId);
@@ -1974,6 +1987,84 @@ export function useNanobotApp() {
     [],
   );
 
+  const retryFromMessage = useCallback(
+    async (messageId: string) => {
+      const socket = socketRef.current;
+      const key = activeKeyRef.current;
+      const chatId = chatIdFromKey(key);
+      if (!socket || !chatId || !bootstrap) return;
+      if (turnActiveRef.current) return;
+      const all = messagesRef.current;
+      const index = all.findIndex((message) => message.id === messageId);
+      if (index < 0) return;
+      const target = all[index];
+      if (!target || target.role !== 'assistant' || target.kind === 'trace') return;
+      // No further user prompts after the assistant reply → still safe to retry.
+      const tailHasUserPrompt = all.slice(index + 1).some(
+        (message) => message.role === 'user',
+      );
+      if (tailHasUserPrompt) return;
+      const turnId = target.turnId;
+      // Drop the prior assistant reply and any trailing reasoning/trace rows
+      // that belong to it so the model regenerates a clean answer.
+      const cutoff = (() => {
+        let boundary = index;
+        for (let scan = index - 1; scan >= 0; scan -= 1) {
+          const prev = all[scan];
+          if (prev.role === 'user') break;
+          if (prev.turnId && turnId && prev.turnId === turnId) {
+            boundary = scan;
+          }
+        }
+        return boundary;
+      })();
+      flushPendingStreamEvents();
+      cancelStreamEndTimer();
+      resetStreamFoldState(streamFoldRef.current);
+      uiMutationVersionRef.current += 1;
+      setMessages((current) => {
+        const trimmed = current.slice(0, cutoff);
+        const tail = current.slice(cutoff);
+        const reusedPrefix: UIMessage[] = [];
+        for (const row of tail) {
+          if (row.role === 'assistant' && row.kind === 'trace') {
+            reusedPrefix.push(row);
+            continue;
+          }
+          if (row === target) continue;
+          reusedPrefix.push(row);
+        }
+        return [...trimmed, ...reusedPrefix];
+      });
+      const send = socket.sendMessage(
+        chatId,
+        '\n[retry]',
+        undefined,
+        { startsNewRun: false },
+      );
+      sideChannelTurnIdsRef.current.add(send.turnId);
+      setTurnActive(true);
+      void send.accepted.catch((caught) => {
+        sideChannelTurnIdsRef.current.delete(send.turnId);
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : i18n.t('message.retryFailed', {
+                defaultValue: 'Could not retry this message',
+              }),
+        );
+      });
+    },
+    [
+      bootstrap,
+      cancelStreamEndTimer,
+      flushPendingStreamEvents,
+      setError,
+      setMessages,
+      setTurnActive,
+    ],
+  );
+
   const restartServer = useCallback(() => {
     const runtimePolicy = resolveRuntimeClientPolicy(bootstrapRef.current);
     if (!runtimePolicy.canRestart) {
@@ -2047,12 +2138,19 @@ export function useNanobotApp() {
     modelPresetOverrideRef.current = null;
     setAuthenticationFailed(false);
     setError(null);
-    // When the server does not require authentication, signing out simply
-    // refreshes the anonymous bootstrap credentials. Auth-enabled servers fall
-    // back to the login screen.
+    // Re-bootstrap with the cached credential when one exists; otherwise
+    // surface the auth screen so the user can re-enter the runtime password.
+    const cachedSecret = secretRef.current || await loadBootstrapSecret();
+    if (!cachedSecret) {
+      setPhase("authentication");
+      return;
+    }
     setPhase("booting");
-    void requestBootstrap("", false).catch((caught) => {
+    try {
+      await requestBootstrap(cachedSecret, false);
+    } catch (caught) {
       if (caught instanceof BootstrapAuthRequiredError) {
+        await clearBootstrapSecret();
         setPhase("authentication");
         return;
       }
@@ -2060,17 +2158,21 @@ export function useNanobotApp() {
         caught instanceof Error ? caught.message : i18n.t("app.error.title"),
       );
       setPhase("unreachable");
-    });
+    }
   }, [cancelCanonicalRetry, resetStreamingRuntime, requestBootstrap]);
 
   const retryConnection = useCallback(async () => {
     const secret = secretRef.current || (await loadBootstrapSecret());
+    if (!secret) {
+      setPhase("authentication");
+      return;
+    }
     setPhase("booting");
     try {
       await requestBootstrap(secret, false);
     } catch (caught) {
       if (caught instanceof BootstrapAuthRequiredError) {
-        if (secret) await clearBootstrapSecret();
+        await clearBootstrapSecret();
         setPhase("authentication");
         return;
       }
@@ -2080,6 +2182,10 @@ export function useNanobotApp() {
       setPhase("unreachable");
     }
   }, [requestBootstrap]);
+
+  useEffect(() => {
+    turnActiveRef.current = turnActive;
+  }, [turnActive]);
 
   return {
     phase,
@@ -2130,6 +2236,7 @@ export function useNanobotApp() {
     transcribeAudio,
     stopTurn,
     restartServer,
+    retryFromMessage,
     togglePinned,
     toggleArchived,
     toggleSidebarGroup,

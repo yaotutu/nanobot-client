@@ -1224,7 +1224,9 @@
     "fileEditShowMoreLines": "Mostrar mais {{count}} linhas",
     "fileEditShowFewerLines": "Mostrar menos linhas",
     "fileEditOpenFile": "Abrir arquivo",
-    "fileEditDiffTruncated": "Diff truncado. Abra o arquivo para ver a alteração completa."
+    "fileEditDiffTruncated": "Diff truncado. Abra o arquivo para ver a alteração completa.",
+    "retry": "Retry",
+    "retryFailed": "Could not retry this message"
   },
   "lightbox": {
     "title": "Pré-visualização de imagem",

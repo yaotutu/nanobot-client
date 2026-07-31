@@ -1224,7 +1224,9 @@
     "cliRunRan": "使用済み",
     "cliRunFailed": "失敗",
     "automationSourceFallback": "自動化",
-    "automationTriggered": "自動実行"
+    "automationTriggered": "自動実行",
+    "retry": "Retry",
+    "retryFailed": "Could not retry this message"
   },
   "lightbox": {
     "title": "画像プレビュー",

@@ -1224,7 +1224,9 @@
     "cliRunRan": "사용함",
     "cliRunFailed": "실패",
     "automationSourceFallback": "자동화",
-    "automationTriggered": "자동 실행됨"
+    "automationTriggered": "자동 실행됨",
+    "retry": "Retry",
+    "retryFailed": "Could not retry this message"
   },
   "lightbox": {
     "title": "이미지 미리보기",

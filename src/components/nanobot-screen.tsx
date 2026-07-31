@@ -13,6 +13,7 @@ import {
   Moon,
   Paperclip,
   Quote,
+  RotateCw,
   Square,
   Sun,
   X,
@@ -171,6 +172,7 @@ interface NanobotScreenProps {
   onLoadOlder: () => Promise<void>;
   onModelPresetChange: (name: string) => Promise<void>;
   onForkFromMessage: (beforeUserIndex: number) => Promise<string>;
+  onRetryFromMessage: (messageId: string) => Promise<void> | void;
   onTogglePinned: (key: string) => Promise<void>;
   onToggleArchived: (key: string) => Promise<void>;
   onToggleSidebarGroup: (groupId: string) => Promise<void>;
@@ -387,6 +389,42 @@ export function NanobotScreen(props: NanobotScreenProps) {
     [props.messages, props.turnActive],
   );
   const unitKeys = useMemo(() => unitKeysForDisplay(units), [units]);
+  const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
+
+  const retryFromMessage = useCallback((messageId: string) => async () => {
+    if (props.turnActive || retryingMessageId) return;
+    setRetryingMessageId(messageId);
+    try {
+      await props.onRetryFromMessage(messageId);
+    } finally {
+      setRetryingMessageId(null);
+    }
+  }, [props, retryingMessageId]);
+
+  const lastMessageUnitIndex = useMemo(() => {
+    for (let i = units.length - 1; i >= 0; i -= 1) {
+      const unit = units[i];
+      if (unit.type === 'message') return i;
+    }
+    return -1;
+  }, [units]);
+
+  function canRetryFromMessage(unit: TurnUnit, unitIndex: number): boolean {
+    if (unit.type !== 'message') return false;
+    const message = unit.message;
+    if (message.role !== 'assistant' || message.kind === 'trace') return false;
+    if (message.isStreaming) return false;
+    // Retry is offered only on the very last assistant message of the
+    // thread so we don't trample intermediate checkpoints. Older assistant
+    // replies can still be forked.
+    if (unitIndex !== lastMessageUnitIndex) return false;
+    const tailHasUserPrompt = units.slice(unitIndex + 1).some(
+      (row) => row.type === 'message' && row.message.role === 'user',
+    );
+    if (tailHasUserPrompt) return false;
+    return true;
+  }
+
   const forkIndexes = useMemo(
     () => assistantForkIndexes(units, props.userMessageOffset),
     [props.userMessageOffset, units],
@@ -1169,11 +1207,14 @@ export function NanobotScreen(props: NanobotScreenProps) {
                       dark={dark}
                       forkBusy={forkingMessageId === item.message.id}
                       forkIndex={forkIndexes[index]}
+                      canRetry={canRetryFromMessage(item, index)}
+                      isRetryBusy={retryingMessageId === item.message.id}
                       cliApps={props.cliApps}
                       mcpPresets={props.mcpPresets}
                       message={item.message}
                       slashCommands={props.slashCommands}
                       onFork={(beforeUserIndex) => void forkFromMessage(item.message.id, beforeUserIndex)}
+                      onRetry={retryFromMessage(item.message.id)}
                       onOpenFilePreview={props.activeKey ? setFilePreviewPath : undefined}
                       onQuote={setAssistantQuoteSource}
                       resolveFilePreviewAvailability={resolveFilePreviewAvailability}
@@ -1862,11 +1903,18 @@ function MessageRow({
   slashCommands,
   forkIndex,
   forkBusy,
+  canRetry,
+  isRetryBusy,
   onFork,
+  onRetry,
   onOpenFilePreview,
   onQuote,
   resolveFilePreviewAvailability,
 }: {
+  canRetry: boolean;
+  isRetryBusy: boolean;
+  onRetry: () => void | Promise<void>;
+
   message: UIMessage;
   colors: Palette;
   dark: boolean;
@@ -2012,6 +2060,22 @@ function MessageRow({
                 {forkBusy
                   ? <ActivityIndicator color={colors.subtle} size={15} />
                   : <GitFork color={colors.subtle} size={15} strokeWidth={1.8} />}
+              </Pressable>
+            ) : null}
+            {showAssistantActions && canRetry ? (
+              <Pressable
+                accessibilityLabel={t('message.retry', { defaultValue: 'Retry' })}
+                disabled={isRetryBusy}
+                hitSlop={7}
+                onPress={() => void onRetry()}
+                style={({ pressed }) => [
+                  styles.messageActionButton,
+                  pressed && { backgroundColor: colors.pressed },
+                ]}
+              >
+                {isRetryBusy
+                  ? <ActivityIndicator color={colors.subtle} size={15} />
+                  : <RotateCw color={colors.subtle} size={15} strokeWidth={1.8} />}
               </Pressable>
             ) : null}
             {completedAtLabel ? (

@@ -1224,7 +1224,9 @@
     "fileEditShowMoreLines": "显示剩余 {{count}} 行",
     "fileEditShowFewerLines": "收起部分行",
     "fileEditOpenFile": "打开文件",
-    "fileEditDiffTruncated": "差异内容已截断。打开文件可查看完整更改。"
+    "fileEditDiffTruncated": "差异内容已截断。打开文件可查看完整更改。",
+    "retry": "Retry",
+    "retryFailed": "Could not retry this message"
   },
   "lightbox": {
     "title": "图片预览",

@@ -155,11 +155,11 @@ function isSameLocalCalendarDay(left: Date, right: Date): boolean {
     && left.getDate() === right.getDate();
 }
 
-function isModelCommandText(text: string | null | undefined): boolean {
+export function isModelCommandText(text: string | null | undefined): boolean {
   return /^\/model(?:@[A-Za-z0-9_]+)?(?:\s|$)/i.test(text?.trim() ?? '');
 }
 
-function isModelCommandResponseText(text: string | null | undefined): boolean {
+export function isModelCommandResponseText(text: string | null | undefined): boolean {
   const normalized = text?.trim() ?? '';
   return /^## Model\s+- Current (?:model|selection error):/.test(normalized)
     || normalized.startsWith('Switched model preset to ')
