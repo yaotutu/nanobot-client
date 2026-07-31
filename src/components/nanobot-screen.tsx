@@ -283,10 +283,17 @@ function currentActivityClusterIndices(units: TurnUnit[]): Set<number> {
 }
 
 function unitKeysForDisplay(units: TurnUnit[]): string[] {
+  const bases = units.map(unitKeyBase);
+  const totals = new Map<string, number>();
   const occurrences = new Map<string, number>();
-  return units.map((unit, index) => {
-    const base = unitKeyBase(unit, index);
-    if (!base.startsWith('turn-') || !base.endsWith('-user')) return base;
+
+  for (const base of bases) {
+    totals.set(base, (totals.get(base) ?? 0) + 1);
+  }
+
+  return bases.map((base) => {
+    const isUserTurn = base.startsWith('turn-') && base.endsWith('-user');
+    if (!isUserTurn && totals.get(base) === 1) return base;
     const next = (occurrences.get(base) ?? 0) + 1;
     occurrences.set(base, next);
     return `${base}-${next}`;
