@@ -21,7 +21,7 @@ import type { ModelPresetInfo } from '@/types/api';
 
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPicker, SettingsSection, StatusPill } from '../settings-controls';
 import { ModelCatalog } from './ModelCatalog';
-import { FieldLabel, IconButton, ProviderMark } from './ModelsShared';
+import { FieldLabel, IconButton, ProviderMark } from './models-controls';
 import type { ModelDraft, ModelsSettingsProps } from './models-utils';
 import {
   CONTEXT_WINDOW_OPTIONS,

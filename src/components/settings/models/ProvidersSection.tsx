@@ -27,9 +27,9 @@ import type {
 } from '@/types/api';
 
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsSection, StatusPill } from '../settings-controls';
-import { AdvancedProviderFields } from './AdvancedProviderFields';
+import { AdvancedProviderFields } from './ModelCatalog';
 import { ProviderCatalog } from './ProviderCatalog';
-import { FieldLabel, IconButton, ProviderMark } from './ModelsShared';
+import { FieldLabel, IconButton, ProviderMark } from './models-controls';
 import type { CustomProviderDraft, ModelsSettingsProps, ProviderForm } from './models-utils';
 import {
   CUSTOM_PROVIDER_FIELDS,
