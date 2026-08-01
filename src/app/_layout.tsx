@@ -7,7 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { RootErrorBoundary } from '@/components/overlays/error-boundary';
 import { DebugOverlay } from '@/components/overlays/debug-overlay';
-import { debugLog } from '@/services/debug-log';
+import { debugLog } from '@/services/runtime/debug-log';
 import { ensureI18n, setAppLanguage } from '@/i18n';
 import { readLocalPreferences } from '@/stores/local-preferences-store';
 

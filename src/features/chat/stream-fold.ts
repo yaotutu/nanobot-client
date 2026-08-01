@@ -1,4 +1,4 @@
-import { toMediaAttachment } from '@/services/media';
+import { toMediaAttachment } from '@/services/links/media';
 import {
   formatToolCallTrace,
   mergeToolProgressEvents,

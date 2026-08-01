@@ -22,7 +22,7 @@ import {
   type VoiceRecorderError,
   useVoiceRecorder,
 } from '@/hooks/use-voice-recorder';
-import { ApiError } from '@/services/api';
+import { ApiError } from '@/services/api/api';
 import { fetchFilePreviewAvailability } from '@/features/chat/api';
 import { fetchSettings } from '@/features/settings/api';
 import {
@@ -37,11 +37,11 @@ import {
 } from "@/features/chat/components/timeline";
 import { useChatScroll } from "@/features/chat/hooks/useChatScroll";
 import { ChatThread } from "@/features/chat/components/ChatThread";
-import { sessionTitle } from '@/services/format';
+import { sessionTitle } from '@/services/text/format';
 import {
   formatQuotedUserMessage,
   normalizeQuotedContext,
-} from '@/services/user-quote-format';
+} from '@/services/text/user-quote-format';
 import {
   activeCapabilityMentionPayloads,
   capabilityMentionCandidates,
@@ -63,7 +63,7 @@ import { Composer as ExtractedComposer } from "@/features/chat/components/Compos
 import { ChatHeader } from "@/features/chat/components/ChatHeader";
 import { ChatModals } from "@/features/chat/components/ChatModals";
 import { LIGHT_COLORS, DARK_COLORS } from '@/ui/colors';
-import { resolveRuntimeClientPolicy } from '@/services/runtime-capabilities';
+import { resolveRuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import {
   isSideChannelLifecycle,
   slashCommandLifecycle,

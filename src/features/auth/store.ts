@@ -7,9 +7,9 @@ import {
   clearBootstrapSecret,
   loadBootstrapSecret,
   saveBootstrapSecret,
-} from '@/services/auth-credentials';
-import { loadLocalDevBootstrapSecret } from '@/services/local-dev-bootstrap';
-import { debugLog } from '@/services/debug-log';
+} from '@/services/credentials/auth-credentials';
+import { loadLocalDevBootstrapSecret } from '@/services/credentials/local-dev-bootstrap';
+import { debugLog } from '@/services/runtime/debug-log';
 import i18n from '@/i18n';
 
 export type AuthPhase = 'booting' | 'authentication' | 'ready' | 'unreachable';

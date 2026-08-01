@@ -39,6 +39,9 @@ yarn-error.*
 # local env files
 .env*.local
 
+# Reasonix agent tooling
+.reasonix/
+
 # typescript
 *.tsbuildinfo
 
@@ -49,5 +52,4 @@ example
 /android
 
 # dev-only bootstrap secret (NEVER commit)
-src/lib/dev-secret.ts
-src/services/dev-secret.ts
+src/services/credentials/dev-secret.ts

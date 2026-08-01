@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next';
 
-import { relativeTimeFromMs, safeDateTimeFormat, safeNumberFormat } from '@/services/format';
+import { relativeTimeFromMs, safeDateTimeFormat, safeNumberFormat } from '@/services/text/format';
 import type { SessionAutomationJob } from '@/types/api';
 
 export type AutomationFilter = 'all' | 'active' | 'paused' | 'failed' | 'system';

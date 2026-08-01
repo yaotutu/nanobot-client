@@ -1,5 +1,5 @@
 import i18n from "@/i18n";
-import { compactActivityPath, redactActivityText } from "@/services/log-redaction";
+import { compactActivityPath, redactActivityText } from "@/services/text/log-redaction";
 
 export type GenericToolStatus = "running" | "done" | "error";
 export type ToolFamily =

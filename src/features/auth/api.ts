@@ -2,8 +2,8 @@ import {
   BootstrapAuthRequiredError,
   fetchBootstrap as fetchBootstrapRaw,
   type BootstrapResponse,
-} from '@/services/bootstrap';
-import { DEFAULT_SERVER_URL } from '@/services/config';
+} from '@/services/api/bootstrap';
+import { DEFAULT_SERVER_URL } from '@/services/api/config';
 
 /**
  * fetchBootstrap 的薄包装：在 features 层只暴露领域 API，services 保留底层实现。

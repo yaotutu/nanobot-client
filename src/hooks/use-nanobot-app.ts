@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import i18n from '@/i18n';
-import { debugLog } from '@/services/debug-log';
+import { debugLog } from '@/services/runtime/debug-log';
 
 import { useAuthStore, selectAuthPhase, selectBootstrap } from '@/features/auth/store';
 import { useChatStore } from '@/features/chat/store';
@@ -29,13 +29,13 @@ import { listSlashCommands } from '@/features/capabilities/api';
 import { fetchSettings } from '@/features/settings/api';
 import { fetchWorkspaces } from '@/features/workspaces/api';
 import { createNanobotSocket, type NanobotSocket, type MessageSendResult as SendMessageResult } from "@/features/connection/socket-transport";
-import { deriveWsUrl } from "@/services/bootstrap";
-import { DEFAULT_SERVER_URL as SERVER_URL } from "@/services/config";
+import { deriveWsUrl } from "@/services/api/bootstrap";
+import { DEFAULT_SERVER_URL as SERVER_URL } from "@/services/api/config";
 
-import { resolveRuntimeClientPolicy, mergeRuntimeMetadata } from '@/services/runtime-capabilities';
-import { sessionTitle } from '@/services/format';
-import { normalizeWorkspaceScope, projectNameFromPath } from '@/services/workspace-paths';
-import { formatQuotedUserMessage, normalizeQuotedContext } from '@/services/user-quote-format';
+import { resolveRuntimeClientPolicy, mergeRuntimeMetadata } from '@/services/runtime/runtime-capabilities';
+import { sessionTitle } from '@/services/text/format';
+import { normalizeWorkspaceScope, projectNameFromPath } from '@/services/runtime/workspace-paths';
+import { formatQuotedUserMessage, normalizeQuotedContext } from '@/services/text/user-quote-format';
 import { hasPendingAgentActivity } from '@/features/chat/activity-timeline';
 
 function utf8Bytes(value: string): number {

@@ -11,7 +11,7 @@ import type {
   WorkspaceScopePayload,
 } from '@/types/api';
 
-import { normalizeWorkspaceScope } from '@/services/workspace-paths';
+import { normalizeWorkspaceScope } from '@/services/runtime/workspace-paths';
 
 import { projectWebuiThreadMessages } from './thread-display-compat';
 import {

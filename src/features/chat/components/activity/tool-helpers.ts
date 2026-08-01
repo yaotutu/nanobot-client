@@ -20,14 +20,14 @@ import {
   countSkippedUnchangedLines,
   type RenderableFileDiff,
   type RenderableFileDiffHunk,
-} from '@/services/file-diff';
+} from '@/services/text/file-diff';
 import {
   compactActivityPath,
   redactActivityText,
   redactShellCommand,
   safeActivityDetail,
-} from '@/services/log-redaction';
-import { logoFallbackUrls } from '@/services/provider-brand';
+} from '@/services/text/log-redaction';
+import { logoFallbackUrls } from '@/services/links/provider-brand';
 import type { Palette } from '@/ui/palette';
 import type {
   CliAppInfo,

@@ -27,7 +27,7 @@ import { useTranslation } from 'react-i18next';
 
 import { isReasoningOnlyAssistant } from '@/features/chat/activity-timeline';
 import { useLogoFallback } from '@/hooks/use-logo-fallback';
-import { browserSafeFaviconUrls } from '@/services/web-url';
+import { browserSafeFaviconUrls } from '@/services/links/web-url';
 import type { Palette } from '@/ui/palette';
 import type { CliAppInfo, McpPresetInfo, UIMessage } from '@/types/api';
 

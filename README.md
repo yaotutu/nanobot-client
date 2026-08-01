@@ -95,21 +95,28 @@ src/
     automations/                # 自动化任务
     channels/                   # 渠道运行时
   services/                     # 跨业务基础服务
-    api-client.ts               # 统一 API 客户端（fetch + 鉴权 + 超时）
-    api.ts                      # apiClient 单例
-    auth-credentials.ts         # SecureStore bootstrap secret
-    config.ts                   # DEFAULT_SERVER_URL 派生
-    bootstrap.ts                # fetchBootstrap / deriveWsUrl
-    runtime-capabilities.ts     # host / native 能力策略
-    format.ts                   # 时间 / 标题 / 预览
-    workspace-paths.ts          # 路径归一化
-    user-quote-format.ts        # 引用块格式化
-    log-redaction.ts            # 脱敏
-    file-diff.ts                # unified diff 解析
-    markdown-to-text.ts         # markdown → 可选文本
-    provider-brand.ts           # 提供商标识
-    web-url.ts                  # Web URL 解析
-    media.ts                    # 媒体附件类型归一化
+    api/                        # 网关 / API 层
+      api-client.ts             # 统一 API 客户端（fetch + 鉴权 + 超时）
+      api.ts                    # apiClient 单例
+      config.ts                 # DEFAULT_SERVER_URL 派生
+      bootstrap.ts              # fetchBootstrap / deriveWsUrl
+    credentials/                # 凭据与开发引导
+      auth-credentials.ts       # SecureStore bootstrap secret
+      local-dev-bootstrap.ts    # 本地开发引导装配
+    text/                       # 文本 / 展示格式化
+      format.ts                 # 时间 / 标题 / 预览
+      file-diff.ts              # unified diff 解析
+      log-redaction.ts          # 脱敏
+      markdown-to-text.ts       # markdown → 可选文本
+      user-quote-format.ts      # 引用块格式化
+    links/                      # 外部链接 / 媒体
+      web-url.ts                # Web URL 解析
+      provider-brand.ts         # 提供商标识
+      media.ts                  # 媒体附件类型归一化
+    runtime/                    # 平台基础设施
+      debug-log.ts              # 调试日志（DebugOverlay）
+      runtime-capabilities.ts   # host / native 能力策略
+      workspace-paths.ts        # 路径归一化
   stores/                       # Zustand 全局 store
     local-preferences-store.ts  # 主题 / 语言 / 密度 / 活动模式
     composer-recents-store.ts   # Composer 历史命令
@@ -136,7 +143,7 @@ src/
 ## 架构关键决策
 
 - **Zustand 切片 store**：跨组件状态分布在 `auth` / `connection` / `chat` / `sidebar` / `capabilities` / `settings` / `workspaces` / `local-preferences` / `composer-recents` 9 个独立 store 中，按域切片，单一来源。
-- **apiClient 单例**：`@/services/api-client.ts` 提供统一的 fetch + 鉴权 + 超时 + JSON 错误翻译；所有 endpoint 通过 `apiClient.get/post/request` 调用，不再传递 `baseUrl`/`token`。
+- **apiClient 单例**：`@/services/api/api-client.ts` 提供统一的 fetch + 鉴权 + 超时 + JSON 错误翻译；所有 endpoint 通过 `apiClient.get/post/request` 调用，不再传递 `baseUrl`/`token`。
 - **Socket 收敛为 transport**：`@/features/connection/socket-transport.ts` 只负责 WebSocket 协议 + 帧队列 + 入站分发；run generation / canonical reconciliation 等业务语义迁移到 `chat/store.ts`。
 - **唯一 Palette**：`@/ui/palette.ts` 合并了原本散落在 7 个文件中的重复类型。
 - **i18n 显式初始化**：`@/i18n/index.ts` 顶层不再有副作用，调用方需 `await ensureI18n()`。

@@ -1,12 +1,12 @@
 import i18n from "@/i18n";
 import type { GenericToolStatus } from "@/features/chat/generic-tool-model";
-import { safeActivityDetail, summarizeShellCommand } from "@/services/log-redaction";
+import { safeActivityDetail, summarizeShellCommand } from "@/services/text/log-redaction";
 import { presentWebSearchAction } from "@/features/chat/web-search-model";
 import {
   displayWebHost,
   formatCompactWebUrl,
   parseSafeActivityHttpUrl,
-} from "@/services/web-url";
+} from "@/services/links/web-url";
 
 export interface TraceDescription {
   kind: "search" | "tool" | "done" | "trace";

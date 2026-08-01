@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { compactActivityPath, redactActivityText, redactShellCommand } from '@/services/log-redaction';
+import { compactActivityPath, redactActivityText, redactShellCommand } from '@/services/text/log-redaction';
 
 describe('redactActivityText', () => {
   it('redacts bearer tokens', () => {

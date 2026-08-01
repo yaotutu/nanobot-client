@@ -3,8 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { countDiffLines, parseRenderableFileDiff } from '@/services/file-diff';
-import { compactActivityPath, redactActivityText, safeActivityDetail } from '@/services/log-redaction';
+import { countDiffLines, parseRenderableFileDiff } from '@/services/text/file-diff';
+import { compactActivityPath, redactActivityText, safeActivityDetail } from '@/services/text/log-redaction';
 import type { FileEditDisplayMode } from '@/stores/local-preferences-store';
 import type { Palette } from '@/ui/palette';
 

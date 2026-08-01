@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeWorkspaceScope, projectNameFromPath, sameWorkspacePath } from '@/services/workspace-paths';
+import { normalizeWorkspaceScope, projectNameFromPath, sameWorkspacePath } from '@/services/runtime/workspace-paths';
 
 describe('projectNameFromPath', () => {
   it('takes the last segment of a unix path', () => {

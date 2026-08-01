@@ -2,7 +2,7 @@ import { Component, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { DebugOverlay } from './debug-overlay';
-import { debugLog } from '@/services/debug-log';
+import { debugLog } from '@/services/runtime/debug-log';
 
 interface Props {
   children: ReactNode;

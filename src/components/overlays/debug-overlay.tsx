@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { getDebugEntries, getDebugVersion, subscribeDebug, type DebugEntry } from '@/services/debug-log';
+import { getDebugEntries, getDebugVersion, subscribeDebug, type DebugEntry } from '@/services/runtime/debug-log';
 
 /**
  * Renders the debug log on-screen so we can see boot progress in release

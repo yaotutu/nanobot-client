@@ -1,4 +1,4 @@
-import { DEFAULT_SERVER_URL } from '@/services/config';
+import { DEFAULT_SERVER_URL } from '@/services/api/config';
 import type { UIMediaAttachment } from '@/types/api';
 
 const IMAGE_EXTENSIONS = new Set([

@@ -6,7 +6,7 @@ import { useAuthStore } from '@/features/auth/store';
  * 全局 API 客户端单例。baseUrl 在创建时锁定；token 通过闭包从 auth store 动态读取。
  *
  * 使用方式：
- *   import { apiClient } from '@/services/api';
+ *   import { apiClient } from '@/services/api/api';
  *   const list = await apiClient.get<{ sessions: Session[] }>('/api/sessions');
  *
  * 切勿在模块顶层使用 `useAuthStore.getState()` 之外的方式获取 token —— 会破坏

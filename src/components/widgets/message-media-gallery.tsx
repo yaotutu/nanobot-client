@@ -16,7 +16,7 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 
-import { toMediaAttachment } from '@/services/media';
+import { toMediaAttachment } from '@/services/links/media';
 import type { UIImage, UIMediaAttachment } from '@/types/api';
 
 interface MediaPalette {

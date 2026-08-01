@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatQuotedUserMessage, normalizeQuotedContext, parseQuotedUserMessage } from '@/services/user-quote-format';
+import { formatQuotedUserMessage, normalizeQuotedContext, parseQuotedUserMessage } from '@/services/text/user-quote-format';
 
 describe('formatQuotedUserMessage', () => {
   it('returns original content when no quote', () => {

@@ -17,7 +17,7 @@ import {
   scopeWithAccessMode,
   selectedProjectScope,
   shortWorkspacePath,
-} from '@/services/workspace-paths';
+} from '@/services/runtime/workspace-paths';
 import type {
   WorkspaceAccessMode,
   WorkspaceScopePayload,

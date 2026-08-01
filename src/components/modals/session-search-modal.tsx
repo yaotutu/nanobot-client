@@ -13,7 +13,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
-import { sessionTitle, visibleSessionPreview } from '@/services/format';
+import { sessionTitle, visibleSessionPreview } from '@/services/text/format';
 import type { ChatSummary } from '@/types/api';
 
 interface SessionSearchColors {

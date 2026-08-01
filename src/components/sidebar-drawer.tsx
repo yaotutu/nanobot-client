@@ -44,7 +44,7 @@ import {
   type ChatGroupLabels,
   type SessionGroup,
 } from '@/features/sidebar/chat-groups';
-import { formatDateTime, relativeTime, safeNumberFormat, sessionTitle, visibleSessionPreview } from '@/services/format';
+import { formatDateTime, relativeTime, safeNumberFormat, sessionTitle, visibleSessionPreview } from '@/services/text/format';
 import type {
   ChatSummary,
   ConnectionStatus,

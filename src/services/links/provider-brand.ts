@@ -1,4 +1,4 @@
-import { DEFAULT_SERVER_URL } from '@/services/config';
+import { DEFAULT_SERVER_URL } from '@/services/api/config';
 
 function officialFaviconUrl(domain: string): string {
   return `https://${domain}/favicon.ico`;

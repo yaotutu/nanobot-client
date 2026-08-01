@@ -1,4 +1,4 @@
-import { isModelCommandResponseText, isModelCommandText } from '@/services/format';
+import { isModelCommandResponseText, isModelCommandText } from '@/services/text/format';
 import { isSystemCommandTurnId } from '@/features/connection/socket-transport';
 import type { UIMessage } from '@/types/api';
 

@@ -24,13 +24,13 @@ import {
 
 import { fetchSettings, fetchSettingsUsage } from '@/features/settings/api';
  
-// import { DEFAULT_SERVER_URL } from '@/services/config';
+// import { DEFAULT_SERVER_URL } from '@/services/api/config';
 import type { LocalPreferences } from "@/stores/local-preferences-store";
 import {
   mergeRuntimeMetadata,
   resolveRuntimeClientPolicy,
   type RuntimeMetadata,
-} from "@/services/runtime-capabilities";
+} from "@/services/runtime/runtime-capabilities";
 import type { SettingsPayload } from "@/types/api";
 
 import { AppearanceSettings } from "../settings/appearance-settings";

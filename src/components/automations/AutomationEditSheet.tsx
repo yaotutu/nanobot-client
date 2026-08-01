@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { safeDateTimeFormat } from '@/services/format';
+import { safeDateTimeFormat } from '@/services/text/format';
 import type { AutomationUpdatePayload, SessionAutomationJob } from '@/types/api';
 import type { Palette } from '@/ui/palette';
 

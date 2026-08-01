@@ -1,4 +1,4 @@
-import type { RuntimeClientPolicy } from '@/services/runtime-capabilities';
+import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type {
   ModelPresetInfo,
   ProviderAdvancedField,

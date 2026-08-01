@@ -1,4 +1,4 @@
-import { apiClient, ApiError } from '@/services/api';
+import { apiClient, ApiError } from '@/services/api/api';
 import type {
   FetchThreadOptions,
   FilePreviewPayload,

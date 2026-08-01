@@ -1,4 +1,4 @@
-import { apiClient } from '@/services/api';
+import { apiClient } from '@/services/api/api';
 import type { SkillDetail, SkillsPayload } from '@/types/api';
 
 export async function fetchSkills(): Promise<SkillsPayload> {

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { updateWebSearchSettings } from '@/features/settings/api';
-import type { RuntimeClientPolicy } from '@/services/runtime-capabilities';
+import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type { SettingsPayload, WebSearchProviderInfo, WebSearchSettingsUpdate } from '@/types/api';
 
 import type { SettingsPalette } from '../screens/settings-screen';

@@ -1,6 +1,6 @@
 import i18n from "@/i18n";
-import { safeActivityDetail } from "@/services/log-redaction";
-import { formatCompactWebUrl, parseSafeActivityHttpUrl } from "@/services/web-url";
+import { safeActivityDetail } from "@/services/text/log-redaction";
+import { formatCompactWebUrl, parseSafeActivityHttpUrl } from "@/services/links/web-url";
 
 export type McpActivityStatus = "running" | "done" | "error";
 

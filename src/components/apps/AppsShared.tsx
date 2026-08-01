@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useLogoFallback } from '@/hooks/use-logo-fallback';
-import { isGenericRepositoryLogoUrl, logoFallbackUrls } from '@/services/provider-brand';
+import { isGenericRepositoryLogoUrl, logoFallbackUrls } from '@/services/links/provider-brand';
 import type { Palette } from '@/ui/palette';
 
 export function ToolLogo({

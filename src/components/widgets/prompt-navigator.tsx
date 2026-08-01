@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { formatDateTime } from '@/services/format';
+import { formatDateTime } from '@/services/text/format';
 import { userPromptAnchors } from '@/features/chat/prompt-navigation';
 import type { UIMessage } from '@/types/api';
 

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   MAX_QUOTED_CONTEXT_CHARS,
   normalizeQuotedContext,
-} from '@/services/user-quote-format';
+} from '@/services/text/user-quote-format';
 
 interface AssistantQuoteColors {
   background: string;

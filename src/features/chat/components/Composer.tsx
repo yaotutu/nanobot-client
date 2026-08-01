@@ -32,7 +32,7 @@ import {
 } from '@/features/chat/skill-mentions';
 import {
   parseQuotedUserMessage,
-} from '@/services/user-quote-format';
+} from '@/services/text/user-quote-format';
 
 import type {
   ComposerAttachment,
@@ -45,7 +45,7 @@ import type {
   WorkspacesPayload,
 } from '@/types/api';
 import type { Palette } from '@/ui/palette';
-import { logoFallbackUrls } from '@/services/provider-brand';
+import { logoFallbackUrls } from '@/services/links/provider-brand';
 
 import { ModelPresetMenu } from '@/components/widgets/model-preset-menu';
 import { VoiceRecorderController } from '@/hooks/use-voice-recorder';

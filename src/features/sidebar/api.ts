@@ -1,4 +1,4 @@
-import { apiClient } from '@/services/api';
+import { apiClient } from '@/services/api/api';
 import type {
   AutomationsPayload,
   ChatSummary,

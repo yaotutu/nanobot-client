@@ -2,8 +2,8 @@ import { canonicalToolTrace, formatToolCallTrace } from '@/features/chat/tool-tr
 import type { ToolProgressEvent } from '@/types/api';
 
 import i18n from '@/i18n';
-import { redactActivityText, safeActivityDetail } from '@/services/log-redaction';
-import { displayWebHost, formatCompactWebUrl, parseSafeActivityHttpUrl } from '@/services/web-url';
+import { redactActivityText, safeActivityDetail } from '@/services/text/log-redaction';
+import { displayWebHost, formatCompactWebUrl, parseSafeActivityHttpUrl } from '@/services/links/web-url';
 
 export type WebSearchStatus = "running" | "done" | "error";
 export type WebSearchTarget = "web" | "x";

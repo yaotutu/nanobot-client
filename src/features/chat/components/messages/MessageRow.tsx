@@ -8,8 +8,8 @@ import {
 } from 'react-native';
 import { GitFork, Quote, RotateCw } from 'lucide-react-native';
 
-import { parseQuotedUserMessage } from '@/services/user-quote-format';
-import { formatDateTime } from '@/services/format';
+import { parseQuotedUserMessage } from '@/services/text/user-quote-format';
+import { formatDateTime } from '@/services/text/format';
 import type {
   CliAppInfo,
   McpPresetInfo,
