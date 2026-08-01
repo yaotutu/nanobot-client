@@ -11,7 +11,7 @@ import {
 
 import { channelCopy } from "./channels-utils";
 import type { ChannelConfigField } from "@/types/api";
-import type { SettingsPalette } from "../../settings-screen";
+import type { SettingsPalette } from "../../screens/settings-screen";
 
 export function ChannelFields({
   colors,

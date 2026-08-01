@@ -35,7 +35,7 @@ import {
 import { restartRequirementDescription, type RuntimeClientPolicy } from '@/services/runtime-capabilities';
 import type { ApiServicePayload, NanobotFeatureInfo, SettingsPayload } from '@/types/api';
 
-import type { SettingsPalette } from '../settings-screen';
+import type { SettingsPalette } from '../screens/settings-screen';
 import {
   SegmentedControl,
   SettingsButton,

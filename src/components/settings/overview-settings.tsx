@@ -6,7 +6,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { checkVersion } from '@/features/settings/api';
 import type { SettingsPayload } from '@/types/api';
 
-import type { SettingsPalette, SettingsSectionKey } from '../settings-screen';
+import type { SettingsPalette, SettingsSectionKey } from '../screens/settings-screen';
 import { SettingsButton, SettingsPage, SettingsSection } from './settings-controls';
 import { TokenUsageHeatmap } from './token-usage-heatmap';
 

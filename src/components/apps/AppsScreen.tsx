@@ -30,10 +30,10 @@ import type {
 } from '@/types/api';
 import type { Palette } from '@/ui/palette';
 
-import { CliAppRow } from './apps/CliAppRow';
-import { CliReadyPanel } from './apps/CliReadyPanel';
-import { CustomMcpPanel } from './apps/CustomMcpPanel';
-import { McpPresetRow } from './apps/McpPresetRow';
+import { CliAppRow } from './CliAppRow';
+import { CliReadyPanel } from './CliReadyPanel';
+import { CustomMcpPanel } from './CustomMcpPanel';
+import { McpPresetRow } from './McpPresetRow';
 import {
   CLI_APPS_REFRESH_MAX_RETRIES,
   CLI_APPS_REFRESH_RETRY_MS,
@@ -41,7 +41,7 @@ import {
   itemReady,
   searchText,
   titleOf,
-} from './apps/apps-utils';
+} from './apps-utils';
 import type {
   AppAction,
   AppsFilter,
@@ -49,7 +49,7 @@ import type {
   CustomMcpForm,
   CustomMcpMode,
   McpAction,
-} from './apps/apps-utils';
+} from './apps-utils';
 
 interface AppsScreenProps {
   colors: Palette;

@@ -22,9 +22,10 @@ expo-env.d.ts
 .metro-health-check*
 
 # Local acceptance artifacts may include device logs, screenshots, or
-# pre-sanitization captures. Only sanitized outputs are committed; keep
-# the directory ignored by default.
-artifacts/
+# pre-sanitization captures. Only sanitized counterparts are committed
+# under `docs/verification/`; raw outputs go under `.local/` and are
+# ignored.
+.local/
 
 # debug
 npm-debug.*

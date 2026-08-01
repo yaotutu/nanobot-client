@@ -8,7 +8,7 @@ import type {
   SettingsPayload,
 } from '@/types/api';
 
-import type { SettingsPalette } from '../../settings-screen';
+import type { SettingsPalette } from '../../screens/settings-screen';
 
 export interface ModelsSettingsProps {
   colors: SettingsPalette;

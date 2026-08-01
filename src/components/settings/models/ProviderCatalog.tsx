@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { fetchProviderModels } from '@/features/settings/api';
 import type { ProviderModelsPayload, ProviderSettingsInfo } from '@/types/api';
 
-import type { SettingsPalette } from '../../settings-screen';
+import type { SettingsPalette } from '../../screens/settings-screen';
 import { SettingsButton } from '../settings-controls';
 
 export function ProviderCatalog({ colors, provider }: {

@@ -29,9 +29,9 @@ import type {
 } from '@/types/api';
 import type { Palette } from '@/ui/palette';
 
-import { AutomationListItem } from './automations/AutomationListItem';
-import { AutomationDetailPanel } from './automations/AutomationDetailPanel';
-import { AutomationEditModal, SortSheet } from './automations/AutomationEditSheet';
+import { AutomationListItem } from './AutomationListItem';
+import { AutomationDetailPanel } from './AutomationDetailPanel';
+import { AutomationEditModal, SortSheet } from './AutomationEditSheet';
 import {
   FILTERS,
   automationNeedsAttention,
@@ -41,12 +41,12 @@ import {
   matchesSearch,
   parseSearchQuery,
   sortJobs,
-} from './automations/automations-utils';
+} from './automations-utils';
 import type {
   AutomationAction,
   AutomationFilter,
   AutomationSort,
-} from './automations/automations-utils';
+} from './automations-utils';
 
 interface AutomationsScreenProps {
   colors: Palette;

@@ -5,8 +5,8 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { RootErrorBoundary } from '@/components/error-boundary';
-import { DebugOverlay } from '@/components/debug-overlay';
+import { RootErrorBoundary } from '@/components/overlays/error-boundary';
+import { DebugOverlay } from '@/components/overlays/debug-overlay';
 import { debugLog } from '@/services/debug-log';
 import { ensureI18n, setAppLanguage } from '@/i18n';
 import { readLocalPreferences } from '@/stores/local-preferences-store';

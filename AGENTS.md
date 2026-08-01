@@ -103,7 +103,7 @@ android/ ios/      Expo Prebuild 产物（已 git ignore）
 
 1. `npm run check`（必过）
 2. `npx expo-doctor`（建议）
-3. 写清楚改了什么、为什么；UI 截图 / 设备日志放到 `artifacts-sanitized/`（`artifacts/` 默认被 git ignore，仅保留清洗后版本）。
+3. 写清楚改了什么、为什么；UI 截图 / 设备日志写到 `.local/verification-raw/`（默认 git ignore），清洗后提交到 `docs/verification/<kind>-<date>/`。
 4. 不要把原生构建产物（`android/`、`ios/`）提交。
 
 ## 相关链接

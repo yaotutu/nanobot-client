@@ -98,11 +98,11 @@ import type {
   WorkspacesPayload,
 } from '@/types/nanobot';
 
-import { AutomationsScreen } from './automations-screen';
-import { AppsScreen } from './apps-screen';
-import { SkillsScreen } from './skills-screen';
+import { AutomationsScreen } from '../automations/AutomationsScreen';
+import { AppsScreen } from '../apps/AppsScreen';
+import { SkillsScreen } from '../skills-screen';
 import { SettingsScreen } from './settings-screen';
-import { StreamErrorNotice } from './stream-error-notice';
+import { StreamErrorNotice } from '../widgets/stream-error-notice';
 
 interface NanobotScreenProps {
   bootstrap: BootstrapResponse;
@@ -834,7 +834,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
       ) : utilityView === 'automations' ? (
         <AutomationsScreen
           colors={colors}
-          onOpenLinkedChat={(sessionKey) => {
+          onOpenLinkedChat={(sessionKey: string) => {
             setUtilityView('chat');
             props.onSelectSession(sessionKey);
           }}

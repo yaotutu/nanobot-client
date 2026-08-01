@@ -18,8 +18,8 @@ import type {
 } from '@/types/api';
 import type { Palette } from '@/ui/palette';
 
-import { MarkdownText } from '@/components/markdown-text';
-import { MessageMediaGallery } from '@/components/message-media-gallery';
+import { MarkdownText } from '@/components/widgets/markdown-text';
+import { MessageMediaGallery } from '@/components/widgets/message-media-gallery';
 
 import { MessageCopyButton } from './MessageRow.extras';
 import { UserMessageBody } from './UserMessageBody';

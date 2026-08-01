@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 
-import type { SettingsPalette } from '../settings-screen';
+import type { SettingsPalette } from '../screens/settings-screen';
 
 export interface SettingsOption {
   value: string;

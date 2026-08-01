@@ -33,15 +33,15 @@ import {
 } from "@/services/runtime-capabilities";
 import type { SettingsPayload } from "@/types/api";
 
-import { AppearanceSettings } from "./settings/appearance-settings";
-import { ChannelsSettings } from "./settings/channels-settings";
-import { ImageSettings } from "./settings/image-settings";
-import { ModelsSettings } from "./settings/models-settings";
-import { OverviewSettings } from "./settings/overview-settings";
-import { RuntimeSettings } from "./settings/runtime-settings";
-import { SecuritySettings } from "./settings/security-settings";
-import { VoiceSettings } from "./settings/voice-settings";
-import { WebSettings } from "./settings/web-settings";
+import { AppearanceSettings } from "../settings/appearance-settings";
+import { ChannelsSettings } from "../settings/channels-settings";
+import { ImageSettings } from "../settings/image-settings";
+import { ModelsSettings } from "../settings/models-settings";
+import { OverviewSettings } from "../settings/overview-settings";
+import { RuntimeSettings } from "../settings/runtime-settings";
+import { SecuritySettings } from "../settings/security-settings";
+import { VoiceSettings } from "../settings/voice-settings";
+import { WebSettings } from "../settings/web-settings";
 
 export interface SettingsPalette {
   background: string;

@@ -8,7 +8,7 @@ import { updateWebSearchSettings } from '@/features/settings/api';
 import type { RuntimeClientPolicy } from '@/services/runtime-capabilities';
 import type { SettingsPayload, WebSearchProviderInfo, WebSearchSettingsUpdate } from '@/types/api';
 
-import type { SettingsPalette } from '../settings-screen';
+import type { SettingsPalette } from '../screens/settings-screen';
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPage, SettingsPicker, SettingsRow, SettingsSection, SettingsSwitch, StatusPill } from './settings-controls';
 
 function fromPayload(settings: SettingsPayload): WebSearchSettingsUpdate {
