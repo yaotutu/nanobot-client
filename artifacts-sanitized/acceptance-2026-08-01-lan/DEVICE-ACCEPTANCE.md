@@ -63,3 +63,9 @@
 - Shell 工具活动显示 `Ran command`、命令摘要、脚本类型与行数；见 `09-tool-activity-expanded.png`。
 - URL/file read 活动显示 `Read`、来源 hostname/path；多条 command/read 与 reasoning 保持服务端顺序；见 `10-web-search-expanded.png`。
 - Activity cluster 展开/折叠、历史消息正文、Fork boundary 与 composer 同屏无布局阻断。
+
+## Settings 剩余子页（增量）
+
+- **Appearance**：Theme / Language / Density / Activity detail / File edit display 与 WebUI 选项一致；`11-settings-appearance.png`
+- **Models**：Model presets、call order、Model providers（SiliconFlow / OpenAI Codex / Kimi Coding / MiniMax）状态显示正常；`11-settings-models.png`
+- **Image**：Image generation 开关、provider 状态、image model / aspect / size 默认项与 WebUI 一致；`11-settings-image.png`
