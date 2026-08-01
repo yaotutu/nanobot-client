@@ -21,6 +21,7 @@ import {
   fetchBootstrap,
 } from "@/lib/bootstrap";
 import { DEFAULT_SERVER_URL } from "@/lib/config";
+import { loadLocalDevBootstrapSecret } from "@/lib/local-dev-bootstrap";
 import {
   clearBootstrapSecret,
   loadBootstrapSecret,
@@ -856,23 +857,23 @@ export function useNanobotApp() {
     [requestBootstrap],
   );
 
-  // Bootstrap with the saved SecureStore credential when present; otherwise
-  // require the user to enter the runtime password on the login screen.
-  // We do not auto-attempt an empty credential against auth-required servers
-  // because the gateway rejects it with 401/403, which would then drop the
-  // user into the auth screen anyway — we just take the shorter path.
+  // Bootstrap from SecureStore. During local development only, seed an empty
+  // store from the gitignored dev-secret module so the temporary dev workflow
+  // can skip the authentication screen without committing credentials.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const savedSecret = await loadBootstrapSecret();
+      const localDevSecret = loadLocalDevBootstrapSecret();
+      const bootstrapSecret = savedSecret || localDevSecret;
       if (cancelled) return;
       debugLog("AUTH", "savedSecret=" + (savedSecret ? "yes" : "no"));
-      if (!savedSecret) {
+      if (!bootstrapSecret) {
         setPhase("authentication");
         return;
       }
       try {
-        await requestBootstrap(savedSecret, false);
+        await requestBootstrap(bootstrapSecret, !savedSecret && Boolean(localDevSecret));
       } catch (caught) {
         if (cancelled) return;
         if (caught instanceof BootstrapAuthRequiredError) {
