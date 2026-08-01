@@ -14,10 +14,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ApiError, fetchFilePreview } from '@/lib/api';
-import { DEFAULT_SERVER_URL } from '@/lib/config';
+import { ApiError } from '@/services/api';
+import { fetchFilePreview } from '@/features/chat/api';
 import i18n from '@/i18n';
-import type { FilePreviewPayload } from '@/types/nanobot';
+import type { FilePreviewPayload } from '@/types/api';
 
 interface FilePreviewPalette {
   background: string;
@@ -124,7 +124,7 @@ export function FilePreviewModal({
     if (!path || !sessionKey) return;
     let cancelled = false;
     const activeRequestKey = `${sessionKey}\n${path}`;
-    void fetchFilePreview(DEFAULT_SERVER_URL, token, sessionKey, path)
+    void fetchFilePreview(sessionKey, path)
       .then((payload) => {
         if (!cancelled) setResult({ requestKey: activeRequestKey, status: 'ready', payload });
       })

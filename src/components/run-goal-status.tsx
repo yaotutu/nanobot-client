@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import type { GoalStateWsPayload } from '@/types/nanobot';
+import type { GoalStateWsPayload } from '@/types/api';
 
 import { MarkdownText } from './markdown-text';
 

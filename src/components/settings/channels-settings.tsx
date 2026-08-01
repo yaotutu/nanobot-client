@@ -42,10 +42,11 @@ import {
   setNanobotFeatureEnabled,
   startChannelConnect,
   validateChannel,
-} from "@/lib/api";
+} from '@/features/channels/api';
 import { currentLocale } from "@/i18n";
-import { channelPresentation } from "@/lib/channel-presentation";
-import { DEFAULT_SERVER_URL } from "@/lib/config";
+import { channelPresentation } from "@/features/channels/channel-presentation";
+ 
+// import { DEFAULT_SERVER_URL } from '@/services/config';
 import type {
   ChannelConfigField,
   ChannelConnectPayload,
@@ -54,7 +55,7 @@ import type {
   NanobotChannelInstanceInfo,
   NanobotFeatureInfo,
   NanobotFeaturesPayload,
-} from "@/types/nanobot";
+} from "@/types/api";
 
 import type { SettingsPalette } from "../settings-screen";
 
@@ -226,11 +227,9 @@ function channelConnectStatusLabel(
 }
 
 export function ChannelsSettings({
-  token,
   colors,
   showBrandLogos,
 }: {
-  token: string;
   colors: SettingsPalette;
   showBrandLogos: boolean;
 }) {
@@ -249,7 +248,7 @@ export function ChannelsSettings({
       if (mode === "initial") setLoading(true);
       if (mode === "refresh") setRefreshing(true);
       try {
-        const next = await fetchNanobotFeatures(DEFAULT_SERVER_URL, token);
+        const next = await fetchNanobotFeatures();
         setPayload(next);
         setError(null);
       } catch (caught) {
@@ -265,13 +264,13 @@ export function ChannelsSettings({
         setRefreshing(false);
       }
     },
-    [t, token],
+    [t],
   );
 
   useEffect(() => {
     let cancelled = false;
     const refresh = () => {
-      fetchNanobotFeatures(DEFAULT_SERVER_URL, token)
+      fetchNanobotFeatures()
         .then((next) => {
           if (!cancelled) {
             setPayload(next);
@@ -297,7 +296,7 @@ export function ChannelsSettings({
       cancelled = true;
       clearInterval(timer);
     };
-  }, [t, token]);
+  }, [t]);
 
   const allChannels = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase(currentLocale());
@@ -335,10 +334,7 @@ export function ChannelsSettings({
     const key = `${enabled ? "enable" : "disable"}:${feature.name}:${instanceId ?? "default"}`;
     setActionKey(key);
     try {
-      const next = await setNanobotFeatureEnabled(
-        DEFAULT_SERVER_URL,
-        token,
-        enabled ? "enable" : "disable",
+      const next = await setNanobotFeatureEnabled(enabled ? "enable" : "disable",
         feature.name,
         instanceId,
       );
@@ -368,7 +364,7 @@ export function ChannelsSettings({
         onPayload={setPayload}
         showBrandLogos={showBrandLogos}
         onToggle={toggle}
-        token={token}
+        
       />
     );
   }
@@ -583,7 +579,6 @@ export function ChannelsSettings({
 }
 
 function ChannelDetail({
-  token,
   colors,
   feature,
   actionKey,
@@ -593,7 +588,6 @@ function ChannelDetail({
   onError,
   showBrandLogos,
 }: {
-  token: string;
   colors: SettingsPalette;
   feature: NanobotFeatureInfo;
   actionKey: string | null;
@@ -695,10 +689,7 @@ function ChannelDetail({
     setSaving(true);
     onError(null);
     try {
-      const result = await configureChannel(
-        DEFAULT_SERVER_URL,
-        token,
-        feature.name,
+      const result = await configureChannel(feature.name,
         submission(),
         { instanceId },
       );
@@ -729,10 +720,7 @@ function ChannelDetail({
     onError(null);
     try {
       setValidation(
-        await validateChannel(
-          DEFAULT_SERVER_URL,
-          token,
-          feature.name,
+        await validateChannel(feature.name,
           submission(),
           instanceId,
         ),
@@ -754,10 +742,7 @@ function ChannelDetail({
     onError(null);
     try {
       const valuesForSubmit = submission();
-      const validationPayload = await validateChannel(
-        DEFAULT_SERVER_URL,
-        token,
-        feature.name,
+      const validationPayload = await validateChannel(feature.name,
         valuesForSubmit,
         instanceId,
       );
@@ -773,10 +758,7 @@ function ChannelDetail({
         );
         return;
       }
-      const result = await configureChannel(
-        DEFAULT_SERVER_URL,
-        token,
-        feature.name,
+      const result = await configureChannel(feature.name,
         valuesForSubmit,
         { enable: true, instanceId },
       );
@@ -823,10 +805,7 @@ function ChannelDetail({
       if (pollInFlight.current) return;
       pollInFlight.current = true;
       try {
-        const next = await pollChannelConnect(
-          DEFAULT_SERVER_URL,
-          token,
-          feature.name,
+        const next = await pollChannelConnect(feature.name,
           connect.session_id,
         );
         if (cancelled || context !== connectContext.current) return;
@@ -873,7 +852,6 @@ function ChannelDetail({
     onError,
     onPayload,
     t,
-    token,
   ]);
 
   const beginConnect = async (mode: "replace" | "create" = "replace") => {
@@ -882,10 +860,7 @@ function ChannelDetail({
     setConnectBusy(true);
     onError(null);
     try {
-      const state = await startChannelConnect(
-        DEFAULT_SERVER_URL,
-        token,
-        feature.name,
+      const state = await startChannelConnect(feature.name,
         feature.name === "feishu"
           ? {
               domain: "feishu",
@@ -922,10 +897,7 @@ function ChannelDetail({
     const context = connectContext.current;
     setConnectBusy(true);
     try {
-      const next = await cancelChannelConnect(
-        DEFAULT_SERVER_URL,
-        token,
-        feature.name,
+      const next = await cancelChannelConnect(feature.name,
         connect.session_id,
       );
       if (context === connectContext.current) setConnect(next);

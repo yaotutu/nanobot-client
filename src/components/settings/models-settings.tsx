@@ -38,9 +38,8 @@ import {
   updateModelCallOrder,
   updateModelConfiguration,
   updateProviderSettings,
-} from '@/lib/api';
-import { DEFAULT_SERVER_URL } from '@/lib/config';
-import type { RuntimeClientPolicy } from '@/lib/runtime-capabilities';
+} from '@/features/settings/api';
+import type { RuntimeClientPolicy } from '@/services/runtime-capabilities';
 import type {
   ModelPresetInfo,
   ProviderAdvancedField,
@@ -50,7 +49,7 @@ import type {
   ProviderSettingsInfo,
   ProviderSettingsUpdate,
   SettingsPayload,
-} from '@/types/nanobot';
+} from '@/types/api';
 
 import type { SettingsPalette } from '../settings-screen';
 import {
@@ -66,7 +65,6 @@ import {
 
 interface ModelsSettingsProps {
   colors: SettingsPalette;
-  token: string;
   settings: SettingsPayload;
   showBrandLogos: boolean;
   onSettingsChange: (settings: SettingsPayload) => void;
@@ -277,9 +275,8 @@ function FieldLabel({ colors, children }: { colors: SettingsPalette; children: R
   return <Text style={[styles.fieldLabel, { color: colors.muted }]}>{children}</Text>;
 }
 
-function ModelCatalog({ colors, token, settings, provider, value, onChange }: {
+function ModelCatalog({ colors, settings, provider, value, onChange }: {
   colors: SettingsPalette;
-  token: string;
   settings: SettingsPayload;
   provider: string;
   value: string;
@@ -299,7 +296,7 @@ function ModelCatalog({ colors, token, settings, provider, value, onChange }: {
     setLoading(true);
     setError(null);
     try {
-      setPayload(await fetchProviderModels(DEFAULT_SERVER_URL, token, effectiveProvider));
+      setPayload(await fetchProviderModels(effectiveProvider));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('settings.models.loadFailed'));
     } finally {
@@ -442,10 +439,9 @@ function AdvancedProviderFields({ colors, fields, form, onChange }: {
   );
 }
 
-function ProviderCatalog({ colors, provider, token }: {
+function ProviderCatalog({ colors, provider }: {
   colors: SettingsPalette;
   provider: ProviderSettingsInfo;
-  token: string;
 }) {
   const { t } = useTranslation();
   const [payload, setPayload] = useState<ProviderModelsPayload | null>(null);
@@ -457,7 +453,7 @@ function ProviderCatalog({ colors, provider, token }: {
     setLoading(true);
     setError(null);
     try {
-      setPayload(await fetchProviderModels(DEFAULT_SERVER_URL, token, provider.name));
+      setPayload(await fetchProviderModels(provider.name));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('settings.models.loadFailed'));
     } finally {
@@ -491,7 +487,7 @@ function ProviderCatalog({ colors, provider, token }: {
   );
 }
 
-function PresetsSection({ colors, token, settings, showBrandLogos, onSettingsChange }: ModelsSettingsProps) {
+function PresetsSection({ colors, settings, showBrandLogos, onSettingsChange }: ModelsSettingsProps) {
   const { t } = useTranslation();
   const namedPresets = settings.model_presets.filter((preset) => !preset.is_default);
   const initialPreset = namedPresets.find((preset) => preset.name === settings.model_call_order[0]) ?? namedPresets[0] ?? null;
@@ -524,7 +520,7 @@ function PresetsSection({ colors, token, settings, showBrandLogos, onSettingsCha
     setBusy('order');
     setError(null);
     try {
-      onSettingsChange(await updateModelCallOrder(DEFAULT_SERVER_URL, token, nextOrder));
+      onSettingsChange(await updateModelCallOrder(nextOrder));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('settings.models.callOrderUpdateFailed', { defaultValue: 'Could not update model call order.' }));
     } finally {
@@ -580,7 +576,7 @@ function PresetsSection({ colors, token, settings, showBrandLogos, onSettingsCha
     setError(null);
     try {
       if (creating) {
-        const created = await createModelConfiguration(DEFAULT_SERVER_URL, token, {
+        const created = await createModelConfiguration({
           label: draft.label.trim(),
           provider: draft.provider,
           model: draft.model.trim(),
@@ -591,16 +587,13 @@ function PresetsSection({ colors, token, settings, showBrandLogos, onSettingsCha
         });
         const createdName = created.created_model_preset;
         if (createdName && !created.model_call_order.includes(createdName)) {
-          onSettingsChange(await updateModelCallOrder(
-            DEFAULT_SERVER_URL,
-            token,
-            [...created.model_call_order, createdName],
+          onSettingsChange(await updateModelCallOrder([...created.model_call_order, createdName],
           ));
         } else {
           onSettingsChange(created);
         }
       } else if (selectedPreset) {
-        onSettingsChange(await updateModelConfiguration(DEFAULT_SERVER_URL, token, {
+        onSettingsChange(await updateModelConfiguration({
           name: selectedPreset.name,
           label: draft.label.trim(),
           provider: draft.provider,
@@ -632,7 +625,7 @@ function PresetsSection({ colors, token, settings, showBrandLogos, onSettingsCha
         onPress: () => {
           setBusy('delete');
           setError(null);
-          void deleteModelConfiguration(DEFAULT_SERVER_URL, token, selectedPreset.name)
+          void deleteModelConfiguration(selectedPreset.name)
             .then(onSettingsChange)
             .catch((caught: unknown) => setError(caught instanceof Error ? caught.message : t('settings.models.deleteFailed', { defaultValue: 'Could not delete the preset.' })))
             .finally(() => setBusy(null));
@@ -646,7 +639,7 @@ function PresetsSection({ colors, token, settings, showBrandLogos, onSettingsCha
     setBusy('migrate');
     setError(null);
     try {
-      onSettingsChange(await migrateModelConfigurations(DEFAULT_SERVER_URL, token));
+      onSettingsChange(await migrateModelConfigurations());
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('settings.models.convertFailed', { defaultValue: 'Could not convert the model configuration.' }));
     } finally {
@@ -744,7 +737,7 @@ function PresetsSection({ colors, token, settings, showBrandLogos, onSettingsCha
           </View>
           <View style={styles.fieldStack}>
             <FieldLabel colors={colors}>{t('settings.models.selectModel')}</FieldLabel>
-            <ModelCatalog colors={colors} onChange={(model) => setDraft((current) => current ? { ...current, model } : current)} provider={draft.provider} settings={settings} token={token} value={draft.model} />
+            <ModelCatalog colors={colors} onChange={(model) => setDraft((current) => current ? { ...current, model } : current)} provider={draft.provider} settings={settings} value={draft.model} />
           </View>
           <Pressable onPress={() => setAdvancedOpen((value) => !value)} style={[styles.advancedHeader, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
             <View style={styles.rowCopy}>
@@ -786,7 +779,7 @@ function PresetsSection({ colors, token, settings, showBrandLogos, onSettingsCha
   );
 }
 
-function ProvidersSection({ colors, token, settings, showBrandLogos, onSettingsChange, onRestart, runtimePolicy }: ModelsSettingsProps) {
+function ProvidersSection({ colors, settings, showBrandLogos, onSettingsChange, onRestart, runtimePolicy }: ModelsSettingsProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [forms, setForms] = useState<Record<string, ProviderForm>>(() => Object.fromEntries(settings.providers.map((provider) => [provider.name, providerForm(provider)])));
@@ -858,7 +851,7 @@ function ProvidersSection({ colors, token, settings, showBrandLogos, onSettingsC
         if (field === 'region') update.region = form.region.trim();
         if (field === 'profile') update.profile = form.profile.trim();
       }
-      onSettingsChange(await updateProviderSettings(DEFAULT_SERVER_URL, token, update));
+      onSettingsChange(await updateProviderSettings(update));
       setForms((current) => ({ ...current, [provider.name]: { ...form, apiKey: '' } }));
       setKeyVisible((current) => ({ ...current, [provider.name]: false }));
       setKeyEditing((current) => ({ ...current, [provider.name]: false }));
@@ -876,8 +869,8 @@ function ProvidersSection({ colors, token, settings, showBrandLogos, onSettingsC
     setError(null);
     try {
       const payload = action === 'login'
-        ? await loginProviderOAuth(DEFAULT_SERVER_URL, token, provider.name)
-        : await logoutProviderOAuth(DEFAULT_SERVER_URL, token, provider.name);
+        ? await loginProviderOAuth(provider.name)
+        : await logoutProviderOAuth(provider.name);
       if (isAuthorizationRequired(payload)) {
         setOauthFlow(payload);
         setOauthCode('');
@@ -900,7 +893,7 @@ function ProvidersSection({ colors, token, settings, showBrandLogos, onSettingsC
     setBusy(oauthFlow.provider);
     setError(null);
     try {
-      const payload = await completeProviderOAuth(DEFAULT_SERVER_URL, token, oauthFlow.provider, oauthFlow.flow_id, oauthCode.trim());
+      const payload = await completeProviderOAuth(oauthFlow.provider, oauthFlow.flow_id, oauthCode.trim());
       if (isOAuthPending(payload)) {
         setOauthPending(true);
       } else {
@@ -921,7 +914,7 @@ function ProvidersSection({ colors, token, settings, showBrandLogos, onSettingsC
     setBusy(CUSTOM_PROVIDER_KEY);
     setError(null);
     try {
-      onSettingsChange(await createProviderSettings(DEFAULT_SERVER_URL, token, {
+      onSettingsChange(await createProviderSettings({
         name: customDraft.name.trim(),
         apiKey: customDraft.apiKey.trim() || undefined,
         apiBase: customDraft.apiBase.trim(),
@@ -1011,7 +1004,7 @@ function ProvidersSection({ colors, token, settings, showBrandLogos, onSettingsC
               </>
             )}
             <AdvancedProviderFields colors={colors} fields={provider.advanced_fields ?? []} form={form} onChange={(value) => updateForm(provider.name, value)} />
-            <ProviderCatalog colors={colors} provider={provider} token={token} />
+            <ProviderCatalog colors={colors} provider={provider} />
             {error ? <SettingsNotice colors={colors} error message={error} /> : null}
             <View style={styles.editorActions}>
               <SettingsButton colors={colors} disabled={busy !== null} label={t('settings.actions.cancel')} onPress={() => toggle(provider)} />

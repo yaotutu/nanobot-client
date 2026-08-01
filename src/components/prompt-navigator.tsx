@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { formatDateTime } from '@/lib/format';
-import { userPromptAnchors } from '@/lib/prompt-navigation';
-import type { UIMessage } from '@/types/nanobot';
+import { formatDateTime } from '@/services/format';
+import { userPromptAnchors } from '@/features/chat/prompt-navigation';
+import type { UIMessage } from '@/types/api';
 
 interface PromptNavigatorColors {
   background: string;

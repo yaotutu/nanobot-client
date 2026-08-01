@@ -49,3 +49,4 @@ example
 
 # dev-only bootstrap secret (NEVER commit)
 src/lib/dev-secret.ts
+src/services/dev-secret.ts

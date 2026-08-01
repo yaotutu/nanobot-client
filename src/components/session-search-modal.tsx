@@ -13,8 +13,8 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
-import { sessionTitle, visibleSessionPreview } from '@/lib/format';
-import type { ChatSummary } from '@/types/nanobot';
+import { sessionTitle, visibleSessionPreview } from '@/services/format';
+import type { ChatSummary } from '@/types/api';
 
 interface SessionSearchColors {
   background: string;

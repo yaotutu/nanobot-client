@@ -2,7 +2,7 @@ import { AlertTriangle, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { StreamError } from '@/types/nanobot';
+import type { StreamError } from '@/types/api';
 
 interface StreamErrorNoticeProps {
   colors: {

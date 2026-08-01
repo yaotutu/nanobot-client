@@ -3,9 +3,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { checkVersion } from '@/lib/api';
-import { DEFAULT_SERVER_URL } from '@/lib/config';
-import type { SettingsPayload } from '@/types/nanobot';
+import { checkVersion } from '@/features/settings/api';
+import type { SettingsPayload } from '@/types/api';
 
 import type { SettingsPalette, SettingsSectionKey } from '../settings-screen';
 import { SettingsButton, SettingsPage, SettingsSection } from './settings-controls';
@@ -20,10 +19,9 @@ function shortPath(path: string, fallback: string): string {
   return parts.length > 3 ? `…/${parts.slice(-3).join('/')}` : path || fallback;
 }
 
-export function OverviewSettings({ colors, settings, token, onSelectSection }: {
+export function OverviewSettings({ colors, settings, onSelectSection }: {
   colors: SettingsPalette;
   settings: SettingsPayload;
-  token: string;
   onSelectSection: (section: SettingsSectionKey) => void;
 }) {
   const { t } = useTranslation();
@@ -73,7 +71,7 @@ export function OverviewSettings({ colors, settings, token, onSelectSection }: {
       </SettingsSection>
 
       <SettingsSection colors={colors} title={t('settings.sections.about')}>
-        <VersionRow colors={colors} currentVersion={settings.version?.current} token={token} />
+        <VersionRow colors={colors} currentVersion={settings.version?.current} />
       </SettingsSection>
     </SettingsPage>
   );
@@ -97,7 +95,7 @@ function OverviewRow({ colors, icon, title, value, caption, onPress, last = fals
   );
 }
 
-function VersionRow({ colors, currentVersion, token }: { colors: SettingsPalette; currentVersion?: string; token: string }) {
+function VersionRow({ colors, currentVersion }: { colors: SettingsPalette; currentVersion?: string }) {
   const { t } = useTranslation();
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -106,7 +104,7 @@ function VersionRow({ colors, currentVersion, token }: { colors: SettingsPalette
     setChecking(true);
     setResult(null);
     try {
-      const payload = await checkVersion(DEFAULT_SERVER_URL, token);
+      const payload = await checkVersion();
       setError(false);
       setResult(payload.updateAvailable
         ? t('settings.about.updateAvailable', { version: payload.updateAvailable.latestVersion })

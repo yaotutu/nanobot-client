@@ -2,10 +2,9 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { updateImageGenerationSettings } from '@/lib/api';
-import { DEFAULT_SERVER_URL } from '@/lib/config';
-import type { RuntimeClientPolicy } from '@/lib/runtime-capabilities';
-import type { ImageGenerationSettingsUpdate, SettingsPayload } from '@/types/nanobot';
+import { updateImageGenerationSettings } from '@/features/settings/api';
+import type { RuntimeClientPolicy } from '@/services/runtime-capabilities';
+import type { ImageGenerationSettingsUpdate, SettingsPayload } from '@/types/api';
 
 import type { SettingsPalette, SettingsSectionKey } from '../settings-screen';
 import {
@@ -35,10 +34,9 @@ function fromPayload(settings: SettingsPayload): ImageGenerationSettingsUpdate {
   };
 }
 
-export function ImageSettings({ colors, settings, token, onSettingsChange, onSelectSection, onRestart, runtimePolicy }: {
+export function ImageSettings({ colors, settings, onSettingsChange, onSelectSection, onRestart, runtimePolicy }: {
   colors: SettingsPalette;
   settings: SettingsPayload;
-  token: string;
   onSettingsChange: (settings: SettingsPayload) => void;
   onSelectSection: (section: SettingsSectionKey) => void;
   onRestart: () => void;
@@ -73,7 +71,7 @@ export function ImageSettings({ colors, settings, token, onSettingsChange, onSel
     setSaving(true);
     setMessage(null);
     try {
-      const payload = await updateImageGenerationSettings(DEFAULT_SERVER_URL, token, form);
+      const payload = await updateImageGenerationSettings(form);
       onSettingsChange(payload);
       setForm(fromPayload(payload));
       setError(false);

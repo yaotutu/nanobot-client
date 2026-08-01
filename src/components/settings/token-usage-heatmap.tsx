@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { SettingsPalette } from '../settings-screen';
-import type { SettingsPayload, UsageDayInfo } from '@/types/nanobot';
+import type { SettingsPayload, UsageDayInfo } from '@/types/api';
 
 type TokenUsagePayload = NonNullable<SettingsPayload['usage']>;
 type TokenUsageCell = {

@@ -31,30 +31,18 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { fetchAutomations, runAutomationAction, updateAutomation } from '@/lib/api';
-import { DEFAULT_SERVER_URL } from '@/lib/config';
-import { relativeTimeFromMs, safeDateTimeFormat, safeNumberFormat } from '@/lib/format';
+import { fetchAutomations, runAutomationAction, updateAutomation } from '@/features/automations/api';
+import { relativeTimeFromMs, safeDateTimeFormat, safeNumberFormat } from '@/services/format';
 import type {
   AutomationsPayload,
   AutomationUpdatePayload,
   SessionAutomationJob,
-} from '@/types/nanobot';
+} from '@/types/api';
+import type { Palette } from '@/ui/palette';
 
-export interface AutomationsScreenPalette {
-  background: string;
-  foreground: string;
-  muted: string;
-  subtle: string;
-  border: string;
-  card: string;
-  pressed: string;
-  errorBackground: string;
-  errorText: string;
-}
 
 interface AutomationsScreenProps {
-  token: string;
-  colors: AutomationsScreenPalette;
+  colors: Palette;
   onOpenLinkedChat: (sessionKey: string) => void;
 }
 
@@ -95,7 +83,7 @@ const EVERY_UNITS: Array<{ key: EveryUnit; ms: number }> = [
   { key: 'day', ms: 86_400_000 },
 ];
 
-export function AutomationsScreen({ token, colors, onOpenLinkedChat }: AutomationsScreenProps) {
+export function AutomationsScreen({ colors, onOpenLinkedChat }: AutomationsScreenProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage || i18n.language;
   const [payload, setPayload] = useState<AutomationsPayload | null>(null);
@@ -115,7 +103,7 @@ export function AutomationsScreen({ token, colors, onOpenLinkedChat }: Automatio
     if (mode === 'initial') setLoading(true);
     if (mode === 'refresh') setRefreshing(true);
     try {
-      const next = await fetchAutomations(DEFAULT_SERVER_URL, token);
+      const next = await fetchAutomations();
       setPayload(next);
       setError(null);
     } catch (caught) {
@@ -124,7 +112,7 @@ export function AutomationsScreen({ token, colors, onOpenLinkedChat }: Automatio
       if (mode === 'initial') setLoading(false);
       if (mode === 'refresh') setRefreshing(false);
     }
-  }, [t, token]);
+  }, [t]);
 
   useEffect(() => {
     const initial = setTimeout(() => void load('initial'), 0);
@@ -162,7 +150,7 @@ export function AutomationsScreen({ token, colors, onOpenLinkedChat }: Automatio
     const key = `${action}:${job.id}`;
     setActionKey(key);
     try {
-      const next = await runAutomationAction(DEFAULT_SERVER_URL, token, action, job.id);
+      const next = await runAutomationAction(action, job.id);
       applyPayload(next);
       if (action === 'delete') setSelectedId(null);
       if (action === 'run') {
@@ -190,7 +178,7 @@ export function AutomationsScreen({ token, colors, onOpenLinkedChat }: Automatio
     const key = `update:${job.id}`;
     setActionKey(key);
     try {
-      const next = await updateAutomation(DEFAULT_SERVER_URL, token, job.id, values);
+      const next = await updateAutomation(job.id, values);
       applyPayload(next);
       setEditingJob(null);
     } catch (caught) {
@@ -373,7 +361,7 @@ function AutomationListItem({
 }: {
   job: SessionAutomationJob;
   selected: boolean;
-  colors: AutomationsScreenPalette;
+  colors: Palette;
   onSelect: () => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -419,7 +407,7 @@ function AutomationDetailPanel({
   onOpenLinkedChat,
 }: {
   job: SessionAutomationJob;
-  colors: AutomationsScreenPalette;
+  colors: Palette;
   actionKey: string | null;
   onAction: (action: AutomationAction, job: SessionAutomationJob) => Promise<void>;
   onEdit: () => void;
@@ -527,7 +515,7 @@ function AutomationActions({
   onRequestDelete,
 }: {
   job: SessionAutomationJob;
-  colors: AutomationsScreenPalette;
+  colors: Palette;
   actionKey: string | null;
   onAction: (action: AutomationAction, job: SessionAutomationJob) => Promise<void>;
   onEdit: () => void;
@@ -590,7 +578,7 @@ function RoundAction({
   onPress,
 }: {
   accessibilityLabel: string;
-  colors: AutomationsScreenPalette;
+  colors: Palette;
   children: React.ReactNode;
   disabled?: boolean;
   danger?: boolean;
@@ -620,7 +608,7 @@ function DetailCard({
   title,
   onPress,
 }: {
-  colors: AutomationsScreenPalette;
+  colors: Palette;
   label: string;
   value: string;
   title?: string;
@@ -639,7 +627,7 @@ function DetailCard({
   return onPress ? <Pressable accessibilityRole="link" onPress={onPress} style={styles.detailCardFlex}>{body}</Pressable> : <View style={styles.detailCardFlex}>{body}</View>;
 }
 
-function MetadataLine({ colors, label, value, mono = false }: { colors: AutomationsScreenPalette; label: string; value: string; mono?: boolean }) {
+function MetadataLine({ colors, label, value, mono = false }: { colors: Palette; label: string; value: string; mono?: boolean }) {
   return (
     <View style={styles.metadataLine}>
       <Text style={[styles.metadataLabel, { color: colors.subtle }]}>{label}</Text>
@@ -648,7 +636,7 @@ function MetadataLine({ colors, label, value, mono = false }: { colors: Automati
   );
 }
 
-function StatusBadge({ colors, tone = 'neutral', children }: { colors: AutomationsScreenPalette; tone?: 'neutral' | 'success' | 'warning'; children: React.ReactNode }) {
+function StatusBadge({ colors, tone = 'neutral', children }: { colors: Palette; tone?: 'neutral' | 'success' | 'warning'; children: React.ReactNode }) {
   const backgroundColor = tone === 'success' ? '#FCE8D6' : tone === 'warning' ? '#FFF0C9' : colors.background;
   const color = tone === 'success' ? '#9B5724' : tone === 'warning' ? '#8A631F' : colors.muted;
   return (
@@ -667,7 +655,7 @@ function SortSheet({
 }: {
   visible: boolean;
   selected: AutomationSort;
-  colors: AutomationsScreenPalette;
+  colors: Palette;
   onSelect: (sort: AutomationSort) => void;
   onClose: () => void;
 }) {
@@ -709,7 +697,7 @@ function AutomationEditModal({
 }: {
   job: SessionAutomationJob | null;
   saving: boolean;
-  colors: AutomationsScreenPalette;
+  colors: Palette;
   onClose: () => void;
   onSave: (job: SessionAutomationJob, values: AutomationUpdatePayload) => Promise<void>;
 }) {
@@ -734,7 +722,7 @@ function AutomationEditSheet({
 }: {
   job: SessionAutomationJob;
   saving: boolean;
-  colors: AutomationsScreenPalette;
+  colors: Palette;
   onClose: () => void;
   onSave: (job: SessionAutomationJob, values: AutomationUpdatePayload) => Promise<void>;
 }) {
@@ -939,7 +927,7 @@ function AutomationEditSheet({
   );
 }
 
-function FieldLabel({ colors, children }: { colors: AutomationsScreenPalette; children: React.ReactNode }) {
+function FieldLabel({ colors, children }: { colors: Palette; children: React.ReactNode }) {
   return <Text style={[styles.fieldLabel, { color: colors.muted }]}>{children}</Text>;
 }
 

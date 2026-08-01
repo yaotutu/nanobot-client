@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import type { ModelPresetInfo } from '@/types/nanobot';
+import type { ModelPresetInfo } from '@/types/api';
 
 interface ModelPresetPalette {
   background: string;

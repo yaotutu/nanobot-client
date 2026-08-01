@@ -10,7 +10,7 @@ import type {
   OutboundMedia,
   SendAttachment,
   WebUIIngressLimits,
-} from '@/types/nanobot';
+} from '@/types/api';
 
 const DEFAULT_MAX_COUNT = 4;
 const DEFAULT_MAX_FILE_BYTES = 6 * 1024 * 1024;

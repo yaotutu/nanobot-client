@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { updateTranscriptionSettings } from '@/lib/api';
-import { DEFAULT_SERVER_URL } from '@/lib/config';
-import type { RuntimeClientPolicy } from '@/lib/runtime-capabilities';
-import type { SettingsPayload, TranscriptionSettingsUpdate } from '@/types/nanobot';
+import { updateTranscriptionSettings } from '@/features/settings/api';
+import type { RuntimeClientPolicy } from '@/services/runtime-capabilities';
+import type { SettingsPayload, TranscriptionSettingsUpdate } from '@/types/api';
 
 import type { SettingsPalette, SettingsSectionKey } from '../settings-screen';
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPage, SettingsPicker, SettingsRow, SettingsSection, SettingsSwitch, StatusPill } from './settings-controls';
@@ -26,10 +25,9 @@ function fromPayload(settings: SettingsPayload): TranscriptionSettingsUpdate {
   return { enabled: voice.enabled, provider: voice.provider, model: voice.model, language: voice.language ?? '', maxDurationSec: voice.max_duration_sec, maxUploadMb: voice.max_upload_mb };
 }
 
-export function VoiceSettings({ colors, settings, token, onSettingsChange, onSelectSection, onRestart, runtimePolicy }: {
+export function VoiceSettings({ colors, settings, onSettingsChange, onSelectSection, onRestart, runtimePolicy }: {
   colors: SettingsPalette;
   settings: SettingsPayload;
-  token: string;
   onSettingsChange: (settings: SettingsPayload) => void;
   onSelectSection: (section: SettingsSectionKey) => void;
   onRestart: () => void;
@@ -49,7 +47,7 @@ export function VoiceSettings({ colors, settings, token, onSettingsChange, onSel
     setSaving(true);
     setMessage(null);
     try {
-      const payload = await updateTranscriptionSettings(DEFAULT_SERVER_URL, token, form);
+      const payload = await updateTranscriptionSettings(form);
       onSettingsChange(payload);
       setForm(fromPayload(payload));
       setError(false);

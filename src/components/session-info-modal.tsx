@@ -14,8 +14,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { formatDateTime, relativeTimeFromMs, safeNumberFormat } from '@/lib/format';
-import type { SessionAutomationJob } from '@/types/nanobot';
+import { formatDateTime, relativeTimeFromMs, safeNumberFormat } from '@/services/format';
+import type { SessionAutomationJob } from '@/types/api';
 
 const AUTOMATIONS_REFRESH_MS = 3_000;
 

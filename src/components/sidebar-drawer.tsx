@@ -43,15 +43,15 @@ import {
   visibleSessionsForGroup,
   type ChatGroupLabels,
   type SessionGroup,
-} from '@/lib/chat-groups';
-import { formatDateTime, relativeTime, safeNumberFormat, sessionTitle, visibleSessionPreview } from '@/lib/format';
+} from '@/features/sidebar/chat-groups';
+import { formatDateTime, relativeTime, safeNumberFormat, sessionTitle, visibleSessionPreview } from '@/services/format';
 import type {
   ChatSummary,
   ConnectionStatus,
   SessionAutomationJob,
   SessionDeleteResult,
   SidebarStatePayload,
-} from '@/types/nanobot';
+} from '@/types/api';
 
 // Static Metro asset; require is the React Native asset loader.
 // eslint-disable-next-line @typescript-eslint/no-require-imports

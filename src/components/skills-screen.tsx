@@ -26,28 +26,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { fetchSkillDetail, fetchSkills } from '@/lib/api';
-import { DEFAULT_SERVER_URL } from '@/lib/config';
-import type { SkillDetail, SkillSummary } from '@/types/nanobot';
+import { fetchSkillDetail, fetchSkills } from '@/features/skills/api';
+import type { SkillDetail, SkillSummary } from '@/types/api';
+import type { Palette } from '@/ui/palette';
 
-export interface SkillsScreenPalette {
-  background: string;
-  foreground: string;
-  muted: string;
-  subtle: string;
-  border: string;
-  card: string;
-  pressed: string;
-  errorBackground: string;
-  errorText: string;
-}
 
 interface SkillsScreenProps {
-  token: string;
-  colors: SkillsScreenPalette;
+  colors: Palette;
 }
 
-export function SkillsScreen({ token, colors }: SkillsScreenProps) {
+export function SkillsScreen({ colors }: SkillsScreenProps) {
   const { t } = useTranslation();
   const [skills, setSkills] = useState<SkillSummary[]>([]);
   const [selectedSkill, setSelectedSkill] = useState<SkillSummary | null>(null);
@@ -60,7 +48,7 @@ export function SkillsScreen({ token, colors }: SkillsScreenProps) {
     else setLoading(true);
     setError(null);
     try {
-      const payload = await fetchSkills(DEFAULT_SERVER_URL, token);
+      const payload = await fetchSkills();
       setSkills(payload.skills ?? []);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('settings.skills.loadCatalogFailed', { defaultValue: 'Unable to load skills.' }));
@@ -69,11 +57,11 @@ export function SkillsScreen({ token, colors }: SkillsScreenProps) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [t, token]);
+  }, [t]);
 
   useEffect(() => {
     let cancelled = false;
-    fetchSkills(DEFAULT_SERVER_URL, token)
+    fetchSkills()
       .then((payload) => {
         if (!cancelled) setSkills(payload.skills ?? []);
       })
@@ -89,7 +77,7 @@ export function SkillsScreen({ token, colors }: SkillsScreenProps) {
     return () => {
       cancelled = true;
     };
-  }, [t, token]);
+  }, [t]);
 
   const availableCount = useMemo(
     () => skills.filter((skill) => skill.available).length,
@@ -166,7 +154,6 @@ export function SkillsScreen({ token, colors }: SkillsScreenProps) {
         key={selectedSkill?.name ?? 'closed'}
         onClose={() => setSelectedSkill(null)}
         skill={selectedSkill}
-        token={token}
       />
     </View>
   );
@@ -178,7 +165,7 @@ function SkillRow({
   onPress,
 }: {
   skill: SkillSummary;
-  colors: SkillsScreenPalette;
+  colors: Palette;
   onPress: () => void;
 }) {
   const { t } = useTranslation();
@@ -227,13 +214,11 @@ function SkillRow({
 
 function SkillDetailModal({
   skill,
-  token,
   colors,
   onClose,
 }: {
   skill: SkillSummary | null;
-  token: string;
-  colors: SkillsScreenPalette;
+  colors: Palette;
   onClose: () => void;
 }) {
   const insets = useSafeAreaInsets();
@@ -247,7 +232,7 @@ function SkillDetailModal({
   useEffect(() => {
     if (!skill) return;
     let cancelled = false;
-    fetchSkillDetail(DEFAULT_SERVER_URL, token, skill.name)
+    fetchSkillDetail(skill.name)
       .then((payload) => {
         if (!cancelled) setDetail(payload);
       })
@@ -260,7 +245,7 @@ function SkillDetailModal({
     return () => {
       cancelled = true;
     };
-  }, [skill, token]);
+  }, [skill]);
 
   // Do not mount an invisible native modal tree. This also avoids hidden Fabric updates.
   if (!skill) return null;
@@ -371,7 +356,7 @@ function SkillDetailModal({
   );
 }
 
-function RequirementsSection({ detail, colors }: { detail: SkillDetail; colors: SkillsScreenPalette }) {
+function RequirementsSection({ detail, colors }: { detail: SkillDetail; colors: Palette }) {
   const { t } = useTranslation();
   const { bins, env, missing_bins: missingBins, missing_env: missingEnv } = detail.requirements;
   const hasRequirements = bins.length > 0 || env.length > 0;
@@ -397,7 +382,7 @@ function DetailSection({
   children,
 }: {
   title: string;
-  colors: SkillsScreenPalette;
+  colors: Palette;
   children: React.ReactNode;
 }) {
   return (
@@ -408,7 +393,7 @@ function DetailSection({
   );
 }
 
-function MetaItem({ label, value, colors }: { label: string; value: string; colors: SkillsScreenPalette }) {
+function MetaItem({ label, value, colors }: { label: string; value: string; colors: Palette }) {
   return (
     <View style={[styles.metaItem, { backgroundColor: colors.card }]}>
       <Text style={[styles.metaLabel, { color: colors.muted }]}>{label}</Text>
@@ -427,7 +412,7 @@ function RequirementLine({
   title: string;
   items: string[];
   icon: 'terminal' | 'key';
-  colors: SkillsScreenPalette;
+  colors: Palette;
   danger?: boolean;
 }) {
   const tint = danger ? colors.errorText : colors.muted;
@@ -452,7 +437,7 @@ function Pill({
   success = false,
 }: {
   label: string;
-  colors: SkillsScreenPalette;
+  colors: Palette;
   success?: boolean;
 }) {
   return (

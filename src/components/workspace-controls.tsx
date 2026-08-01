@@ -17,12 +17,12 @@ import {
   scopeWithAccessMode,
   selectedProjectScope,
   shortWorkspacePath,
-} from '@/lib/workspace';
+} from '@/services/workspace-paths';
 import type {
   WorkspaceAccessMode,
   WorkspaceScopePayload,
   WorkspacesPayload,
-} from '@/types/nanobot';
+} from '@/types/api';
 
 interface WorkspaceColors {
   background: string;

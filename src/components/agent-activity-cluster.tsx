@@ -36,45 +36,45 @@ import { useTranslation } from 'react-i18next';
 
 import { useLogoFallback } from '@/hooks/use-logo-fallback';
 import i18n from '@/i18n';
-import { isReasoningOnlyAssistant } from '@/lib/activity-timeline';
-import { coalesceActivityMessages } from '@/lib/activity-message-model';
+import { isReasoningOnlyAssistant } from '@/features/chat/activity-timeline';
+import { coalesceActivityMessages } from '@/features/chat/activity-message-model';
 import {
   compactActivityPath,
   redactActivityText,
   redactShellCommand,
   safeActivityDetail,
-} from '@/lib/activity-text';
+} from '@/services/log-redaction';
 import {
   countDiffLines,
   countSkippedUnchangedLines,
   parseRenderableFileDiff,
   type RenderableFileDiff,
   type RenderableFileDiffHunk,
-} from '@/lib/file-diff';
+} from '@/services/file-diff';
 import {
   canGroupGenericToolRuns,
   describeGenericToolRun,
   parseGenericToolTrace,
   type GenericToolRunItem,
   type GenericToolStatus,
-} from '@/lib/generic-tool-model';
-import { describeMcpActivity } from '@/lib/mcp-activity-model';
-import { describeTraceLine } from '@/lib/trace-activity-model';
-import { canonicalToolTrace, formatToolCallTrace } from '@/lib/tool-traces';
+} from '@/features/chat/generic-tool-model';
+import { describeMcpActivity } from '@/features/chat/mcp-activity-model';
+import { describeTraceLine } from '@/features/chat/trace-activity-model';
+import { canonicalToolTrace, formatToolCallTrace } from '@/features/chat/tool-traces';
 import {
   presentWebSearchAction,
   webSearchRunsByTraceLine,
-} from '@/lib/web-search-model';
-import { browserSafeFaviconUrls } from '@/lib/web-url';
-import type { FileEditDisplayMode, LocalActivityMode } from '@/lib/local-preferences';
-import { logoFallbackUrls } from '@/lib/provider-brand';
+} from '@/features/chat/web-search-model';
+import { browserSafeFaviconUrls } from '@/services/web-url';
+import type { FileEditDisplayMode, LocalActivityMode } from '@/stores/local-preferences-store';
+import { logoFallbackUrls } from '@/services/provider-brand';
 import type {
   CliAppInfo,
   McpPresetInfo,
   ToolProgressEvent,
   UIFileEdit,
   UIMessage,
-} from '@/types/nanobot';
+} from '@/types/api';
 
 interface ActivityPalette {
   background: string;

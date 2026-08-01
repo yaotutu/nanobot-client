@@ -31,22 +31,44 @@ export const resources = {
   id: { common: idCommon },
 } as const;
 
-if (!i18n.isInitialized) {
-  try {
-    i18n.use(initReactI18next).init({
-      resources,
-      lng: resolveDeviceLocale(),
-      fallbackLng: fallbackLocale,
-      defaultNS: 'common',
-      ns: ['common'],
-      interpolation: { escapeValue: false },
-      returnNull: false,
-      supportedLngs: Object.keys(resources),
-      initAsync: false,
-    });
-  } catch (error) {
-    console.warn('🟦 i18n init failed, using fallback', error instanceof Error ? error.message : String(error));
-  }
+let initPromise: Promise<void> | null = null;
+
+/**
+ * 显式初始化 i18next。`_layout.tsx` 应在 splash 阶段 await 此函数；
+ * 模块顶层不再有副作用，避免 StrictMode 重复触发 / 测试环境被强污染。
+ */
+export function ensureI18n(): Promise<void> {
+  if (i18n.isInitialized) return Promise.resolve();
+  if (initPromise) return initPromise;
+  initPromise = new Promise((resolve) => {
+    try {
+      i18n
+        .use(initReactI18next)
+        .init(
+          {
+            resources,
+            lng: resolveDeviceLocale(),
+            fallbackLng: fallbackLocale,
+            defaultNS: 'common',
+            ns: ['common'],
+            interpolation: { escapeValue: false },
+            returnNull: false,
+            supportedLngs: Object.keys(resources),
+            initAsync: false,
+          },
+          () => {
+            resolve();
+          },
+        );
+    } catch (error) {
+      console.warn(
+        '🟦 i18n init failed, using fallback',
+        error instanceof Error ? error.message : String(error),
+      );
+      resolve();
+    }
+  });
+  return initPromise;
 }
 
 export function currentLocale(): SupportedLocale {

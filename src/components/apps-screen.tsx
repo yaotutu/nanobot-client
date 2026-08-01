@@ -37,28 +37,17 @@ import {
   runMcpPresetAction,
   saveCustomMcpServer,
   updateMcpServerTools,
-} from '@/lib/api';
-import { DEFAULT_SERVER_URL } from '@/lib/config';
-import { isGenericRepositoryLogoUrl, logoFallbackUrls } from '@/lib/provider-brand';
-import type { RuntimeClientPolicy } from '@/lib/runtime-capabilities';
+} from '@/features/capabilities/api';
+import { isGenericRepositoryLogoUrl, logoFallbackUrls } from '@/services/provider-brand';
+import type { RuntimeClientPolicy } from '@/services/runtime-capabilities';
 import type {
   CliAppInfo,
   CliAppsPayload,
   McpPresetInfo,
   McpPresetsPayload,
-} from '@/types/nanobot';
+} from '@/types/api';
+import type { Palette } from '@/ui/palette';
 
-export interface AppsScreenPalette {
-  background: string;
-  foreground: string;
-  muted: string;
-  subtle: string;
-  border: string;
-  card: string;
-  pressed: string;
-  errorBackground: string;
-  errorText: string;
-}
 
 type AppsFilter = 'ready' | 'cli' | 'mcp';
 type AppAction = 'install' | 'update' | 'uninstall' | 'test';
@@ -70,8 +59,7 @@ type CatalogItem =
   | { id: string; kind: 'mcp'; preset: McpPresetInfo };
 
 interface AppsScreenProps {
-  token: string;
-  colors: AppsScreenPalette;
+  colors: Palette;
   initialCliApps: CliAppInfo[];
   initialMcpPresets: McpPresetInfo[];
   onCliAppsChanged: (payload: CliAppsPayload) => void;
@@ -143,7 +131,6 @@ function searchText(item: CatalogItem): string {
 }
 
 export function AppsScreen({
-  token,
   colors,
   initialCliApps,
   initialMcpPresets,
@@ -197,8 +184,8 @@ export function AppsScreen({
     if (refresh) setRefreshing(true);
     else setLoading(true);
     const [cliResult, mcpResult] = await Promise.allSettled([
-      fetchCliApps(DEFAULT_SERVER_URL, token),
-      fetchMcpPresets(DEFAULT_SERVER_URL, token),
+      fetchCliApps(),
+      fetchMcpPresets(),
     ]);
     if (!mountedRef.current) return;
     if (cliResult.status === 'fulfilled') {
@@ -209,7 +196,7 @@ export function AppsScreen({
           if (!mountedRef.current || retryCount >= CLI_APPS_REFRESH_MAX_RETRIES) return;
           cliRetryTimerRef.current = setTimeout(() => {
             cliRetryTimerRef.current = null;
-            void fetchCliApps(DEFAULT_SERVER_URL, token)
+            void fetchCliApps()
               .then((payload) => {
                 if (!mountedRef.current) return;
                 setCliPayload(payload);
@@ -238,7 +225,7 @@ export function AppsScreen({
     setStatus(errors.length ? { message: errors.join('\n'), error: true } : null);
     setLoading(false);
     setRefreshing(false);
-  }, [onCliAppsChanged, onMcpPresetsChanged, t, token]);
+  }, [onCliAppsChanged, onMcpPresetsChanged, t]);
 
   useEffect(() => {
     const timer = setTimeout(() => void load(), 0);
@@ -267,7 +254,7 @@ export function AppsScreen({
     setActionKey(key);
     setStatus(null);
     try {
-      const payload = await runCliAppAction(DEFAULT_SERVER_URL, token, action, app.name);
+      const payload = await runCliAppAction(action, app.name);
       setCliPayload(payload);
       if (action !== 'test') onCliAppsChanged(payload);
       setCliFocusName(action === 'uninstall' ? null : app.name);
@@ -295,10 +282,7 @@ export function AppsScreen({
     setActionKey(key);
     setStatus(null);
     try {
-      const payload = await runMcpPresetAction(
-        DEFAULT_SERVER_URL,
-        token,
-        action,
+      const payload = await runMcpPresetAction(action,
         preset.name,
         values,
       );
@@ -343,7 +327,7 @@ export function AppsScreen({
     setActionKey(`custom:${name}`);
     setStatus(null);
     try {
-      const payload = await saveCustomMcpServer(DEFAULT_SERVER_URL, token, {
+      const payload = await saveCustomMcpServer({
         name,
         transport: customMcpForm.transport,
         command: customMcpForm.command,
@@ -373,7 +357,7 @@ export function AppsScreen({
     setActionKey('import');
     setStatus(null);
     try {
-      const payload = await importMcpConfig(DEFAULT_SERVER_URL, token, mcpConfigImport);
+      const payload = await importMcpConfig(mcpConfigImport);
       applyMcpMutation(payload, t('settings.mcp.imported', { defaultValue: 'MCP configuration imported.' }));
       setMcpConfigImport('');
     } catch (caught) {
@@ -391,10 +375,7 @@ export function AppsScreen({
     setActionKey(`tools:mcp:${preset.name}`);
     setStatus(null);
     try {
-      const payload = await updateMcpServerTools(
-        DEFAULT_SERVER_URL,
-        token,
-        preset.name,
+      const payload = await updateMcpServerTools(preset.name,
         enabledTools,
       );
       applyMcpMutation(payload, t('settings.mcp.toolScopeUpdated', { defaultValue: '{{name}} tool scope updated.', name: preset.display_name }));
@@ -602,7 +583,7 @@ function CliAppRow({
   onAction,
 }: {
   app: CliAppInfo;
-  colors: AppsScreenPalette;
+  colors: Palette;
   actionKey: string | null;
   onAction: (action: AppAction, app: CliAppInfo) => void;
 }) {
@@ -668,7 +649,7 @@ function McpPresetRow({
   onToolsChange,
 }: {
   preset: McpPresetInfo;
-  colors: AppsScreenPalette;
+  colors: Palette;
   actionKey: string | null;
   setupOpen: boolean;
   values: Record<string, string>;
@@ -860,7 +841,7 @@ function CliReadyPanel({
   onBackToChat,
 }: {
   app: CliAppInfo;
-  colors: AppsScreenPalette;
+  colors: Palette;
   onBackToChat: () => void;
 }) {
   const { t } = useTranslation();
@@ -927,7 +908,7 @@ function CustomMcpPanel({
 }: {
   actionKey: string | null;
   advancedOpen: boolean;
-  colors: AppsScreenPalette;
+  colors: Palette;
   configImport: string;
   form: CustomMcpForm;
   mode: CustomMcpMode;
@@ -1138,7 +1119,7 @@ function FieldLabel({
   label,
 }: {
   children: ReactNode;
-  colors: AppsScreenPalette;
+  colors: Palette;
   label: string;
 }) {
   return (
@@ -1159,7 +1140,7 @@ function ToolLogo({
   logoUrl?: string | null;
   displayName: string;
   brandColor?: string | null;
-  colors: AppsScreenPalette;
+  colors: Palette;
   hideGenericRepositoryLogo?: boolean;
 }) {
   const logoUrls = useMemo(
@@ -1208,7 +1189,7 @@ function ToolLogo({
   );
 }
 
-function TypeBadge({ label, colors }: { label: string; colors: AppsScreenPalette }) {
+function TypeBadge({ label, colors }: { label: string; colors: Palette }) {
   return (
     <View style={[styles.typeBadge, { backgroundColor: colors.card }]}>
       <Text style={[styles.typeText, { color: colors.muted }]}>{label}</Text>

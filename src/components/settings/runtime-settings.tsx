@@ -23,16 +23,17 @@ import {
 
 import {
   fetchApiService,
-  fetchNanobotFeatures,
   fetchSettings,
-  setNanobotFeatureEnabled,
   startApiService,
   stopApiService,
   updateSettings,
-} from '@/lib/api';
-import { DEFAULT_SERVER_URL } from '@/lib/config';
-import { restartRequirementDescription, type RuntimeClientPolicy } from '@/lib/runtime-capabilities';
-import type { ApiServicePayload, NanobotFeatureInfo, SettingsPayload } from '@/types/nanobot';
+} from '@/features/settings/api';
+import {
+  fetchNanobotFeatures,
+  setNanobotFeatureEnabled,
+} from '@/features/channels/api';
+import { restartRequirementDescription, type RuntimeClientPolicy } from '@/services/runtime-capabilities';
+import type { ApiServicePayload, NanobotFeatureInfo, SettingsPayload } from '@/types/api';
 
 import type { SettingsPalette } from '../settings-screen';
 import {
@@ -47,7 +48,6 @@ import {
 } from './settings-controls';
 
 interface RuntimeSettingsProps {
-  token: string;
   colors: SettingsPalette;
   settings: SettingsPayload;
   onSettingsChange: (settings: SettingsPayload) => void;
@@ -131,7 +131,7 @@ function timezoneOptions(current: string, t: TFunction): TimezoneOption[] {
   });
 }
 
-export function RuntimeSettings({ token, colors, settings, onSettingsChange, onRestart, runtimePolicy }: RuntimeSettingsProps) {
+export function RuntimeSettings({ colors, settings, onSettingsChange, onRestart, runtimePolicy }: RuntimeSettingsProps) {
   const { t } = useTranslation();
   const [botName, setBotName] = useState(settings.agent.bot_name);
   const [botIcon, setBotIcon] = useState(settings.agent.bot_icon);
@@ -155,7 +155,7 @@ export function RuntimeSettings({ token, colors, settings, onSettingsChange, onR
 
   useEffect(() => {
     let cancelled = false;
-    fetchApiService(DEFAULT_SERVER_URL, token)
+    fetchApiService()
       .then((payload) => {
         if (cancelled) return;
         setApi(payload);
@@ -170,11 +170,11 @@ export function RuntimeSettings({ token, colors, settings, onSettingsChange, onR
         if (!cancelled) setApiLoading(false);
       });
     return () => { cancelled = true; };
-  }, [t, token]);
+  }, [t]);
 
   useEffect(() => {
     let cancelled = false;
-    fetchNanobotFeatures(DEFAULT_SERVER_URL, token)
+    fetchNanobotFeatures()
       .then((payload) => {
         if (cancelled) return;
         setLangfuse(payload.features.find((feature) => feature.name === 'langfuse') ?? null);
@@ -190,14 +190,14 @@ export function RuntimeSettings({ token, colors, settings, onSettingsChange, onR
         if (!cancelled) setFeaturesLoading(false);
       });
     return () => { cancelled = true; };
-  }, [t, token]);
+  }, [t]);
 
   const saveIdentity = async () => {
     if (!dirty) return;
     setSaving(true);
     setIdentityError(null);
     try {
-      const next = await updateSettings(DEFAULT_SERVER_URL, token, { botName, botIcon, timezone });
+      const next = await updateSettings({ botName, botIcon, timezone });
       onSettingsChange(next);
     } catch (caught) {
       setIdentityError(caught instanceof Error ? caught.message : t('settings.status.unsaved'));
@@ -217,13 +217,13 @@ export function RuntimeSettings({ token, colors, settings, onSettingsChange, onR
     setApiError(null);
     try {
       const next = action === 'start'
-        ? await startApiService(DEFAULT_SERVER_URL, token, {
+        ? await startApiService({
             host: apiHost.trim(),
             port: parsedPort,
             timeout: api?.timeout ?? settings.api?.timeout ?? 120,
             apiKey: apiKey.trim() || undefined,
           })
-        : await stopApiService(DEFAULT_SERVER_URL, token);
+        : await stopApiService();
       setApi(next);
       setApiHost(next.host);
       setApiPort(String(next.port));
@@ -241,11 +241,11 @@ export function RuntimeSettings({ token, colors, settings, onSettingsChange, onR
     setFeatureAction(true);
     setFeatureError(null);
     try {
-      const payload = await setNanobotFeatureEnabled(DEFAULT_SERVER_URL, token, 'enable', 'langfuse');
+      const payload = await setNanobotFeatureEnabled('enable', 'langfuse');
       setLangfuse(payload.features.find((feature) => feature.name === 'langfuse') ?? null);
       setFeatureRestartPending(Boolean(payload.requires_restart));
       try {
-        onSettingsChange(await fetchSettings(DEFAULT_SERVER_URL, token));
+        onSettingsChange(await fetchSettings());
       } catch {
         // The feature result remains authoritative even when refreshing settings fails.
       }

@@ -13,15 +13,14 @@ import {
   View,
 } from 'react-native';
 
-import { fetchPairingRequests, runPairingAction, updateNetworkSafetySettings } from '@/lib/api';
-import { DEFAULT_SERVER_URL } from '@/lib/config';
-import type { RuntimeClientPolicy } from '@/lib/runtime-capabilities';
-import type { PairingPayload, SettingsPayload, WebuiDefaultAccessMode } from '@/types/nanobot';
+import { fetchPairingRequests, runPairingAction } from '@/features/channels/api';
+import { updateNetworkSafetySettings } from '@/features/settings/api';
+import type { RuntimeClientPolicy } from '@/services/runtime-capabilities';
+import type { PairingPayload, SettingsPayload, WebuiDefaultAccessMode } from '@/types/api';
 
 import type { SettingsPalette } from '../settings-screen';
 
 interface SecuritySettingsProps {
-  token: string;
   colors: SettingsPalette;
   settings: SettingsPayload;
   onSettingsChange: (settings: SettingsPayload) => void;
@@ -29,7 +28,7 @@ interface SecuritySettingsProps {
   runtimePolicy: RuntimeClientPolicy;
 }
 
-export function SecuritySettings({ token, colors, settings, onSettingsChange, onRestart, runtimePolicy }: SecuritySettingsProps) {
+export function SecuritySettings({ colors, settings, onSettingsChange, onRestart, runtimePolicy }: SecuritySettingsProps) {
   const { t } = useTranslation();
   const settingsAllowLocal = settings.advanced.webui_allow_local_service_access ?? settings.advanced.allow_local_preview_access ?? true;
   const settingsAccessMode: WebuiDefaultAccessMode = settings.advanced.webui_default_access_mode === 'full' ? 'full' : 'default';
@@ -47,7 +46,7 @@ export function SecuritySettings({ token, colors, settings, onSettingsChange, on
   const loadPairing = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
     try {
-      setPairing(await fetchPairingRequests(DEFAULT_SERVER_URL, token));
+      setPairing(await fetchPairingRequests());
       setPairingError(null);
     } catch (caught) {
       setPairingError(caught instanceof Error ? caught.message : t('settings.security.loadPairingFailed', { defaultValue: 'Could not load pairing requests.' }));
@@ -55,14 +54,14 @@ export function SecuritySettings({ token, colors, settings, onSettingsChange, on
       setPairingLoading(false);
       setRefreshing(false);
     }
-  }, [t, token]);
+  }, [t]);
 
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setInterval> | null = null;
 
     const refresh = () => {
-      fetchPairingRequests(DEFAULT_SERVER_URL, token)
+      fetchPairingRequests()
         .then((next) => {
           if (!cancelled) {
             setPairing(next);
@@ -96,13 +95,13 @@ export function SecuritySettings({ token, colors, settings, onSettingsChange, on
       stopPolling();
       subscription.remove();
     };
-  }, [t, token]);
+  }, [t]);
 
   const save = async () => {
     setSaving(true);
     setSafetyError(null);
     try {
-      const next = await updateNetworkSafetySettings(DEFAULT_SERVER_URL, token, {
+      const next = await updateNetworkSafetySettings({
         webuiAllowLocalServiceAccess: allowLocal,
         webuiDefaultAccessMode: accessMode,
       });
@@ -118,7 +117,7 @@ export function SecuritySettings({ token, colors, settings, onSettingsChange, on
     setPairingAction(`${action}:${code}`);
     setPairingError(null);
     try {
-      setPairing(await runPairingAction(DEFAULT_SERVER_URL, token, action, code));
+      setPairing(await runPairingAction(action, code));
     } catch (caught) {
       setPairingError(caught instanceof Error ? caught.message : t('settings.security.pairingActionFailed', { defaultValue: 'Pairing action failed.' }));
     } finally {

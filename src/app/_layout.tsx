@@ -1,5 +1,3 @@
-import '@/i18n';
-
 import * as SplashScreen from 'expo-splash-screen';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -9,9 +7,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { RootErrorBoundary } from '@/components/error-boundary';
 import { DebugOverlay } from '@/components/debug-overlay';
-import { debugLog } from '@/lib/debug-log';
-import { setAppLanguage } from '@/i18n';
-import { readLocalPreferences } from '@/lib/local-preferences';
+import { debugLog } from '@/services/debug-log';
+import { ensureI18n, setAppLanguage } from '@/i18n';
+import { readLocalPreferences } from '@/stores/local-preferences-store';
 
 // Prevent auto-hide so we can explicitly hide once the first screen renders.
 void SplashScreen.preventAutoHideAsync();
@@ -44,16 +42,19 @@ function LocalizationGate({ children }: { children: ReactNode }) {
       }
     }, 2500);
 
-    void readLocalPreferences()
+    void ensureI18n()
+      .then(() => readLocalPreferences())
       .then((preferences) => {
+        if (cancelled) return;
         debugLog('GATE', `prefs read lang=${preferences.language}`);
-        return setAppLanguage(preferences.language);
+        return setAppLanguage(preferences.language as never);
       })
       .then(() => {
         debugLog('GATE', 'lang set');
       })
-      .catch((err) => {
-        debugLog('GATE', `error ${err instanceof Error ? err.message : String(err)}`);
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        debugLog('GATE', `error ${message}`);
       })
       .finally(() => {
         if (!cancelled) {
@@ -68,7 +69,6 @@ function LocalizationGate({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Hide the splash screen once we start rendering content.
   useEffect(() => {
     if (ready) {
       debugLog('GATE', 'hiding splash screen');

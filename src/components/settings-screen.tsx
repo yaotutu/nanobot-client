@@ -22,15 +22,16 @@ import {
   View,
 } from "react-native";
 
-import { fetchSettings, fetchSettingsUsage } from "@/lib/api";
-import { DEFAULT_SERVER_URL } from "@/lib/config";
-import type { LocalPreferences } from "@/lib/local-preferences";
+import { fetchSettings, fetchSettingsUsage } from '@/features/settings/api';
+ 
+// import { DEFAULT_SERVER_URL } from '@/services/config';
+import type { LocalPreferences } from "@/stores/local-preferences-store";
 import {
   mergeRuntimeMetadata,
   resolveRuntimeClientPolicy,
   type RuntimeMetadata,
-} from "@/lib/runtime-capabilities";
-import type { SettingsPayload } from "@/types/nanobot";
+} from "@/services/runtime-capabilities";
+import type { SettingsPayload } from "@/types/api";
 
 import { AppearanceSettings } from "./settings/appearance-settings";
 import { ChannelsSettings } from "./settings/channels-settings";
@@ -78,7 +79,6 @@ const SECTIONS = [
 ];
 
 interface SettingsScreenProps {
-  token: string;
   colors: SettingsPalette;
   preferences: LocalPreferences;
   onChangePreferences: (preferences: LocalPreferences) => void;
@@ -88,7 +88,7 @@ interface SettingsScreenProps {
 }
 
 export function SettingsScreen({
-  token,
+
   colors,
   preferences,
   onChangePreferences,
@@ -121,7 +121,7 @@ export function SettingsScreen({
       if (refresh) setRefreshing(true);
       else setLoading(true);
       try {
-        applySettings(await fetchSettings(DEFAULT_SERVER_URL, token));
+        applySettings(await fetchSettings());
         setError(null);
       } catch (caught) {
         setError(caught instanceof Error ? caught.message : t("settings.status.loadError"));
@@ -130,12 +130,12 @@ export function SettingsScreen({
         setRefreshing(false);
       }
     },
-    [applySettings, t, token],
+    [applySettings, t],
   );
 
   useEffect(() => {
     let cancelled = false;
-    fetchSettings(DEFAULT_SERVER_URL, token)
+    fetchSettings()
       .then((payload) => {
         if (!cancelled) {
           applySettings(payload);
@@ -152,14 +152,14 @@ export function SettingsScreen({
     return () => {
       cancelled = true;
     };
-  }, [applySettings, t, token]);
+  }, [applySettings, t]);
 
   const hasSettings = settings !== null;
   useEffect(() => {
     if (section !== "overview" || !hasSettings) return;
     let cancelled = false;
     const refreshUsage = () => {
-      void fetchSettingsUsage(DEFAULT_SERVER_URL, token)
+      void fetchSettingsUsage()
         .then((usage) => {
           if (cancelled) return;
           setSettings((current) => (current ? { ...current, usage } : current));
@@ -178,7 +178,7 @@ export function SettingsScreen({
       clearInterval(interval);
       subscription.remove();
     };
-  }, [hasSettings, section, token]);
+  }, [hasSettings, section]);
 
   const runtimePolicy = resolveRuntimeClientPolicy(settings, runtimeMetadata);
   const content = settings
@@ -189,7 +189,6 @@ export function SettingsScreen({
               colors={colors}
               onSelectSection={setSection}
               settings={settings}
-              token={token}
             />
           );
         if (section === "appearance")
@@ -210,7 +209,6 @@ export function SettingsScreen({
               onSettingsChange={applySettings}
               settings={settings}
               showBrandLogos={preferences.brandLogos}
-              token={token}
             />
           );
         if (section === "image")
@@ -223,7 +221,6 @@ export function SettingsScreen({
               onSelectSection={setSection}
               onSettingsChange={applySettings}
               settings={settings}
-              token={token}
             />
           );
         if (section === "voice")
@@ -236,7 +233,6 @@ export function SettingsScreen({
               onSelectSection={setSection}
               onSettingsChange={applySettings}
               settings={settings}
-              token={token}
             />
           );
         if (section === "web")
@@ -248,7 +244,6 @@ export function SettingsScreen({
               onRestart={onRestart}
               onSettingsChange={applySettings}
               settings={settings}
-              token={token}
             />
           );
         if (section === "channels")
@@ -256,7 +251,6 @@ export function SettingsScreen({
             <ChannelsSettings
               colors={colors}
               showBrandLogos={preferences.brandLogos}
-              token={token}
             />
           );
         if (section === "runtime")
@@ -268,7 +262,6 @@ export function SettingsScreen({
               onRestart={onRestart}
               onSettingsChange={applySettings}
               settings={settings}
-              token={token}
             />
           );
         return (
@@ -279,7 +272,6 @@ export function SettingsScreen({
             onRestart={onRestart}
             onSettingsChange={applySettings}
             settings={settings}
-            token={token}
           />
         );
       })()

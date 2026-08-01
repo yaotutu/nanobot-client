@@ -4,10 +4,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { updateWebSearchSettings } from '@/lib/api';
-import { DEFAULT_SERVER_URL } from '@/lib/config';
-import type { RuntimeClientPolicy } from '@/lib/runtime-capabilities';
-import type { SettingsPayload, WebSearchProviderInfo, WebSearchSettingsUpdate } from '@/types/nanobot';
+import { updateWebSearchSettings } from '@/features/settings/api';
+import type { RuntimeClientPolicy } from '@/services/runtime-capabilities';
+import type { SettingsPayload, WebSearchProviderInfo, WebSearchSettingsUpdate } from '@/types/api';
 
 import type { SettingsPalette } from '../settings-screen';
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPage, SettingsPicker, SettingsRow, SettingsSection, SettingsSwitch, StatusPill } from './settings-controls';
@@ -26,10 +25,9 @@ function acceptsKey(provider?: WebSearchProviderInfo): boolean {
   return provider?.credential === 'api_key' || provider?.credential === 'optional_api_key';
 }
 
-export function WebSettings({ colors, settings, token, onSettingsChange, onRestart, runtimePolicy }: {
+export function WebSettings({ colors, settings, onSettingsChange, onRestart, runtimePolicy }: {
   colors: SettingsPalette;
   settings: SettingsPayload;
-  token: string;
   onSettingsChange: (settings: SettingsPayload) => void;
   onRestart: () => void;
   runtimePolicy: RuntimeClientPolicy;
@@ -91,7 +89,7 @@ export function WebSettings({ colors, settings, token, onSettingsChange, onResta
     setSaving(true);
     setMessage(null);
     try {
-      const payload = await updateWebSearchSettings(DEFAULT_SERVER_URL, token, update);
+      const payload = await updateWebSearchSettings(update);
       onSettingsChange(payload);
       setForm(fromPayload(payload));
       setKeyEditing(false);

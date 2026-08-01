@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { supportedLocales, type SupportedLocale } from '@/i18n/config';
-import type { LocalPreferences } from '@/lib/local-preferences';
+import type { LocalPreferences } from '@/stores/local-preferences-store';
 
 import type { SettingsPalette } from '../settings-screen';
 import {
