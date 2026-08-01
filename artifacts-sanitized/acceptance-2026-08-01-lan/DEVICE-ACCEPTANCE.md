@@ -56,3 +56,10 @@
 - 发现 Android 实体设备上键盘打开时，原先 `KeyboardAvoidingView` 未设置 Android behavior，composer 被 IME 完全遮挡。
 - Android behavior 改为 `height` 后通过 Metro HMR 验证：composer 与 Send 按钮稳定显示在键盘上方，见 `08-keyboard-composer-fixed.png`。
 - 发送长回复请求后真机出现 `Stop response`；点击后按钮退出 active 状态，并显示 `Stopped 1 task(s).`，Stop 协议与 UI 状态通过。
+
+## 复杂活动渲染（增量）
+
+- 历史长任务默认折叠为 `Worked for …`，点击后正常展开 reasoning 与工具 timeline。
+- Shell 工具活动显示 `Ran command`、命令摘要、脚本类型与行数；见 `09-tool-activity-expanded.png`。
+- URL/file read 活动显示 `Read`、来源 hostname/path；多条 command/read 与 reasoning 保持服务端顺序；见 `10-web-search-expanded.png`。
+- Activity cluster 展开/折叠、历史消息正文、Fork boundary 与 composer 同屏无布局阻断。
