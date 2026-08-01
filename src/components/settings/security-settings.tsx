@@ -171,7 +171,7 @@ export function SecuritySettings({ token, colors, settings, onSettingsChange, on
         <ReadOnly colors={colors} label={t('settings.security.sandboxLevel', { defaultValue: 'Sandbox level' })} value={advanced.workspace_sandbox?.level ?? advanced.exec_sandbox ?? t('settings.values.notConfigured')} />
         <ReadOnly colors={colors} label={t('settings.security.commandExecution', { defaultValue: 'Command execution' })} value={advanced.exec_enabled ? t('settings.values.on') : t('settings.values.off')} />
         <ReadOnly colors={colors} label={t('settings.security.ssrfAllowlist', { defaultValue: 'SSRF allowlist' })} value={t('settings.security.itemCount', { count: advanced.ssrf_whitelist_count, defaultValue: '{{count}} items' })} />
-        <ReadOnly colors={colors} label={t('settings.mcp.title')} value={t('settings.security.serviceCount', { count: advanced.mcp_server_count, defaultValue: '{{count}} services' })} />
+        <ReadOnly colors={colors} label={t('settings.sections.mcp')} value={t('settings.security.serviceCount', { count: advanced.mcp_server_count, defaultValue: '{{count}} services' })} />
       </Section>
 
       <Section colors={colors} title={t('thread.composer.slash.commands.pairing.title')}>

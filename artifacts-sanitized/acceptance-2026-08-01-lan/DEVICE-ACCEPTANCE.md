@@ -32,6 +32,11 @@
 | Apps | PASS | catalog 加载、ready filter、MiniMax app ready；见 `02-apps.png` |
 | Skills | PASS | 16 skills、available 状态与详情入口正常；见 `03-skills.png` |
 | Automations | PASS | all/active/paused/attention filters、system jobs 与详情正常；见 `04-automations.png` |
+| 文件附件 | PASS | 历史文件附件 tile、文件名、打开提示与 reasoning 同屏正常；见 `05-file-message.png` |
+| Settings Web | PASS | provider、无凭据 DuckDuckGo、max results、timeout、Jina reader；见 `07-settings-web.png` |
+| Settings Channels | PASS | 16 channel catalog、running/setup 状态与详情入口；见 `07-settings-channels.png` |
+| Settings System | PASS | identity、timezone、API server、runtime capability 状态；见 `07-settings-system.png` |
+| Settings Security | PASS | web safety、workspace/sandbox/command/MCP 状态；见 `07-settings-security.png` |
 
 ## 本轮静态门禁
 
@@ -41,3 +46,7 @@
 - Debug native build/install: PASS (`assembleDebug`, one-time dev-client installation)
 
 本轮没有重新执行 Release 构建；前一里程碑已有 Android JS export 与 `assembleRelease` PASS 证据。
+
+## 本轮发现并修复
+
+- Security 页面错误显示原始 i18n key `settings.mcp.title`；改为 WebUI 已有的 `settings.sections.mcp`，HMR 后真机显示 `MCP services`。
