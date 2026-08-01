@@ -1011,7 +1011,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
 
   return (
     <KeyboardAvoidingView
-      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
+      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
       style={[styles.root, { backgroundColor: colors.background }]}
     >
       <View style={{ height: insets.top, backgroundColor: colors.background }} />

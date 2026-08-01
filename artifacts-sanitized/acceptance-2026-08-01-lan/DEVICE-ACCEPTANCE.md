@@ -50,3 +50,9 @@
 ## 本轮发现并修复
 
 - Security 页面错误显示原始 i18n key `settings.mcp.title`；改为 WebUI 已有的 `settings.sections.mcp`，HMR 后真机显示 `MCP services`。
+
+## Composer 与 Stop 回归（增量）
+
+- 发现 Android 实体设备上键盘打开时，原先 `KeyboardAvoidingView` 未设置 Android behavior，composer 被 IME 完全遮挡。
+- Android behavior 改为 `height` 后通过 Metro HMR 验证：composer 与 Send 按钮稳定显示在键盘上方，见 `08-keyboard-composer-fixed.png`。
+- 发送长回复请求后真机出现 `Stop response`；点击后按钮退出 active 状态，并显示 `Stopped 1 task(s).`，Stop 协议与 UI 状态通过。
