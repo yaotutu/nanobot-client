@@ -16,8 +16,8 @@ concurrency:
 jobs:
   build:
     name: Build Android APK + Web and Release
-    runs-on: ubuntu-latest
-    timeout-minutes: 75
+    runs-on: [self-hosted, n100]
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -60,24 +60,35 @@ jobs:
       - name: Generate native Android project (CNG)
         run: npx expo prebuild --platform android --no-install --clean
 
-      - name: Cache Gradle
+      - name: Cache Gradle + native build artifacts
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+            node_modules/*/android/build
+            node_modules/*/android/.cxx
+            android/app/.cxx
+            android/app/build/intermediates/cmake
+            android/app/build/intermediates/cxx
+            ~/.ccache
+          key: nb-android-${{ runner.os }}-${{ hashFiles('package-lock.json', 'app.json', 'plugins/**') }}
+          restore-keys: |
+            nb-android-${{ runner.os }}-
 
       - name: Build Android Release APK
         working-directory: android
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx3g"
-          # The hosted runner has 2 cores / 7GB RAM. Compiling React Native's
-          # C++ (Hermes/JSI/Fabric) for multiple ABIs in parallel exhausts
-          # memory and the job is killed. Constrain to a single ABI and limit
-          # the native build parallelism so peak memory stays under the limit.
+          # Limit to a single ABI on shared/self-hosted runners to keep
+          # memory pressure down while compiling React Native's C++.
           ORG_GRADLE_PROJECT_reactNativeArchitectures: "arm64-v8a"
           CMAKE_BUILD_PARALLEL_LEVEL: "2"
+          # Persistent C++ compiler cache (hosted in /home/runner/.ccache,
+          # bound to a NAS volume). First build seeds the cache; subsequent
+          # builds only recompile what actually changed.
+          CCACHE_DIR: /home/runner/.ccache
+          CCACHE_MAXSIZE: "2G"
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Build Web (static export)

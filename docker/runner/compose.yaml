@@ -1,0 +1,25 @@
+# Self-hosted GitHub Actions runner for nanobot-client
+# Run:  docker compose up -d
+#      (after putting RUNNER_TOKEN into .env)
+
+services:
+  runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nanobot-runner:latest
+    container_name: nanobot-runner
+    restart: unless-stopped
+    environment:
+      REPO_URL: "https://github.com/yaotutu/nanobot-client"
+      RUNNER_TOKEN: "${RUNNER_TOKEN}"
+      RUNNER_NAME: "n100-nas"
+      RUNNER_LABELS: "self-hosted,linux,x64,n100"
+      RUNNER_REPLACE_EXISTING: "true"
+      # myoung34/github-runner hooks
+      DISABLE_WAIT_FOR_DEBUGGER: "true"
+    volumes:
+      - ./work:/work
+      - ./gradle:/home/runner/.gradle
+      - ./ccache:/home/runner/.ccache
+      - ./android-sdk:/opt/android-sdk
