@@ -1,4 +1,5 @@
 import { apiClient } from '@/services/api/api';
+import type { RequestOptions } from '@/services/api/api-client';
 import type {
   ApiServicePayload,
   ImageGenerationSettingsUpdate,
@@ -17,8 +18,10 @@ import type {
   WebSearchSettingsUpdate,
 } from '@/types/api/settings';
 
-export async function fetchSettings(): Promise<SettingsPayload> {
-  return apiClient.get<SettingsPayload>('/api/settings');
+export async function fetchSettings(
+  options?: Pick<RequestOptions, 'signal'>,
+): Promise<SettingsPayload> {
+  return apiClient.get<SettingsPayload>('/api/settings', undefined, options);
 }
 
 export async function fetchSettingsUsage(): Promise<NonNullable<SettingsPayload['usage']>> {

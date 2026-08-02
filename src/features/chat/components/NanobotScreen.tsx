@@ -1,7 +1,6 @@
 import { X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   BackHandler,
   KeyboardAvoidingView,
@@ -24,7 +23,6 @@ import {
 } from '@/hooks/use-voice-recorder';
 import { ApiError } from '@/services/api/api';
 import { fetchFilePreviewAvailability } from '@/features/chat/api';
-import { fetchSettings } from '@/features/settings/api';
 import {
   normalizeActivityTimeline,
   type TurnUnit,
@@ -36,7 +34,6 @@ import {
   unitKeysForDisplay,
 } from "@/features/chat/components/timeline";
 import { useChatScroll } from "@/features/chat/hooks/useChatScroll";
-import { ChatThread } from "@/features/chat/components/ChatThread";
 import { sessionTitle } from '@/services/text/format';
 import {
   formatQuotedUserMessage,
@@ -63,7 +60,6 @@ import { Composer as ExtractedComposer } from "@/features/chat/components/Compos
 import { ChatHeader } from "@/features/chat/components/ChatHeader";
 import { ChatModals } from "@/features/chat/components/ChatModals";
 import { LIGHT_COLORS, DARK_COLORS } from '@/ui/colors';
-import { resolveRuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import {
   isSideChannelLifecycle,
   slashCommandLifecycle,
@@ -94,7 +90,6 @@ import type {
   ConnectionStatus,
   GoalStateWsPayload,
 } from '@/types/api/runtime';
-import type { SettingsPayload } from '@/types/api/settings';
 import type {
   ChatSummary,
   SidebarStatePayload,
@@ -104,11 +99,10 @@ import type {
   WorkspacesPayload,
 } from '@/types/api/workspaces';
 
-import { AutomationsScreen } from '@/features/automations/components/AutomationsScreen';
-import { AppsScreen } from '@/features/capabilities/components/AppsScreen';
-import { SkillsScreen } from '@/features/skills/components/SkillsScreen';
-import { SettingsScreen } from '@/features/settings/components/SettingsScreen';
 import { StreamErrorNotice } from '@/features/chat/components/widgets/stream-error-notice';
+import { ChatSurface } from '@/features/chat/components/ChatSurface';
+import { UtilityViewRouter, type UtilityView } from '@/features/chat/components/UtilityViewRouter';
+import { useModelSelection } from '@/features/chat/hooks/use-model-selection';
 
 interface NanobotScreenProps {
   bootstrap: BootstrapResponse;
@@ -198,7 +192,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sessionSearchOpen, setSessionSearchOpen] = useState(false);
-  const [utilityView, setUtilityView] = useState<'chat' | 'apps' | 'skills' | 'automations' | 'settings'>('chat');
+  const [utilityView, setUtilityView] = useState<UtilityView>('chat');
   const [preferences, setPreferences] = useState<LocalPreferences>(DEFAULT_LOCAL_PREFS);
   const [composerText, setComposerText] = useState('');
   const [quotedContext, setQuotedContext] = useState<string | null>(null);
@@ -213,18 +207,30 @@ export function NanobotScreen(props: NanobotScreenProps) {
   const [forkingMessageId, setForkingMessageId] = useState<string | null>(null);
   const [filePreviewPath, setFilePreviewPath] = useState<string | null>(null);
   const [queuedPrompts, setQueuedPrompts] = useState<QueuedPrompt[]>([]);
-  const [settings, setSettings] = useState<SettingsPayload | null>(null);
-  const [localModelSelection, setLocalModelSelection] = useState<{ scopeKey: string; preset: string } | null>(null);
   const [voiceError, setVoiceError] = useState<VoiceRecorderError | null>(null);
   const staged = useAttachments(props.bootstrap.limits);
   const composerInputRef = useRef<TextInput>(null);
   const queuedPromptCounterRef = useRef(0);
   const wasTurnActiveRef = useRef(turnActive);
   const skipNextQueueFlushRef = useRef(false);
-  const greeting = t('thread.empty.greetings.workOn');
   const dark = preferences.theme === 'dark';
   const colors = dark ? DARK_COLORS : LIGHT_COLORS;
-  const runtimePolicy = resolveRuntimeClientPolicy(settings, props.bootstrap);
+  const {
+    activeModelPreset,
+    changeModelPreset,
+    modelDisplayLabel,
+    orderedModelPresets,
+    runtimePolicy,
+    settings,
+    setSettings,
+  } = useModelSelection({
+    activeSession: props.activeSession,
+    bootstrap: props.bootstrap,
+    modelSettingsRevision: props.modelSettingsRevision,
+    onModelPresetChange: props.onModelPresetChange,
+    runtimeModelName: props.runtimeModelName,
+    turnModelName: props.turnModelName,
+  });
   const voiceRecorder = useVoiceRecorder({
     disabled: sending || turnActive,
     maxDurationSec: settings?.transcription?.max_duration_sec,
@@ -336,60 +342,6 @@ export function NanobotScreen(props: NanobotScreenProps) {
     props.activeKey,
     props.bootstrap.api_token,
   ]);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchSettings()
-      .then((payload) => {
-        if (!cancelled) setSettings(payload);
-      })
-      .catch(() => {
-        // Voice limits fall back to the WebUI defaults when settings are unavailable.
-      });
-    return () => { cancelled = true; };
-  }, [props.bootstrap.api_token, props.modelSettingsRevision]);
-
-  const modelScopeKey = props.activeSession?.key ?? '__new__';
-  const localModelPreset = localModelSelection?.scopeKey === modelScopeKey
-    ? localModelSelection.preset
-    : null;
-  const activeModelPreset = localModelPreset
-    || props.activeSession?.modelPreset?.trim()
-    || settings?.agent.model_preset?.trim()
-    || 'default';
-  const activeModelPresetInfo = settings?.model_presets.find(
-    (preset) => preset.name === activeModelPreset,
-  ) ?? null;
-  const modelDisplayLabel = activeModelPresetInfo?.label?.trim()
-    || props.turnModelName?.trim()
-    || props.runtimeModelName?.trim()
-    || props.bootstrap.model_name?.trim()
-    || activeModelPreset
-    || 'nanobot';
-  const orderedModelPresets = useMemo(() => {
-    const order = new Map(
-      (settings?.model_call_order ?? []).map((name, index) => [name.trim(), index]),
-    );
-    return [...(settings?.model_presets ?? [])].sort((left, right) => (
-      (order.get(left.name.trim()) ?? Number.POSITIVE_INFINITY)
-      - (order.get(right.name.trim()) ?? Number.POSITIVE_INFINITY)
-    ));
-  }, [settings?.model_call_order, settings?.model_presets]);
-  const onModelPresetChange = props.onModelPresetChange;
-  const changeModelPreset = useCallback(async (name: string) => {
-    const previous = localModelSelection;
-    setLocalModelSelection({ scopeKey: modelScopeKey, preset: name });
-    try {
-      await onModelPresetChange(name);
-    } catch (caught) {
-      setLocalModelSelection(previous);
-      Alert.alert(
-        t('settings.models.selectModel'),
-        caught instanceof Error ? caught.message : t('settings.status.loadError'),
-      );
-      throw caught;
-    }
-  }, [localModelSelection, modelScopeKey, onModelPresetChange, t]);
 
   const chatTitle = props.activeSession
     ? props.sidebarState.title_overrides[props.activeSession.key] || sessionTitle(props.activeSession)
@@ -819,93 +771,62 @@ export function NanobotScreen(props: NanobotScreenProps) {
         </View>
       ) : null}
 
-      {utilityView === 'apps' ? (
-        <AppsScreen
-          key={`apps:${props.bootstrap.token}`}
+      {utilityView === 'chat' ? (
+        <ChatSurface
+          colors={colors}
+          composer={composer}
+          hasMessages={hasMessages}
+          threadLoading={props.threadLoading}
+          threadProps={{
+            listRef,
+            atBottom,
+            scrollToBottom,
+            loadEarlier,
+            handleThreadScroll,
+            handleContentSizeChange,
+            handleScrollToIndexFailed,
+            onMomentumScrollEnd,
+            onScrollBeginDrag,
+            onScrollEndDrag,
+            units,
+            unitKeys,
+            forkIndexes,
+            forkBoundaryAfterUnitIndex,
+            liveActivityClusterIndices,
+            forkingMessageId,
+            retryingMessageId,
+            colors,
+            dark,
+            preferences,
+            cliApps: props.cliApps,
+            mcpPresets: props.mcpPresets,
+            slashCommands: props.slashCommands,
+            hasMoreBefore: props.hasMoreBefore,
+            loadingOlder: props.loadingOlder,
+            canRetryFromMessage,
+            forkFromMessage,
+            retryFromMessage,
+            resolveFilePreviewAvailability,
+            onOpenFilePreview: props.activeKey ? setFilePreviewPath : undefined,
+            onQuote: setAssistantQuoteSource,
+          }}
+        />
+      ) : (
+        <UtilityViewRouter
+          bootstrap={props.bootstrap}
           colors={colors}
           onBackToChat={() => setUtilityView('chat')}
-          onRestart={props.onRestart}
-          restartPolicy={runtimePolicy}
-        />
-      ) : utilityView === 'skills' ? (
-        <SkillsScreen
-          colors={colors}
-        />
-      ) : utilityView === 'automations' ? (
-        <AutomationsScreen
-          colors={colors}
-          onOpenLinkedChat={(sessionKey: string) => {
+          onChangePreferences={changePreferences}
+          onOpenLinkedChat={(sessionKey) => {
             setUtilityView('chat');
             props.onSelectSession(sessionKey);
           }}
-        />
-      ) : utilityView === 'settings' ? (
-        <SettingsScreen
-          colors={colors}
-          onChangePreferences={changePreferences}
           onRestart={props.onRestart}
           onSettingsChange={setSettings}
           preferences={preferences}
-          runtimeMetadata={props.bootstrap}
+          runtimePolicy={runtimePolicy}
+          view={utilityView}
         />
-      ) : !hasMessages ? (
-        props.threadLoading ? (
-          <>
-            <View style={styles.loadingThreadArea}>
-              <View style={styles.loadingConversation}>
-                <ActivityIndicator color={colors.muted} />
-                <Text style={[styles.loadingText, { color: colors.muted }]}>{t('thread.loadingConversation')}</Text>
-              </View>
-            </View>
-            <View style={[styles.threadComposer, { backgroundColor: colors.background }]}>{composer}</View>
-          </>
-        ) : (
-          <View style={styles.heroArea}>
-            <View style={styles.heroContent}>
-              <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.greeting, { color: colors.foreground }]}>
-                {greeting}
-              </Text>
-              <View style={styles.heroComposer}>{composer}</View>
-            </View>
-          </View>
-        )
-      ) : (
-        <>
-          <ChatThread
-            listRef={listRef}
-            atBottom={atBottom}
-            scrollToBottom={scrollToBottom}
-            loadEarlier={loadEarlier}
-            handleThreadScroll={handleThreadScroll}
-            handleContentSizeChange={handleContentSizeChange}
-            handleScrollToIndexFailed={handleScrollToIndexFailed}
-            onMomentumScrollEnd={onMomentumScrollEnd}
-            onScrollBeginDrag={onScrollBeginDrag}
-            onScrollEndDrag={onScrollEndDrag}
-            units={units}
-            unitKeys={unitKeys}
-            forkIndexes={forkIndexes}
-            forkBoundaryAfterUnitIndex={forkBoundaryAfterUnitIndex}
-            liveActivityClusterIndices={liveActivityClusterIndices}
-            forkingMessageId={forkingMessageId}
-            retryingMessageId={retryingMessageId}
-            colors={colors}
-            dark={dark}
-            preferences={preferences}
-            cliApps={props.cliApps}
-            mcpPresets={props.mcpPresets}
-            slashCommands={props.slashCommands}
-            hasMoreBefore={props.hasMoreBefore}
-            loadingOlder={props.loadingOlder}
-            canRetryFromMessage={canRetryFromMessage}
-            forkFromMessage={forkFromMessage}
-            retryFromMessage={retryFromMessage}
-            resolveFilePreviewAvailability={resolveFilePreviewAvailability}
-            onOpenFilePreview={props.activeKey ? setFilePreviewPath : undefined}
-            onQuote={setAssistantQuoteSource}
-          />
-          <View style={[styles.threadComposer, { backgroundColor: colors.background }]}>{composer}</View>
-        </>
       )}
       <View style={{ height: Math.max(insets.bottom, 7), backgroundColor: colors.background }} />
 
@@ -990,12 +911,4 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   errorText: { flex: 1, fontSize: 12, lineHeight: 17 },
-  heroArea: { flex: 1, justifyContent: 'center', paddingHorizontal: 20, paddingBottom: 70 },
-  heroContent: { width: '100%', maxWidth: 720, alignSelf: 'center', alignItems: 'center' },
-  greeting: { width: '100%', fontSize: 34, lineHeight: 39, fontWeight: '400', textAlign: 'center' },
-  heroComposer: { width: '100%', marginTop: 28 },
-  loadingThreadArea: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loadingConversation: { alignItems: 'center', gap: 10 },
-  loadingText: { fontSize: 13 },
-  threadComposer: { paddingHorizontal: 10, paddingTop: 5 },
 });
