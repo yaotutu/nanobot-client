@@ -9,11 +9,10 @@
  *   ⑤ 重新认证（reauthenticate）
  *
  * 业务语义（run generation / canonical reconciliation / side-channel routing）已
- * 迁到 `features/chat/store.ts` 与 `features/chat/reconciler.ts`。
+ * 迁到 `features/chat/store.ts`。
  */
 import type {
   ConnectionStatus,
-  GoalStateWsPayload,
   InboundEvent,
   OutboundMedia,
   StreamError,
@@ -74,7 +73,6 @@ interface PendingSystemCommand {
 }
 
 const SYSTEM_COMMAND_TURN_PREFIX = 'webui-system:';
-const PENDING_INBOUND_MAX = 2_000;
 
 function createTurnId(): string {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -106,12 +104,9 @@ export class NanobotSocket {
   private eventListeners = new Set<EventListener>();
   private runStatusListeners = new Set<RunStatusListener>();
   private transportErrorListeners = new Set<TransportErrorListener>();
-  private pendingInboundByChat = new Map<string, InboundEvent[]>();
   private knownChats = new Set<string>();
   private sendQueue: OutboundFrame[] = [];
   private pendingMessageSends = new Map<string, PendingMessageSend>();
-  private socketPendingMessageSendKeys = new Set<string>();
-  private lastSocketMessageSendKey: string | null = null;
   private reconnectAttempt = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private intentionallyClosed = false;
@@ -122,7 +117,6 @@ export class NanobotSocket {
     timer: ReturnType<typeof setTimeout>;
   } | null = null;
   private runStartedAtByChatId = new Map<string, number>();
-  private goalStateByChatId = new Map<string, GoalStateWsPayload>();
 
   constructor(private options: NanobotSocketOptions) {
     this.maxFrameBytes = this.normalizeMaxFrameBytes(options.maxFrameBytes);
@@ -150,14 +144,6 @@ export class NanobotSocket {
   onTransportError(listener: TransportErrorListener): () => void {
     this.transportErrorListeners.add(listener);
     return () => this.transportErrorListeners.delete(listener);
-  }
-
-  getRunStartedAt(chatId: string): number | null {
-    return this.runStartedAtByChatId.get(chatId) ?? null;
-  }
-
-  getGoalState(chatId: string): GoalStateWsPayload | undefined {
-    return this.goalStateByChatId.get(chatId);
   }
 
   updateUrl(url: string): void {
@@ -238,9 +224,6 @@ export class NanobotSocket {
             reason: (event as { reason?: string }).reason,
           });
         }
-        if (event.event === 'goal_state' && event.chat_id) {
-          this.goalStateByChatId.set(event.chat_id, event.goal_state);
-        }
         if (event.event === 'goal_status') {
           if (event.status === 'running' && typeof event.started_at === 'number') {
             this.runStartedAtByChatId.set(event.chat_id, event.started_at);
@@ -254,6 +237,11 @@ export class NanobotSocket {
         }
         if (event.event === 'ready' && event.chat_id) {
           this.knownChats.add(event.chat_id);
+          if (this.pendingNewChat) {
+            clearTimeout(this.pendingNewChat.timer);
+            this.pendingNewChat.resolve(event.chat_id);
+            this.pendingNewChat = null;
+          }
           return;
         }
         if (event.event === 'attached') return;
@@ -280,23 +268,6 @@ export class NanobotSocket {
   attach(chatId: string): void {
     this.knownChats.add(chatId);
     this.queueSend({ type: 'attach', chat_id: chatId });
-  }
-
-  replayDeferredEvents(chatId: string): void {
-    const pending = this.pendingInboundByChat.get(chatId);
-    if (!pending?.length) return;
-    this.pendingInboundByChat.delete(chatId);
-    for (const event of pending) this.emitEvent(event);
-  }
-
-  deferInboundEvent(event: InboundEvent): void {
-    const chatId = 'chat_id' in event && typeof event.chat_id === 'string' ? event.chat_id : null;
-    if (!chatId) return;
-    const pending = this.pendingInboundByChat.get(chatId) ?? [];
-    pending.push(event);
-    const overflow = pending.length - PENDING_INBOUND_MAX;
-    if (overflow > 0) pending.splice(0, overflow);
-    this.pendingInboundByChat.set(chatId, pending);
   }
 
   newChat(timeoutMs = 5_000, workspaceScope?: WorkspaceScopePayload | null): Promise<string> {
@@ -487,7 +458,6 @@ export class NanobotSocket {
       }
       this.pendingMessageSends.delete(runSendKey(chatId, turnId));
     }
-    this.socketPendingMessageSendKeys.delete(runSendKey(chatId, turnId));
   }
 
   private pendingSystemCommands = new Map<string, PendingSystemCommand>();
@@ -565,7 +535,6 @@ export class NanobotSocket {
       }
     }
     this.pendingMessageSends.clear();
-    this.socketPendingMessageSendKeys.clear();
     if (this.intentionallyClosed) {
       this.setStatus('closed');
       return;

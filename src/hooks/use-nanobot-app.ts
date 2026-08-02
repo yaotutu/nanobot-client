@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import i18n from '@/i18n';
 import { debugLog } from '@/services/runtime/debug-log';
 
@@ -15,7 +15,6 @@ import type {
   SessionDeleteResult,
 
   SendAttachment,
-  SettingsPayload,
   SendMessageOptions,
 
   UIMessage,
@@ -26,13 +25,11 @@ import type {
 
 import { fetchThread } from '@/features/chat/api';
 import { listSlashCommands } from '@/features/capabilities/api';
-import { fetchSettings } from '@/features/settings/api';
-import { fetchWorkspaces } from '@/features/workspaces/api';
 import { createNanobotSocket, type NanobotSocket, type MessageSendResult as SendMessageResult } from "@/features/connection/socket-transport";
 import { deriveWsUrl } from "@/services/api/bootstrap";
 import { DEFAULT_SERVER_URL as SERVER_URL } from "@/services/api/config";
 
-import { resolveRuntimeClientPolicy, mergeRuntimeMetadata } from '@/services/runtime/runtime-capabilities';
+import { resolveRuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import { sessionTitle } from '@/services/text/format';
 import { normalizeWorkspaceScope, projectNameFromPath } from '@/services/runtime/workspace-paths';
 import { formatQuotedUserMessage, normalizeQuotedContext } from '@/services/text/user-quote-format';
@@ -181,8 +178,6 @@ export function useNanobotApp() {
   const resetAllChat = useChatStore((s) => s.resetAll);
 
   const connectionStatus = useConnectionStore((s) => s.status);
-  const hasOpenedSocket = useConnectionStore((s) => s.hasOpenedSocket);
-  const needsCanonicalReconnect = useConnectionStore((s) => s.needsCanonicalReconnect);
   const markOpened = useConnectionStore((s) => s.markOpened);
   const markReconnectNeeded = useConnectionStore((s) => s.markReconnectNeeded);
   const clearReconnectNeeded = useConnectionStore((s) => s.clearReconnectNeeded);
@@ -196,9 +191,6 @@ export function useNanobotApp() {
   const applyCliAppsPayload = useCapabilitiesStore((s) => s.applyCliAppsPayload);
   const applyMcpPresetsPayload = useCapabilitiesStore((s) => s.applyMcpPresetsPayload);
   const resetCapabilities = useCapabilitiesStore((s) => s.resetAll);
-
-  const settings = useSettingsStore((s) => s.settings);
-  const refreshSettingsAction = useSettingsStore((s) => s.refresh);
 
   const workspaces = useWorkspacesStore((s) => s.workspaces);
   const refreshWorkspacesAction = useWorkspacesStore((s) => s.refresh);
@@ -214,13 +206,6 @@ export function useNanobotApp() {
 
   // ---- socket 生命周期 ----
   const socketRef = useRef<NanobotSocket | null>(null);
-  const apiTokenRef = useRef<string | null>(null);
-
-  // 同步 apiToken
-   
-  useEffect(() => {
-    apiTokenRef.current = useAuthStore.getState().apiToken;
-  });
 
   // ---- 一次性 bootstrap 从 storage ----
   useEffect(() => {
@@ -261,6 +246,15 @@ export function useNanobotApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeKey, bootstrap]);
 
+  /**
+   * refreshCanonical 依赖 activeKey，但 socket effect 只在 token/phase 变化时重建。
+   * 用 ref 镜像确保 onStatus 回调始终调用最新版本，避免 stale closure。
+   */
+  const refreshCanonicalRef = useRef(refreshCanonical);
+  useEffect(() => {
+    refreshCanonicalRef.current = refreshCanonical;
+  });
+
   // ---- 当 bootstrap 拿到 token 后挂载 socket ----
   useEffect(() => {
      
@@ -292,12 +286,13 @@ export function useNanobotApp() {
       setConnectionStatus(status);
       if (status === 'open') {
         markOpened();
-        if (needsCanonicalReconnect) {
+        // 直接从 store 读最新值，避免闭包冻结
+        if (useConnectionStore.getState().needsCanonicalReconnect) {
           markReconnectNeeded();
-          void refreshCanonical();
+          void refreshCanonicalRef.current();
         }
       } else if (status === 'reconnecting' || status === 'error' || status === 'closed') {
-        if (hasOpenedSocket) markReconnectNeeded();
+        if (useConnectionStore.getState().hasOpenedSocket) markReconnectNeeded();
       }
     });
 
@@ -373,11 +368,8 @@ export function useNanobotApp() {
     void refreshSessions();
     void refreshSidebarState();
     void refreshCapabilities();
-    void refreshSettingsAction();
     void refreshWorkspacesAction();
     void listSlashCommands().catch(() => undefined);
-    void fetchSettings.bind(null); // no-op
-    void fetchWorkspaces.bind(null); // no-op
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, bootstrap?.token]);
 
@@ -686,11 +678,6 @@ export function useNanobotApp() {
     await logout();
   }, [logout, resetAllChat, resetCapabilities]);
 
-  const settingsWithRuntime = useMemo<SettingsPayload | null>(() => {
-    if (!settings) return null;
-    return mergeRuntimeMetadata(settings, bootstrap);
-  }, [settings, bootstrap]);
-
   return {
     phase,
     bootstrap,
@@ -724,7 +711,6 @@ export function useNanobotApp() {
     cliApps,
     mcpPresets,
     skills,
-    settings: settingsWithRuntime,
     applyCliAppsPayload,
     applyMcpPresetsPayload,
     authenticate,

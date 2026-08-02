@@ -7,7 +7,7 @@ import type {
   SessionDeleteResult,
   SidebarStatePayload,
   UIMessage,
-} from '@/types/nanobot';
+} from '@/types/api';
 import type { Palette } from '@/ui/palette';
 import type { TextInput } from 'react-native';
 

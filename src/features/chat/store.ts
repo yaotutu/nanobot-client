@@ -64,7 +64,6 @@ interface ChatState {
 
 interface ChatActions {
   selectSession(key: string | null, sessions: ChatSummary[]): void;
-  setMessages(messages: UIMessage[]): void;
   applyInboundEvent(event: InboundEvent): void;
   setTurnActive(active: boolean): void;
   setRunStartedAt(ts: number | null): void;
@@ -96,7 +95,6 @@ interface ChatActions {
   setStreamError(error: StreamError | null): void;
   markSideChannel(turnId: string): void;
   prepareUserTurn(turnId: string): void;
-  resetForNewSession(): void;
   resetAll(): void;
 }
 
@@ -220,10 +218,6 @@ export const useChatStore = create<ChatStore>()(
         streamError: null,
         sideChannelTurnIds: new Set<string>(),
       });
-    },
-
-    setMessages(messages) {
-      set({ messages: projectWebuiThreadMessages(messages) });
     },
 
     applyInboundEvent(event) {
@@ -474,28 +468,6 @@ export const useChatStore = create<ChatStore>()(
       resetStreamFoldState(foldState);
     },
 
-    resetForNewSession() {
-      resetFoldRuntime();
-      set({
-        activeKey: null,
-        messages: [],
-        turnActive: false,
-        runStartedAt: null,
-        goalState: undefined,
-        turnModelName: null,
-        draftWorkspaceScope: null,
-        threadLoading: false,
-        loadingOlder: false,
-        beforeCursor: null,
-        hasMoreBefore: false,
-        userMessageOffset: 0,
-        forkBoundaryMessageCount: null,
-        error: null,
-        streamError: null,
-        sideChannelTurnIds: new Set<string>(),
-      });
-    },
-
     resetAll() {
       resetFoldRuntime();
       set({
@@ -522,8 +494,3 @@ export const useChatStore = create<ChatStore>()(
     },
   })),
 );
-
-export const selectActiveKey = (s: ChatStore) => s.activeKey;
-export const selectMessages = (s: ChatStore) => s.messages;
-export const selectTurnActive = (s: ChatStore) => s.turnActive;
-export const selectRunStartedAt = (s: ChatStore) => s.runStartedAt;

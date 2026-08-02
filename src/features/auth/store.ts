@@ -171,5 +171,3 @@ export const useAuthStore = create<AuthStore>()(
 /** Selectors — 用于 `useAuthStore(selector)` 高效订阅 */
 export const selectAuthPhase = (s: AuthStore) => s.phase;
 export const selectBootstrap = (s: AuthStore) => s.bootstrap;
-export const selectIsAuthenticated = (s: AuthStore) => s.phase === 'ready' && s.bootstrap !== null;
-export const selectApiToken = (s: AuthStore) => s.apiToken;
