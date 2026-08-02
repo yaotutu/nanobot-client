@@ -104,7 +104,7 @@ import type {
   WorkspacesPayload,
 } from '@/types/api/workspaces';
 
-import { AutomationsScreen } from '../automations/AutomationsScreen';
+import { AutomationsScreen } from '@/features/automations/components/AutomationsScreen';
 import { AppsScreen } from '@/features/capabilities/components/AppsScreen';
 import { SkillsScreen } from '@/features/skills/components/SkillsScreen';
 import { SettingsScreen } from './settings-screen';
