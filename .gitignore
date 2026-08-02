@@ -53,3 +53,6 @@ example
 
 # dev-only bootstrap secret (NEVER commit)
 src/services/credentials/dev-secret.ts
+
+# Local GitHub Release artifacts
+/release-assets/

@@ -36,8 +36,12 @@ npm run typecheck          # 仅 tsc --noEmit
 npm start                  # Metro dev server（基于 expo-dev-client）
 npm run android            # expo run:android（含 prebuild + Gradle 构建 + 安装）
 npm run ios                # expo run:ios
-npm run web                # 启动 Web 版
+npm run web                # 启动 Web 开发服务（发布脚本不导出 Web）
+
+npm run release              # 使用现有依赖，构建并发布 Android Release APK
 ```
+
+Android Release 打包与 GitHub Release 发布的完整说明见 [`docs/android-release.md`](docs/android-release.md)。
 
 辅助检查：
 

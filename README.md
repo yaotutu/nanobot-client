@@ -56,6 +56,39 @@ npm start
 npm run web
 ```
 
+## 本地构建并发布 GitHub Release
+
+`npm run release` 会构建 Android Release APK 并创建对应的 GitHub Release（含 SHA-256 校验文件）。
+它只处理 Android，不导出 Web；也不检查、提交或推送 Git 工作区——APK 直接来自当前本地工作区。
+
+首次使用前登录 GitHub CLI：
+
+```bash
+gh auth login
+```
+
+日常直接运行（默认自动将 patch 版本号加一，并同步 `package.json` / `app.json` / `package-lock.json`）：
+
+```bash
+npm run release
+```
+
+常用选项：
+
+```bash
+npm run release -- minor           # 1.0.3 -> 1.1.0
+npm run release -- v1.2.0          # 使用指定版本号
+npm run release -- --no-version    # 不修改版本号
+npm run release -- --local-only    # 只构建 APK，不创建 GitHub Release
+npm run release -- --clean-native  # 重新生成 Android 原生工程
+```
+
+产物保存在 `release-assets/vX.Y.Z/`（已在 `.gitignore` 中）。完整的打包、发布、缓存与清理说明见
+[`docs/android-release.md`](docs/android-release.md)。
+
+> 当前 Android Release 使用开发签名，适合通过 GitHub Release 侧载安装；若要提交应用商店，
+> 应先配置并安全保管正式签名密钥。
+
 ## 代码检查
 
 提交代码前运行：
