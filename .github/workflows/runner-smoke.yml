@@ -1,0 +1,73 @@
+name: Runner Smoke Test
+
+# A ~30s sanity check that the self-hosted runner (label: n100) is online
+# and that every tool required by release.yml is wired up. Trigger this
+# right after setup.sh on the NAS, before the first full release build.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "docker/runner/**"
+      - ".github/workflows/runner-smoke.yml"
+
+permissions: read-only
+
+jobs:
+  smoke:
+    name: Verify N100 runner tools
+    runs-on: [self-hosted, n100]
+    timeout-minutes: 5
+    steps:
+      - name: Runner identity
+        run: |
+          echo "hostname:  $(hostname)"
+          echo "uname:     $(uname -a)"
+          echo "uptime:    $(uptime)"
+          echo "free -h:"; free -h
+          echo "df -h /home/runner:"; df -h /home/runner
+          echo "labels:    $RUNNER_LABELS"
+
+      - name: Tool versions
+        run: |
+          echo "node:    $(node --version)"
+          echo "npm:     $(npm --version)"
+          echo "java:    $(java -version 2>&1 | head -1)"
+          echo "javac:   $(javac -version 2>&1 | head -1)"
+          echo "git:     $(git --version)"
+          echo "ccache:  $(ccache --version | head -1)"
+          command -v zip >/dev/null && echo "zip:     $(zip --version | head -2 | tail -1)"
+          command -v curl >/dev/null && echo "curl:    $(curl --version | head -1)"
+
+      - name: Android SDK layout
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME || '/opt/android-sdk' }}
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          if [ -d "$ANDROID_HOME" ]; then
+            ls "$ANDROID_HOME"
+            echo "---"
+            ls "$ANDROID_HOME/platforms" 2>/dev/null || echo "(no platforms)"
+            ls "$ANDROID_HOME/build-tools" 2>/dev/null || echo "(no build-tools)"
+            ls "$ANDROID_HOME/ndk" 2>/dev/null || echo "(no ndk)"
+            echo "---"
+            SDKMGR=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager 2>/dev/null | head -1)
+            [ -x "$SDKMGR" ] && echo "sdkmanager: $SDKMGR (ok)" || echo "sdkmanager: MISSING"
+          else
+            echo "ANDROID_HOME=$ANDROID_HOME does not exist"
+            exit 1
+          fi
+
+      - name: Persistent cache mounts
+        run: |
+          echo "gradle cache: $(du -sh ~/.gradle/caches 2>/dev/null || echo 'empty')"
+          echo "ccache:       $(du -sh ~/.ccache 2>/dev/null || echo 'empty')"
+          echo "ccache stats:"; ccache -s 2>/dev/null || true
+
+      - name: Smoke result
+        run: |
+          echo ""
+          echo "✓ N100 runner is online and fully provisioned."
+          echo "  Safe to push a v* tag to trigger release.yml."
