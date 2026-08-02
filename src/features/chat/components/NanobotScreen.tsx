@@ -1,13 +1,11 @@
 import { X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   BackHandler,
   KeyboardAvoidingView,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,11 +14,6 @@ import { useTranslation } from 'react-i18next';
 import { setAppLanguage } from '@/i18n';
 import { normalizeLocale } from '@/i18n/config';
 
-import { useAttachments } from '@/hooks/use-attachments';
-import {
-  type VoiceRecorderError,
-  useVoiceRecorder,
-} from '@/hooks/use-voice-recorder';
 import { ApiError } from '@/services/api/api';
 import { fetchFilePreviewAvailability } from '@/features/chat/api';
 import {
@@ -36,41 +29,15 @@ import {
 import { useChatScroll } from "@/features/chat/hooks/useChatScroll";
 import { sessionTitle } from '@/services/text/format';
 import {
-  formatQuotedUserMessage,
-  normalizeQuotedContext,
-} from '@/services/text/user-quote-format';
-import {
-  activeCapabilityMentionPayloads,
-  capabilityMentionCandidates,
-  capabilityMentionQuery,
-  insertCapabilityMention,
-  type CapabilityMentionCandidate,
-} from '@/features/chat/capability-mentions';
-import {
   DEFAULT_LOCAL_PREFS,
   readLocalPreferences,
   writeLocalPreferences,
   type LocalPreferences,
 } from '@/stores/local-preferences-store';
-import {
-  readComposerRecents,
-  writeComposerRecents,
-} from '@/stores/composer-recents-store';
 import { Composer as ExtractedComposer } from "@/features/chat/components/Composer";
 import { ChatHeader } from "@/features/chat/components/ChatHeader";
 import { ChatModals } from "@/features/chat/components/ChatModals";
 import { LIGHT_COLORS, DARK_COLORS } from '@/ui/colors';
-import {
-  isSideChannelLifecycle,
-  slashCommandLifecycle,
-  slashQuery,
-} from '@/features/chat/slash-command';
-import {
-  insertSkillMention,
-  skillMentionCandidates,
-  skillMentionQuery,
-  type SkillMentionCandidate,
-} from '@/features/chat/skill-mentions';
 import type { SessionAutomationJob } from '@/types/api/automations';
 import type {
   CliAppInfo,
@@ -103,6 +70,7 @@ import { StreamErrorNotice } from '@/features/chat/components/widgets/stream-err
 import { ChatSurface } from '@/features/chat/components/ChatSurface';
 import { UtilityViewRouter, type UtilityView } from '@/features/chat/components/UtilityViewRouter';
 import { useModelSelection } from '@/features/chat/hooks/use-model-selection';
+import { useComposerController } from '@/features/chat/hooks/use-composer-controller';
 
 interface NanobotScreenProps {
   bootstrap: BootstrapResponse;
@@ -169,17 +137,6 @@ interface NanobotScreenProps {
 }
 
 
-interface QueuedPrompt {
-  id: string;
-  text: string;
-  attachments: SendAttachment[];
-  options?: SendMessageOptions;
-}
-
-interface ComposerSlashCommand extends SlashCommand {
-  recent: boolean;
-}
-
 interface FilePreviewAvailabilityCacheEntry {
   available?: boolean;
   promise: Promise<boolean>;
@@ -187,32 +144,18 @@ interface FilePreviewAvailabilityCacheEntry {
 }
 
 export function NanobotScreen(props: NanobotScreenProps) {
-  const { hasMoreBefore, loadingOlder, onLoadOlder, onSendMessage, turnActive } = props;
+  const { hasMoreBefore, loadingOlder, onLoadOlder } = props;
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sessionSearchOpen, setSessionSearchOpen] = useState(false);
   const [utilityView, setUtilityView] = useState<UtilityView>('chat');
   const [preferences, setPreferences] = useState<LocalPreferences>(DEFAULT_LOCAL_PREFS);
-  const [composerText, setComposerText] = useState('');
-  const [quotedContext, setQuotedContext] = useState<string | null>(null);
   const [assistantQuoteSource, setAssistantQuoteSource] = useState<string | null>(null);
   const [promptNavigatorOpen, setPromptNavigatorOpen] = useState(false);
   const [sessionInfoOpen, setSessionInfoOpen] = useState(false);
-  const [slashMenuDismissed, setSlashMenuDismissed] = useState(false);
-  const [mentionMenuDismissed, setMentionMenuDismissed] = useState(false);
-  const [composerCursor, setComposerCursor] = useState(0);
-  const [recentComposerCommands, setRecentComposerCommands] = useState<string[]>([]);
-  const [sending, setSending] = useState(false);
   const [forkingMessageId, setForkingMessageId] = useState<string | null>(null);
   const [filePreviewPath, setFilePreviewPath] = useState<string | null>(null);
-  const [queuedPrompts, setQueuedPrompts] = useState<QueuedPrompt[]>([]);
-  const [voiceError, setVoiceError] = useState<VoiceRecorderError | null>(null);
-  const staged = useAttachments(props.bootstrap.limits);
-  const composerInputRef = useRef<TextInput>(null);
-  const queuedPromptCounterRef = useRef(0);
-  const wasTurnActiveRef = useRef(turnActive);
-  const skipNextQueueFlushRef = useRef(false);
   const dark = preferences.theme === 'dark';
   const colors = dark ? DARK_COLORS : LIGHT_COLORS;
   const {
@@ -231,21 +174,20 @@ export function NanobotScreen(props: NanobotScreenProps) {
     runtimeModelName: props.runtimeModelName,
     turnModelName: props.turnModelName,
   });
-  const voiceRecorder = useVoiceRecorder({
-    disabled: sending || turnActive,
-    maxDurationSec: settings?.transcription?.max_duration_sec,
-    maxUploadMb: settings?.transcription?.max_upload_mb,
-    onClearError: () => setVoiceError(null),
-    onError: setVoiceError,
-    onTranscript: (text) => {
-      setComposerText((current) => {
-        if (!current) return text;
-        return `${current}${/\s$/.test(current) ? '' : ' '}${text}`;
-      });
-      composerInputRef.current?.focus();
-    },
+  const composerController = useComposerController({
+    cliApps: props.cliApps,
+    limits: props.bootstrap.limits,
+    mcpPresets: props.mcpPresets,
+    onSendMessage: props.onSendMessage,
+    onStopTurn: props.onStopTurn,
     onTranscribeAudio: props.onTranscribeAudio,
+    settings,
+    skills: props.skills,
+    slashCommands: props.slashCommands,
+    turnActive: props.turnActive,
   });
+  const { setQuotedContext } = composerController;
+
   const hasMessages = props.messages.length > 0;
   const hasUserPrompts = props.messages.some((message) => message.role === 'user');
   const units = useMemo(
@@ -346,61 +288,14 @@ export function NanobotScreen(props: NanobotScreenProps) {
   const chatTitle = props.activeSession
     ? props.sidebarState.title_overrides[props.activeSession.key] || sessionTitle(props.activeSession)
     : t('sidebar.newChat');
-  const currentSlashQuery = slashMenuDismissed ? null : slashQuery(composerText);
-  const visibleSlashCommands = useMemo(() => {
-    if (currentSlashQuery === null) return [];
-    const query = currentSlashQuery.trim().toLowerCase();
-    return props.slashCommands
-      .filter((command) => {
-        if (!query && command.command === '/restart') return false;
-        if (!query && !props.turnActive && command.command === '/stop') return false;
-        if (!query) return true;
-        return [command.command, command.title, command.description, command.argHint]
-          .join(' ')
-          .toLowerCase()
-          .includes(query);
-      })
-      .sort((left, right) => {
-        if (props.turnActive) {
-          if (left.command === '/stop') return -1;
-          if (right.command === '/stop') return 1;
-        }
-        if (query) return 0;
-        const leftRecent = recentComposerCommands.indexOf(left.command);
-        const rightRecent = recentComposerCommands.indexOf(right.command);
-        if (leftRecent === -1 && rightRecent === -1) return 0;
-        if (leftRecent === -1) return 1;
-        if (rightRecent === -1) return -1;
-        return leftRecent - rightRecent;
-      })
-      .slice(0, 8)
-      .map((command): ComposerSlashCommand => ({
-        ...command,
-        recent: recentComposerCommands.includes(command.command),
-      }));
-  }, [currentSlashQuery, props.slashCommands, props.turnActive, recentComposerCommands]);
-  const currentSkillQuery = slashMenuDismissed
-    ? null
-    : skillMentionQuery(composerText, composerCursor);
-  const visibleSkillCandidates = useMemo(
-    () => skillMentionCandidates(currentSkillQuery, props.skills, recentComposerCommands),
-    [currentSkillQuery, props.skills, recentComposerCommands],
-  );
-  const currentMentionQuery = mentionMenuDismissed
-    ? null
-    : capabilityMentionQuery(composerText, composerCursor);
-  const visibleMentionCandidates = useMemo(
-    () => capabilityMentionCandidates(currentMentionQuery, props.cliApps, props.mcpPresets),
-    [currentMentionQuery, props.cliApps, props.mcpPresets],
-  );
+
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([readLocalPreferences(), readComposerRecents()]).then(([stored, recents]) => {
+    void readLocalPreferences().then((stored) => {
       if (cancelled) return;
       setPreferences(stored);
       void setAppLanguage(normalizeLocale(stored.language));
-      setRecentComposerCommands(recents);
     });
     return () => { cancelled = true; };
   }, []);
@@ -424,7 +319,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
     setPromptNavigatorOpen(false);
     setSessionInfoOpen(false);
     setQuotedContext(null);
-  }, []);
+  }, [setQuotedContext]);
 
   const {
     listRef,
@@ -448,202 +343,11 @@ export function NanobotScreen(props: NanobotScreenProps) {
     onLoadOlder,
     onSessionReset: handleSessionReset,
   });
-  useEffect(() => {
-    const wasTurnActive = wasTurnActiveRef.current;
-    wasTurnActiveRef.current = turnActive;
-    if (!wasTurnActive || turnActive) return;
-    if (skipNextQueueFlushRef.current) {
-      skipNextQueueFlushRef.current = false;
-      return;
-    }
-    if (queuedPrompts.length === 0) return;
-    const next = queuedPrompts[0];
-    const timer = setTimeout(() => {
-      setQueuedPrompts((current) => current.filter((prompt) => prompt.id !== next.id));
-      setSending(true);
-      void onSendMessage(next.text, next.attachments, next.options)
-        .catch(() => {
-          setQueuedPrompts((current) => [next, ...current]);
-        })
-        .finally(() => setSending(false));
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [onSendMessage, queuedPrompts, turnActive]);
-
-  const handleStop = () => {
-    skipNextQueueFlushRef.current = queuedPrompts.length > 0;
-    setQueuedPrompts([]);
-    props.onStopTurn();
-  };
-
-  const clearComposerDraft = () => {
-    setComposerText('');
-    setQuotedContext(null);
-    setSlashMenuDismissed(false);
-    setMentionMenuDismissed(false);
-    setComposerCursor(0);
-  };
-
-  const recordComposerRecent = useCallback((command: string) => {
-    setRecentComposerCommands((current) => {
-      const next = [command, ...current.filter((item) => item !== command)].slice(0, 5);
-      void writeComposerRecents(next);
-      return next;
-    });
-  }, []);
-
-  const selectSlashCommand = (command: ComposerSlashCommand) => {
-    if (command.command === '/stop' && props.turnActive) {
-      handleStop();
-      clearComposerDraft();
-      setSlashMenuDismissed(true);
-      return;
-    }
-    recordComposerRecent(command.command);
-    const nextValue = command.acceptsArgs ? `${command.command} ` : command.command;
-    setComposerText(nextValue);
-    setSlashMenuDismissed(true);
-    setMentionMenuDismissed(false);
-    setComposerCursor(nextValue.length);
-    setTimeout(() => {
-      composerInputRef.current?.focus();
-      composerInputRef.current?.setNativeProps({
-        selection: { start: nextValue.length, end: nextValue.length },
-      });
-    }, 0);
-  };
-
-  const selectSkillCandidate = (candidate: SkillMentionCandidate) => {
-    if (!currentSkillQuery) return;
-    recordComposerRecent(candidate.command);
-    const next = insertSkillMention(composerText, currentSkillQuery, candidate);
-    setComposerText(next.value);
-    setComposerCursor(next.cursor);
-    setSlashMenuDismissed(true);
-    setMentionMenuDismissed(false);
-    setTimeout(() => {
-      composerInputRef.current?.focus();
-      composerInputRef.current?.setNativeProps({
-        selection: { start: next.cursor, end: next.cursor },
-      });
-    }, 0);
-  };
-
-  const selectMentionCandidate = (candidate: CapabilityMentionCandidate) => {
-    if (!currentMentionQuery) return;
-    const next = insertCapabilityMention(composerText, currentMentionQuery, candidate);
-    setComposerText(next.value);
-    setComposerCursor(next.cursor);
-    setMentionMenuDismissed(true);
-    setSlashMenuDismissed(false);
-    setTimeout(() => {
-      composerInputRef.current?.focus();
-      composerInputRef.current?.setNativeProps({
-        selection: { start: next.cursor, end: next.cursor },
-      });
-    }, 0);
-  };
-
-  const submit = async () => {
-    const content = composerText.trim();
-    const outboundContent = formatQuotedUserMessage(content, quotedContext);
-    const attachments = staged.readyAttachments;
-    const capabilityPayloads = activeCapabilityMentionPayloads(
-      content,
-      props.cliApps,
-      props.mcpPresets,
-    );
-    const messageOptions: SendMessageOptions = {
-      ...(capabilityPayloads.cliApps.length ? { cliApps: capabilityPayloads.cliApps } : {}),
-      ...(capabilityPayloads.mcpPresets.length ? { mcpPresets: capabilityPayloads.mcpPresets } : {}),
-      ...(quotedContext?.trim()
-        ? { quotedContext: normalizeQuotedContext(quotedContext) }
-        : {}),
-    };
-    if (
-      (!outboundContent && attachments.length === 0) ||
-      staged.encoding ||
-      staged.hasErrors ||
-      sending
-    ) return;
-
-    const hasPlainTextCommandPayload = attachments.length === 0
-      && capabilityPayloads.cliApps.length === 0
-      && capabilityPayloads.mcpPresets.length === 0;
-    const slashLifecycle = hasPlainTextCommandPayload
-      ? slashCommandLifecycle(content, props.slashCommands)
-      : null;
-    if (slashLifecycle === 'stop_active_turn' && props.turnActive) {
-      clearComposerDraft();
-      handleStop();
-      return;
-    }
-
-    const sideChannel = isSideChannelLifecycle(slashLifecycle);
-    if (props.turnActive && !sideChannel && !content.trimStart().startsWith('/')) {
-      queuedPromptCounterRef.current += 1;
-      setQueuedPrompts((current) => [...current, {
-        id: `queued-prompt-${Date.now()}-${queuedPromptCounterRef.current}`,
-        text: content,
-        attachments: [...attachments],
-        options: messageOptions,
-      }]);
-      clearComposerDraft();
-      staged.clear();
-      return;
-    }
-
-    const options: SendMessageOptions = {
-      ...messageOptions,
-      ...(sideChannel ? { sideChannel: true } : {}),
-      ...(slashLifecycle === 'finalize_active_turn'
-        ? { finalizeActiveTurn: true }
-        : {}),
-    };
-    const pendingQuote = quotedContext;
-    clearComposerDraft();
-    setQueuedPrompts([]);
-    setSending(true);
-    try {
-      await props.onSendMessage(content, attachments, options);
-      staged.clear();
-    } catch {
-      setComposerText(content);
-      setQuotedContext(pendingQuote);
-      setSlashMenuDismissed(false);
-      setMentionMenuDismissed(false);
-      setComposerCursor(content.length);
-      setTimeout(() => {
-        composerInputRef.current?.focus();
-        composerInputRef.current?.setNativeProps({
-          selection: { start: content.length, end: content.length },
-        });
-      }, 0);
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const openAttachmentMenu = () => {
-    Alert.alert(t('thread.composer.attachImage'), t('thread.composer.attachImage'), [
-      { text: t('settings.actions.cancel'), style: 'cancel' },
-      { text: t('settings.nav.image'), onPress: () => void staged.pickImages() },
-      { text: t('message.fileEditOpenFile'), onPress: () => void staged.pickDocuments() },
-    ]);
-  };
-
   const resetSessionUi = () => {
     setUtilityView('chat');
-    setComposerText('');
-    setQuotedContext(null);
     setPromptNavigatorOpen(false);
     setSessionInfoOpen(false);
-    setSlashMenuDismissed(false);
-    setMentionMenuDismissed(false);
-    setComposerCursor(0);
-    setQueuedPrompts([]);
-    skipNextQueueFlushRef.current = false;
-    staged.clear();
+    composerController.reset();
   };
 
   const selectSession = (key: string | null) => {
@@ -663,8 +367,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
 
   const forkFromMessage = async (messageId: string, beforeUserIndex: number) => {
     if (forkingMessageId) return;
-    setQueuedPrompts([]);
-    skipNextQueueFlushRef.current = false;
+    composerController.clearQueue();
     setForkingMessageId(messageId);
     try {
       await props.onForkFromMessage(beforeUserIndex);
@@ -685,21 +388,21 @@ export function NanobotScreen(props: NanobotScreenProps) {
         />
       ) : null}
       <ExtractedComposer
-        attachmentError={staged.error}
-        attachments={staged.attachments}
-        attachmentBusy={staged.encoding}
-        attachmentFull={staged.full}
+        attachmentError={composerController.attachments.error}
+        attachments={composerController.attachments.attachments}
+        attachmentBusy={composerController.attachments.encoding}
+        attachmentFull={composerController.attachments.full}
         activeModelPreset={activeModelPreset}
         colors={colors}
         dark={dark}
-        disabled={sending}
+        disabled={composerController.sending}
         goalState={props.goalState}
-        inputRef={composerInputRef}
+        inputRef={composerController.inputRef}
         modelName={modelDisplayLabel}
-        mentionCandidates={visibleMentionCandidates}
-        skillCandidates={visibleSkillCandidates}
+        mentionCandidates={composerController.visibleMentionCandidates}
+        skillCandidates={composerController.visibleSkillCandidates}
         modelPresets={orderedModelPresets}
-        quotedContext={quotedContext}
+        quotedContext={composerController.quotedContext}
         runStartedAt={props.runStartedAt}
         workspaceScope={props.activeWorkspaceScope}
         workspaceDefaultScope={props.workspaces?.default_scope ?? null}
@@ -707,37 +410,27 @@ export function NanobotScreen(props: NanobotScreenProps) {
         workspaceError={props.workspaceError}
         workspaceScopeDisabled={props.turnActive}
         onWorkspaceScopeChange={props.onWorkspaceScopeChange}
-        onAddAttachment={openAttachmentMenu}
-        onChangeText={(value) => {
-          setComposerText(value);
-          setSlashMenuDismissed(false);
-          setMentionMenuDismissed(false);
-        }}
-        onClearQuote={() => setQuotedContext(null)}
-        onCursorChange={(cursor) => {
-          setComposerCursor(cursor);
-          setSlashMenuDismissed(false);
-          setMentionMenuDismissed(false);
-        }}
-        onMentionCandidateSelect={selectMentionCandidate}
-        onSkillCandidateSelect={selectSkillCandidate}
+        onAddAttachment={composerController.openAttachmentMenu}
+        onChangeText={composerController.onChangeText}
+        onClearQuote={() => composerController.setQuotedContext(null)}
+        onCursorChange={composerController.onCursorChange}
+        onMentionCandidateSelect={composerController.selectMentionCandidate}
+        onSkillCandidateSelect={composerController.selectSkillCandidate}
         onModelPresetChange={changeModelPreset}
         onOpenModelSettings={() => setUtilityView('settings')}
-        onRemoveQueuedPrompt={(id) => {
-          setQueuedPrompts((current) => current.filter((prompt) => prompt.id !== id));
-        }}
-        onRemoveAttachment={staged.remove}
-        onSelectSlashCommand={selectSlashCommand}
-        onSend={submit}
-        onStop={handleStop}
-        queuedPrompts={queuedPrompts}
-        readyAttachmentCount={staged.readyAttachments.length}
-        slashCommands={visibleSlashCommands}
+        onRemoveQueuedPrompt={composerController.removeQueuedPrompt}
+        onRemoveAttachment={composerController.attachments.remove}
+        onSelectSlashCommand={composerController.selectSlashCommand}
+        onSend={composerController.submit}
+        onStop={composerController.handleStop}
+        queuedPrompts={composerController.queuedPrompts}
+        readyAttachmentCount={composerController.attachments.readyAttachments.length}
+        slashCommands={composerController.visibleSlashCommands}
         turnActive={props.turnActive}
-        value={composerText}
+        value={composerController.text}
         variant={hasMessages || props.threadLoading ? 'thread' : 'hero'}
-        voiceError={voiceError ? t(`thread.composer.voiceErrors.${voiceError}`) : null}
-        voiceRecorder={voiceRecorder}
+        voiceError={composerController.voiceError ? t(`thread.composer.voiceErrors.${composerController.voiceError}`) : null}
+        voiceRecorder={composerController.voiceRecorder}
       />
     </>
   );
@@ -849,17 +542,14 @@ export function NanobotScreen(props: NanobotScreenProps) {
         assistantQuoteSource={assistantQuoteSource}
         filePreviewPath={filePreviewPath}
         token={props.bootstrap.api_token}
-        composerInputRef={composerInputRef}
+        composerInputRef={composerController.inputRef}
         onCloseDrawer={() => setDrawerOpen(false)}
         onCloseSessionSearch={() => setSessionSearchOpen(false)}
         onClosePromptNavigator={() => setPromptNavigatorOpen(false)}
         onCloseSessionInfo={() => setSessionInfoOpen(false)}
         onCloseAssistantQuote={() => setAssistantQuoteSource(null)}
         onCloseFilePreview={() => setFilePreviewPath(null)}
-        onConfirmAssistantQuote={(content) => {
-          setQuotedContext(normalizeQuotedContext(content));
-          setTimeout(() => composerInputRef.current?.focus(), 0);
-        }}
+        onConfirmAssistantQuote={composerController.confirmQuote}
         onJumpToPrompt={jumpToPrompt}
         onSelectSession={selectSession}
         onStartNewChat={startNewChat}
