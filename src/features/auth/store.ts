@@ -10,6 +10,7 @@ import {
 } from '@/services/credentials/auth-credentials';
 import { loadLocalDevBootstrapSecret } from '@/services/credentials/local-dev-bootstrap';
 import { debugLog } from '@/services/runtime/debug-log';
+import { setApiTokenProvider } from '@/services/api/api';
 import i18n from '@/i18n';
 
 export type AuthPhase = 'booting' | 'authentication' | 'ready' | 'unreachable';
@@ -167,6 +168,8 @@ export const useAuthStore = create<AuthStore>()(
     },
   })),
 );
+
+setApiTokenProvider(() => useAuthStore.getState().apiToken ?? '');
 
 /** Selectors — 用于 `useAuthStore(selector)` 高效订阅 */
 export const selectAuthPhase = (s: AuthStore) => s.phase;

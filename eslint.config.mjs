@@ -4,6 +4,10 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import importPlugin from 'eslint-plugin-import-x';
 
+const restrictedLayerImports = (patterns) => ({
+  'no-restricted-imports': ['error', { patterns }],
+});
+
 export default tseslint.config(
   {
     ignores: [
@@ -14,9 +18,7 @@ export default tseslint.config(
       '.expo/**',
       'artifacts/**',
       'artifacts-sanitized/**',
-      '__tests__/**',
-      '*.config.{js,ts,mjs}',
-      'vitest.config.ts',
+      '*.config.{js,ts,mts,mjs}',
       'eslint.config.mjs',
     ],
   },
@@ -50,6 +52,30 @@ export default tseslint.config(
     rules: {
       'import/no-cycle': ['error', { maxDepth: 5, ignoreExternal: true }],
       'import/no-self-import': 'error',
+    },
+  },
+  {
+    files: ['src/services/**/*.{ts,tsx}', 'src/ui/**/*.{ts,tsx}', 'src/types/**/*.{ts,tsx}'],
+    rules: restrictedLayerImports([
+      { group: ['@/app', '@/app/*'], message: 'Infrastructure layers cannot depend on Expo Router.' },
+      { group: ['@/components', '@/components/*'], message: 'Infrastructure layers cannot depend on application components.' },
+      { group: ['@/features', '@/features/*'], message: 'Infrastructure layers cannot depend on feature modules.' },
+    ]),
+  },
+  {
+    files: ['src/features/**/*.{ts,tsx}'],
+    rules: restrictedLayerImports([
+      { group: ['@/app', '@/app/*'], message: 'Features cannot depend on Expo Router.' },
+      { group: ['@/components/screens', '@/components/screens/*'], message: 'Features cannot depend on root screen composition.' },
+    ]),
+  },
+  {
+    files: ['__tests__/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {
+      'no-useless-assignment': 'off',
     },
   },
 );
