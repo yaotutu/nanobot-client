@@ -5,9 +5,13 @@ import type {
   WebuiThreadPersistedPayload,
 } from '@/types/api/chat';
 
+export interface FetchThreadRequestOptions extends FetchThreadOptions {
+  signal?: AbortSignal;
+}
+
 export async function fetchThread(
   key: string,
-  options: FetchThreadOptions = {},
+  options: FetchThreadRequestOptions = {},
 ): Promise<WebuiThreadPersistedPayload | null> {
   const query: Record<string, string | number> = {};
   if (options.limit !== undefined) query.limit = options.limit;
@@ -16,7 +20,7 @@ export async function fetchThread(
   try {
     return await apiClient.request<WebuiThreadPersistedPayload>(
       `/api/sessions/${encodeURIComponent(key)}/webui-thread`,
-      { method: 'GET', query },
+      { method: 'GET', query, signal: options.signal },
     );
   } catch (caught) {
     if (caught instanceof ApiError && caught.status === 404) return null;
