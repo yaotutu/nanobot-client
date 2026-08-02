@@ -1,7 +1,7 @@
 {
   "name": "nanobot-client",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "dependencies": {
     "@react-native-community/datetimepicker": "9.1.0",
     "expo": "~57.0.9",
@@ -33,24 +33,24 @@
     "react-native-markdown-renderer": "^4.1.1",
     "react-native-qrcode-svg": "^6.3.21",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.0",
+    "react-native-screens": "~4.26.2",
     "react-native-svg": "15.15.4",
-    "react-native-web": "~0.21.0",
+    "react-native-web": "~0.21.2",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/react": "~19.2.2",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@types/react": "~19.2.18",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^10.8.0",
     "eslint-import-resolver-typescript": "^4.4.5",
-    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.8.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.65.0",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.10",
+    "eslint-plugin-import-x": "^4.17.1"
   },
   "scripts": {
     "start": "expo start --dev-client",
@@ -60,7 +60,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm test",
-    "test": "vitest run"
+    "test": "vitest run",
+    "release": "bash scripts/release.sh"
   },
   "overrides": {
     "xcode": {

@@ -2,7 +2,7 @@ import js from '@eslint/js';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import importPlugin from 'eslint-plugin-import';
+import importPlugin from 'eslint-plugin-import-x';
 
 export default tseslint.config(
   {
@@ -48,7 +48,7 @@ export default tseslint.config(
       },
     },
     rules: {
-      'import/no-cycle': ['error', { maxDepth: 5 }],
+      'import/no-cycle': ['error', { maxDepth: 5, ignoreExternal: true }],
       'import/no-self-import': 'error',
     },
   },
