@@ -2,7 +2,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { AuthScreen } from '@/components/screens/auth-screen';
+import { AuthScreen } from '@/features/auth/components/AuthScreen';
 import { NanobotScreen } from '@/components/screens/nanobot-screen';
 import { useNanobotApp } from '@/hooks/use-nanobot-app';
 
