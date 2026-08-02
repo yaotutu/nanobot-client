@@ -102,7 +102,10 @@ for command_name in node npm npx java; do
 done
 
 if [[ "$LOCAL_ONLY" == false ]]; then
-  command -v gh >/dev/null 2>&1 || fail "Required command not found: gh (install GitHub CLI or use --local-only)"
+  for command_name in gh curl; do
+    command -v "$command_name" >/dev/null 2>&1 \
+      || fail "Required command not found: $command_name (install it or use --local-only)"
+  done
 fi
 
 [[ -n "${ANDROID_HOME:-}" ]] || fail "ANDROID_HOME is not set."
@@ -218,29 +221,87 @@ if [[ "$LOCAL_ONLY" == true ]]; then
   printf 'GitHub Release: skipped (--local-only)\n'
   exit 0
 fi
-
 printf '\n==> Publishing GitHub Release %s\n' "$TAG"
 REPOSITORY="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 
-# Reuse a release for this tag if one already exists (for example a draft left
-# behind by an interrupted upload). Otherwise create the release without assets,
-# which also creates the git tag on the remote default branch. Assets are then
-# uploaded separately so gh can print an upload progress indicator for the APK.
-if gh release view "$TAG" --repo "$REPOSITORY" >/dev/null 2>&1; then
-  printf 'Release %s already exists; refreshing its assets.\n' "$TAG"
-else
+# Ensure the release exists (this also creates the git tag on the remote).
+if ! gh release view "$TAG" --repo "$REPOSITORY" >/dev/null 2>&1; then
   gh release create "$TAG" \
     --repo "$REPOSITORY" \
     --title "nanobot $TAG" \
-    --notes "Android Release APK built from the local workspace."
+    --notes "Android Release APK built from the local workspace." \
+    || fail "Unable to create GitHub Release $TAG."
 fi
 
-# Upload (or replace) assets. Run in the foreground so the progress bar shows.
-gh release upload "$TAG" \
-  "$ARTIFACT_DIR/$APK_NAME" \
-  "$ARTIFACT_DIR/checksums.txt" \
-  --repo "$REPOSITORY" \
-  --clobber || fail "Unable to upload assets to GitHub Release $TAG."
+RELEASE_ID="$(gh api "repos/$REPOSITORY/releases/tags/$TAG" --jq '.id')" \
+  || fail "Unable to resolve release id for $TAG."
+GH_TOKEN="$(gh auth token)" || fail "Unable to read the GitHub authentication token."
+
+# Remove assets with the same name before each upload attempt. This preserves
+# the script's idempotent behavior and also cleans up assets created by uploads
+# whose response was interrupted before curl received it.
+delete_existing_assets() {
+  local target_name="$1"
+  local assets asset_id asset_name
+
+  assets="$(gh api --paginate \
+    "repos/$REPOSITORY/releases/$RELEASE_ID/assets?per_page=100" \
+    --jq '.[] | [.id, .name] | @tsv')" || return 1
+
+  while IFS=$'\t' read -r asset_id asset_name; do
+    [[ -n "$asset_id" && "$asset_name" == "$target_name" ]] || continue
+    gh api --method DELETE \
+      "repos/$REPOSITORY/releases/assets/$asset_id" >/dev/null || return 1
+  done <<< "$assets"
+}
+
+# Upload directly through the GitHub uploads API. Unlike `gh release upload`,
+# curl has no interactive progress UI that can stall in non-interactive shells.
+upload_asset() {
+  local file="$1" name="$2" content_type="$3"
+  local attempt code curl_status
+
+  for attempt in 1 2 3 4 5; do
+    if ! delete_existing_assets "$name"; then
+      printf '  %s: attempt %d could not remove an existing asset.\n' \
+        "$name" "$attempt" >&2
+    else
+      if code="$(curl -sS -o /dev/null -w '%{http_code}' \
+        --connect-timeout 15 --max-time 7200 \
+        -X POST \
+        -H "Authorization: Bearer $GH_TOKEN" \
+        -H 'Accept: application/vnd.github+json' \
+        -H "Content-Type: $content_type" \
+        --data-binary "@$file" \
+        "https://uploads.github.com/repos/$REPOSITORY/releases/$RELEASE_ID/assets?name=$name")"; then
+        curl_status=0
+      else
+        curl_status=$?
+      fi
+
+      if [[ "$curl_status" -eq 0 && "$code" == "201" ]]; then
+        printf '  uploaded %s\n' "$name"
+        return 0
+      fi
+
+      printf '  %s: attempt %d failed (HTTP %s, curl exit %d).\n' \
+        "$name" "$attempt" "${code:-none}" "$curl_status" >&2
+    fi
+
+    if [[ "$attempt" -lt 5 ]]; then
+      printf '  retrying in 5 seconds...\n' >&2
+      sleep 5
+    fi
+  done
+
+  return 1
+}
+
+upload_asset "$ARTIFACT_DIR/$APK_NAME" "$APK_NAME" 'application/vnd.android.package-archive' \
+  || fail "Unable to upload APK to GitHub Release $TAG."
+upload_asset "$ARTIFACT_DIR/checksums.txt" 'checksums.txt' 'text/plain' \
+  || fail "Unable to upload checksums to GitHub Release $TAG."
+unset GH_TOKEN
 
 # Publish in case the existing release was a draft.
 gh release edit "$TAG" --repo "$REPOSITORY" --draft=false >/dev/null \

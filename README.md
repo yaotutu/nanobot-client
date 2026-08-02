@@ -76,7 +76,7 @@ npm run release
 常用选项：
 
 ```bash
-npm run release -- minor           # 1.0.3 -> 1.1.0
+npm run release -- minor           # 1.0.5 -> 1.1.0
 npm run release -- v1.2.0          # 使用指定版本号
 npm run release -- --no-version    # 不修改版本号
 npm run release -- --local-only    # 只构建 APK，不创建 GitHub Release

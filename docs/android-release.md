@@ -13,7 +13,7 @@
 - 不执行 `git add`、`git commit`、`git push`、`git pull` 或其他 Git 同步操作；
 - 默认创建 GitHub Release，并上传当前本地构建出来的 APK 和校验文件。
 
-GitHub Release 的 tag 由版本号生成，例如 `package.json` 为 `1.0.3` 时使用 `v1.0.3`。脚本上传的 APK 来自本次本地构建，不要求本地代码已经提交或同步。
+GitHub Release 的 tag 由版本号生成，例如 `package.json` 为 `1.0.5` 时使用 `v1.0.5`。脚本上传的 APK 来自本次本地构建，不要求本地代码已经提交或同步。
 
 ## 一条命令完成打包发布
 
@@ -38,7 +38,7 @@ npm run release
 5. 使用 Gradle 构建 Android Release APK；
 6. 生成 APK 和 SHA-256 校验文件；
 7. 创建对应的 GitHub Release；
-8. 上传 APK 和 `checksums.txt`。
+8. 通过 GitHub 上传 API 覆盖同名资产并上传 APK 和 `checksums.txt`；网络失败时自动重试。
 
 发布成功后，终端会打印 GitHub Release 地址。
 
@@ -69,8 +69,8 @@ npm run release -- --no-version
 ### 指定版本类型或版本号
 
 ```bash
-npm run release -- minor       # 1.0.3 -> 1.1.0
-npm run release -- major       # 1.0.3 -> 2.0.0
+npm run release -- minor       # 1.0.5 -> 1.1.0
+npm run release -- major       # 1.0.5 -> 2.0.0
 npm run release -- v1.2.0      # 使用 1.2.0
 ```
 
@@ -127,7 +127,8 @@ Android Release 构建需要：
 - Android Build-Tools 36.0.0；
 - Android SDK Platform-Tools；
 - `ANDROID_HOME` 环境变量；
-- GitHub CLI `gh`，并已执行 `gh auth login`（仅默认发布到 GitHub 时需要）。
+- GitHub CLI `gh`，并已执行 `gh auth login`（仅默认发布到 GitHub 时需要）；
+- `curl`（仅默认发布到 GitHub 时需要）。
 
 macOS 示例：
 
