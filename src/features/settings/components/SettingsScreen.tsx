@@ -32,15 +32,15 @@ import {
 } from "@/services/runtime/runtime-capabilities";
 import type { SettingsPayload } from '@/types/api/settings';
 
-import { AppearanceSettings } from "../settings/appearance-settings";
+import { AppearanceSettings } from "./appearance-settings";
 import { ChannelsSettings } from "@/features/channels/components/ChannelsSettings";
-import { ImageSettings } from "../settings/image-settings";
-import { ModelsSettings } from "../settings/models-settings";
-import { OverviewSettings } from "../settings/overview-settings";
-import { RuntimeSettings } from "../settings/runtime-settings";
-import { SecuritySettings } from "../settings/security-settings";
-import { VoiceSettings } from "../settings/voice-settings";
-import { WebSettings } from "../settings/web-settings";
+import { ImageSettings } from "./image-settings";
+import { ModelsSettings } from "./models-settings";
+import { OverviewSettings } from "./overview-settings";
+import { RuntimeSettings } from "./runtime-settings";
+import { SecuritySettings } from "./security-settings";
+import { VoiceSettings } from "./voice-settings";
+import { WebSettings } from "./web-settings";
 
 const SECTIONS = [
   { key: "overview" as const, translationKey: "overview", icon: LayoutDashboard },

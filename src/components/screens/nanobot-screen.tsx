@@ -107,7 +107,7 @@ import type {
 import { AutomationsScreen } from '@/features/automations/components/AutomationsScreen';
 import { AppsScreen } from '@/features/capabilities/components/AppsScreen';
 import { SkillsScreen } from '@/features/skills/components/SkillsScreen';
-import { SettingsScreen } from './settings-screen';
+import { SettingsScreen } from '@/features/settings/components/SettingsScreen';
 import { StreamErrorNotice } from '../widgets/stream-error-notice';
 
 interface NanobotScreenProps {
