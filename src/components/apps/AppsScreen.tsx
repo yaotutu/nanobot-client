@@ -21,6 +21,7 @@ import {
   saveCustomMcpServer,
   updateMcpServerTools,
 } from '@/features/capabilities/api';
+import { useCapabilitiesStore } from '@/features/capabilities/store';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type {
   CliAppInfo,
@@ -53,34 +54,25 @@ import type {
 
 interface AppsScreenProps {
   colors: Palette;
-  initialCliApps: CliAppInfo[];
-  initialMcpPresets: McpPresetInfo[];
-  onCliAppsChanged: (payload: CliAppsPayload) => void;
-  onMcpPresetsChanged: (payload: McpPresetsPayload) => void;
   onBackToChat: () => void;
   onRestart?: () => void;
   restartPolicy: RuntimeClientPolicy;
 }
 
+const EMPTY_CLI_APPS_PAYLOAD = { apps: [], installed_count: 0 } satisfies CliAppsPayload;
+const EMPTY_MCP_PRESETS_PAYLOAD = { presets: [], installed_count: 0 } satisfies McpPresetsPayload;
+
 export function AppsScreen({
   colors,
-  initialCliApps,
-  initialMcpPresets,
-  onCliAppsChanged,
-  onMcpPresetsChanged,
   onBackToChat,
   onRestart,
   restartPolicy,
 }: AppsScreenProps) {
   const { t } = useTranslation();
-  const [cliPayload, setCliPayload] = useState<CliAppsPayload>({
-    apps: initialCliApps,
-    installed_count: initialCliApps.filter((app) => app.installed).length,
-  });
-  const [mcpPayload, setMcpPayload] = useState<McpPresetsPayload>({
-    presets: initialMcpPresets,
-    installed_count: initialMcpPresets.filter((preset) => preset.installed && preset.configured).length,
-  });
+  const cliPayload = useCapabilitiesStore((state) => state.cliAppsPayload) ?? EMPTY_CLI_APPS_PAYLOAD;
+  const mcpPayload = useCapabilitiesStore((state) => state.mcpPresetsPayload) ?? EMPTY_MCP_PRESETS_PAYLOAD;
+  const applyCliAppsPayload = useCapabilitiesStore((state) => state.applyCliAppsPayload);
+  const applyMcpPresetsPayload = useCapabilitiesStore((state) => state.applyMcpPresetsPayload);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState('');
@@ -121,8 +113,7 @@ export function AppsScreen({
     ]);
     if (!mountedRef.current) return;
     if (cliResult.status === 'fulfilled') {
-      setCliPayload(cliResult.value);
-      onCliAppsChanged(cliResult.value);
+      applyCliAppsPayload(cliResult.value);
       if (cliResult.value.catalog_refresh_pending) {
         const pollCliCatalog = (retryCount: number) => {
           if (!mountedRef.current || retryCount >= CLI_APPS_REFRESH_MAX_RETRIES) return;
@@ -131,8 +122,7 @@ export function AppsScreen({
             void fetchCliApps()
               .then((payload) => {
                 if (!mountedRef.current) return;
-                setCliPayload(payload);
-                onCliAppsChanged(payload);
+                applyCliAppsPayload(payload);
                 if (payload.catalog_refresh_pending) pollCliCatalog(retryCount + 1);
               })
               .catch((caught) => {
@@ -148,8 +138,7 @@ export function AppsScreen({
       }
     }
     if (mcpResult.status === 'fulfilled') {
-      setMcpPayload(mcpResult.value);
-      onMcpPresetsChanged(mcpResult.value);
+      applyMcpPresetsPayload(mcpResult.value);
     }
     const errors = [cliResult, mcpResult]
       .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
@@ -157,7 +146,7 @@ export function AppsScreen({
     setStatus(errors.length ? { message: errors.join('\n'), error: true } : null);
     setLoading(false);
     setRefreshing(false);
-  }, [onCliAppsChanged, onMcpPresetsChanged, t]);
+  }, [applyCliAppsPayload, applyMcpPresetsPayload, t]);
 
   useEffect(() => {
     const timer = setTimeout(() => void load(), 0);
@@ -187,8 +176,7 @@ export function AppsScreen({
     setStatus(null);
     try {
       const payload = await runCliAppAction(action, app.name);
-      setCliPayload(payload);
-      if (action !== 'test') onCliAppsChanged(payload);
+      applyCliAppsPayload(payload);
       setCliFocusName(action === 'uninstall' ? null : app.name);
       setStatus({
         message: payload.last_action?.message || t('settings.cliApps.actionCompleted', { defaultValue: '{{name}} action completed.', name: app.display_name }),
@@ -218,8 +206,7 @@ export function AppsScreen({
         preset.name,
         values,
       );
-      setMcpPayload(payload);
-      if (action !== 'test') onMcpPresetsChanged(payload);
+      applyMcpPresetsPayload(payload);
       if (payload.requires_restart) setRestartRequired(true);
       setSetupPreset(null);
       if (action === 'enable') {
@@ -243,8 +230,7 @@ export function AppsScreen({
     payload: McpPresetsPayload,
     fallbackMessage: string,
   ) => {
-    setMcpPayload(payload);
-    onMcpPresetsChanged(payload);
+    applyMcpPresetsPayload(payload);
     if (payload.requires_restart) setRestartRequired(true);
     setStatus({
       message: payload.last_action?.message || fallbackMessage,

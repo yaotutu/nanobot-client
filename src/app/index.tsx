@@ -49,7 +49,6 @@ export default function HomeScreen() {
       messages={app.messages}
       mcpPresets={app.mcpPresets}
       skills={app.skills}
-      onCliAppsChanged={app.applyCliAppsPayload}
       forkBoundaryMessageCount={app.forkBoundaryMessageCount}
       hasMoreBefore={app.hasMoreBefore}
       loadingOlder={app.loadingOlder}
@@ -62,7 +61,6 @@ export default function HomeScreen() {
       onLoadOlder={app.loadOlder}
       onModelPresetChange={app.changeModelPreset}
       onLogout={app.logout}
-      onMcpPresetsChanged={app.applyMcpPresetsPayload}
       onRenameSession={app.renameSession}
       onRenameProject={app.renameProject}
       onSelectSession={app.selectSession}

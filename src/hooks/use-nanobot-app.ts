@@ -186,8 +186,6 @@ export function useNanobotApp() {
   const mcpPresets = useCapabilitiesStore((s) => s.mcpPresets);
   const skills = useCapabilitiesStore((s) => s.skills);
   const refreshCapabilities = useCapabilitiesStore((s) => s.refreshAll);
-  const applyCliAppsPayload = useCapabilitiesStore((s) => s.applyCliAppsPayload);
-  const applyMcpPresetsPayload = useCapabilitiesStore((s) => s.applyMcpPresetsPayload);
   const resetCapabilities = useCapabilitiesStore((s) => s.resetAll);
 
   const workspaces = useWorkspacesStore((s) => s.workspaces);
@@ -706,8 +704,6 @@ export function useNanobotApp() {
     cliApps,
     mcpPresets,
     skills,
-    applyCliAppsPayload,
-    applyMcpPresetsPayload,
     authenticate,
     retryConnection,
     refreshSessions,

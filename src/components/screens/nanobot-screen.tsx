@@ -79,11 +79,9 @@ import type {
   BootstrapResponse,
   ChatSummary,
   CliAppInfo,
-  CliAppsPayload,
   ConnectionStatus,
   GoalStateWsPayload,
   McpPresetInfo,
-  McpPresetsPayload,
   SidebarStatePayload,
   SendAttachment,
   SendMessageOptions,
@@ -136,7 +134,6 @@ interface NanobotScreenProps {
   onClearError: () => void;
   onDismissStreamError: () => void;
   onWorkspaceScopeChange: (scope: WorkspaceScopePayload) => void;
-  onCliAppsChanged: (payload: CliAppsPayload) => void;
   onSelectSession: (key: string | null) => void;
   onStartNewChat: () => void;
   onStartNewChatInProject: (projectPath: string, projectName: string) => void;
@@ -167,7 +164,6 @@ interface NanobotScreenProps {
   onStopTurn: () => void;
   onRestart: () => void;
   onLogout: () => void;
-  onMcpPresetsChanged: (payload: McpPresetsPayload) => void;
 }
 
 
@@ -819,11 +815,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
         <AppsScreen
           key={`apps:${props.bootstrap.token}`}
           colors={colors}
-          initialCliApps={props.cliApps}
-          initialMcpPresets={props.mcpPresets}
           onBackToChat={() => setUtilityView('chat')}
-          onCliAppsChanged={props.onCliAppsChanged}
-          onMcpPresetsChanged={props.onMcpPresetsChanged}
           onRestart={props.onRestart}
           restartPolicy={runtimePolicy}
         />
