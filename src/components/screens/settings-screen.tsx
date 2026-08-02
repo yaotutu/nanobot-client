@@ -33,7 +33,7 @@ import {
 import type { SettingsPayload } from '@/types/api/settings';
 
 import { AppearanceSettings } from "../settings/appearance-settings";
-import { ChannelsSettings } from "../settings/channels-settings";
+import { ChannelsSettings } from "@/features/channels/components/ChannelsSettings";
 import { ImageSettings } from "../settings/image-settings";
 import { ModelsSettings } from "../settings/models-settings";
 import { OverviewSettings } from "../settings/overview-settings";

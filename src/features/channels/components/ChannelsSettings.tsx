@@ -36,10 +36,10 @@ import {
   channelRunning,
   featureSearchText,
   statusLabel,
-} from "./channels/channels-utils";
-import { ChannelDetail } from "./channels/ChannelDetail";
-import { ChannelMark } from "./channels/ChannelMark";
-import { StatusBadge } from "./channels/channel-controls";
+} from "./channels-utils";
+import { ChannelDetail } from "./ChannelDetail";
+import { ChannelMark } from "./ChannelMark";
+import { StatusBadge } from "./channel-controls";
 
 export function ChannelsSettings({
   colors,
