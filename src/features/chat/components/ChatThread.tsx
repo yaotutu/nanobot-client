@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AgentActivityCluster } from '@/components/agent-activity-cluster';
+import { AgentActivityCluster } from '@/features/chat/components/activity/AgentActivityCluster';
 import { type TurnUnit } from '@/features/chat/activity-timeline';
 import { MessageRow as ExtractedMessageRow } from '@/features/chat/components/messages/MessageRow';
 import { ForkBoundaryDivider as ExtractedForkBoundaryDivider } from '@/features/chat/components/messages/MessageRow.extras';

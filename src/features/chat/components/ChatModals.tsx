@@ -13,11 +13,11 @@ import type {
 import type { Palette } from '@/ui/palette';
 import type { TextInput } from 'react-native';
 
-import { AssistantQuoteModal } from '@/components/modals/assistant-quote-modal';
-import { FilePreviewModal } from '@/components/modals/file-preview-modal';
-import { PromptNavigator } from '@/components/widgets/prompt-navigator';
-import { SessionInfoModal } from '@/components/modals/session-info-modal';
-import { SessionSearchModal } from '@/components/modals/session-search-modal';
+import { AssistantQuoteModal } from '@/features/chat/components/modals/assistant-quote-modal';
+import { FilePreviewModal } from '@/features/chat/components/modals/file-preview-modal';
+import { PromptNavigator } from '@/features/chat/components/widgets/prompt-navigator';
+import { SessionInfoModal } from '@/features/chat/components/modals/session-info-modal';
+import { SessionSearchModal } from '@/features/chat/components/modals/session-search-modal';
 import { SidebarDrawer } from '@/features/sidebar/components/SidebarDrawer';
 
 export interface ChatModalsProps {

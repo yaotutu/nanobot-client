@@ -66,7 +66,7 @@ export default tseslint.config(
     files: ['src/features/**/*.{ts,tsx}'],
     rules: restrictedLayerImports([
       { group: ['@/app', '@/app/*'], message: 'Features cannot depend on Expo Router.' },
-      { group: ['@/components/screens', '@/components/screens/*'], message: 'Features cannot depend on root screen composition.' },
+      { group: ['@/components', '@/components/*'], message: 'Features cannot depend on application shell components.' },
     ]),
   },
   {

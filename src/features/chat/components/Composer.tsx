@@ -23,7 +23,7 @@ import {
 
 import { useLogoFallback } from '@/hooks/use-logo-fallback';
 import { formatVoiceDuration } from '@/features/chat/components/timeline';
-import { WorkspaceAccessMenu, WorkspaceProjectPicker } from '@/components/widgets/workspace-controls';
+import { WorkspaceAccessMenu, WorkspaceProjectPicker } from '@/features/workspaces/components/WorkspaceControls';
 import {
   type CapabilityMentionCandidate,
 } from '@/features/chat/capability-mentions';
@@ -49,9 +49,9 @@ import type {
 import type { Palette } from '@/ui/palette';
 import { logoFallbackUrls } from '@/services/links/provider-brand';
 
-import { ModelPresetMenu } from '@/components/widgets/model-preset-menu';
+import { ModelPresetMenu } from '@/features/chat/components/widgets/model-preset-menu';
 import { VoiceRecorderController } from '@/hooks/use-voice-recorder';
-import { RunGoalStatus } from '@/components/widgets/run-goal-status';
+import { RunGoalStatus } from '@/features/chat/components/widgets/run-goal-status';
 
 interface QueuedPrompt {
   id: string;

@@ -108,7 +108,7 @@ import { AutomationsScreen } from '@/features/automations/components/Automations
 import { AppsScreen } from '@/features/capabilities/components/AppsScreen';
 import { SkillsScreen } from '@/features/skills/components/SkillsScreen';
 import { SettingsScreen } from '@/features/settings/components/SettingsScreen';
-import { StreamErrorNotice } from '../widgets/stream-error-notice';
+import { StreamErrorNotice } from '@/features/chat/components/widgets/stream-error-notice';
 
 interface NanobotScreenProps {
   bootstrap: BootstrapResponse;

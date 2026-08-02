@@ -20,8 +20,8 @@ import type {
 } from '@/types/api/chat';
 import type { Palette } from '@/ui/palette';
 
-import { MarkdownText } from '@/components/widgets/markdown-text';
-import { MessageMediaGallery } from '@/components/widgets/message-media-gallery';
+import { MarkdownText } from '@/features/chat/components/widgets/markdown-text';
+import { MessageMediaGallery } from '@/features/chat/components/widgets/message-media-gallery';
 
 import { MessageCopyButton } from './MessageRow.extras';
 import { UserMessageBody } from './UserMessageBody';

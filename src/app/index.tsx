@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScreen } from '@/features/auth/components/AuthScreen';
-import { NanobotScreen } from '@/components/screens/nanobot-screen';
+import { NanobotScreen } from '@/features/chat/components/NanobotScreen';
 import { useNanobotApp } from '@/hooks/use-nanobot-app';
 
 export default function HomeScreen() {

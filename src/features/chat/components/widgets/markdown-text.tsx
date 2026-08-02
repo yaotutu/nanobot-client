@@ -10,7 +10,7 @@ import Markdown, {
   type RenderRules,
 } from 'react-native-markdown-renderer';
 
-import { CodeBlock } from './code-block';
+import { CodeBlock } from '@/ui/components/CodeBlock';
 import { FileReferenceChip } from './file-reference-chip';
 import {
   fileReferenceFromLink,
