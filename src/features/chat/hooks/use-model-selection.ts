@@ -17,7 +17,14 @@ interface UseModelSelectionOptions {
   turnModelName: string | null;
 }
 
-export function useModelSelection(options: UseModelSelectionOptions) {
+export function useModelSelection({
+  activeSession,
+  bootstrap,
+  modelSettingsRevision,
+  onModelPresetChange,
+  runtimeModelName,
+  turnModelName,
+}: UseModelSelectionOptions) {
   const { t } = useTranslation();
   const [settings, setSettings] = useState<SettingsPayload | null>(null);
   const [localSelection, setLocalSelection] = useState<{
@@ -35,23 +42,23 @@ export function useModelSelection(options: UseModelSelectionOptions) {
         // when settings have never loaded.
       });
     return () => controller.abort();
-  }, [options.bootstrap.api_token, options.modelSettingsRevision]);
+  }, [bootstrap.api_token, modelSettingsRevision]);
 
-  const scopeKey = options.activeSession?.key ?? '__new__';
+  const scopeKey = activeSession?.key ?? '__new__';
   const localPreset = localSelection?.scopeKey === scopeKey
     ? localSelection.preset
     : null;
   const activeModelPreset = localPreset
-    || options.activeSession?.modelPreset?.trim()
+    || activeSession?.modelPreset?.trim()
     || settings?.agent.model_preset?.trim()
     || 'default';
   const activeModelPresetInfo = settings?.model_presets.find(
     (preset) => preset.name === activeModelPreset,
   ) ?? null;
   const modelDisplayLabel = activeModelPresetInfo?.label?.trim()
-    || options.turnModelName?.trim()
-    || options.runtimeModelName?.trim()
-    || options.bootstrap.model_name?.trim()
+    || turnModelName?.trim()
+    || runtimeModelName?.trim()
+    || bootstrap.model_name?.trim()
     || activeModelPreset
     || 'nanobot';
   const orderedModelPresets = useMemo(() => {
@@ -68,7 +75,7 @@ export function useModelSelection(options: UseModelSelectionOptions) {
     const previous = localSelection;
     setLocalSelection({ scopeKey, preset: name });
     try {
-      await options.onModelPresetChange(name);
+      await onModelPresetChange(name);
     } catch (caught) {
       setLocalSelection(previous);
       Alert.alert(
@@ -77,14 +84,14 @@ export function useModelSelection(options: UseModelSelectionOptions) {
       );
       throw caught;
     }
-  }, [localSelection, options, scopeKey, t]);
+  }, [localSelection, onModelPresetChange, scopeKey, t]);
 
   return {
     activeModelPreset,
     changeModelPreset,
     modelDisplayLabel,
     orderedModelPresets,
-    runtimePolicy: resolveRuntimeClientPolicy(settings, options.bootstrap),
+    runtimePolicy: resolveRuntimeClientPolicy(settings, bootstrap),
     settings,
     setSettings,
   };
