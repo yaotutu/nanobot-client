@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { SettingsPalette } from "../../screens/settings-screen";
+import type { SettingsPalette } from "@/features/settings/types";
 
 export function Section({
   colors,

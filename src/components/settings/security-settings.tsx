@@ -18,7 +18,7 @@ import { updateNetworkSafetySettings } from '@/features/settings/api';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type { PairingPayload, SettingsPayload, WebuiDefaultAccessMode } from '@/types/api';
 
-import type { SettingsPalette } from '../screens/settings-screen';
+import type { SettingsPalette } from '@/features/settings/types';
 
 interface SecuritySettingsProps {
   colors: SettingsPalette;

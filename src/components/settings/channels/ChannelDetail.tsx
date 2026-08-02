@@ -41,7 +41,7 @@ import type {
   NanobotFeatureInfo,
   NanobotFeaturesPayload,
 } from "@/types/api";
-import type { SettingsPalette } from "../../screens/settings-screen";
+import type { SettingsPalette } from "@/features/settings/types";
 
 import {
   channelConnectInstruction,

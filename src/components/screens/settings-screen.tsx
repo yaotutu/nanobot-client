@@ -23,8 +23,7 @@ import {
 } from "react-native";
 
 import { fetchSettings, fetchSettingsUsage } from '@/features/settings/api';
- 
-// import { DEFAULT_SERVER_URL } from '@/services/api/config';
+import type { SettingsPalette, SettingsSectionKey } from '@/features/settings/types';
 import type { LocalPreferences } from "@/stores/local-preferences-store";
 import {
   mergeRuntimeMetadata,
@@ -42,29 +41,6 @@ import { RuntimeSettings } from "../settings/runtime-settings";
 import { SecuritySettings } from "../settings/security-settings";
 import { VoiceSettings } from "../settings/voice-settings";
 import { WebSettings } from "../settings/web-settings";
-
-export interface SettingsPalette {
-  background: string;
-  foreground: string;
-  muted: string;
-  subtle: string;
-  border: string;
-  card: string;
-  pressed: string;
-  errorBackground: string;
-  errorText: string;
-}
-
-export type SettingsSectionKey =
-  | "overview"
-  | "appearance"
-  | "models"
-  | "image"
-  | "voice"
-  | "web"
-  | "channels"
-  | "runtime"
-  | "security";
 
 const SECTIONS = [
   { key: "overview" as const, translationKey: "overview", icon: LayoutDashboard },
@@ -88,7 +64,6 @@ interface SettingsScreenProps {
 }
 
 export function SettingsScreen({
-
   colors,
   preferences,
   onChangePreferences,

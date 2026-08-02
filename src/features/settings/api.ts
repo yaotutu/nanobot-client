@@ -1,7 +1,20 @@
 import { apiClient } from '@/services/api/api';
-import type { SettingsPayload } from "@/types/api";import type {
+import type {
+  ApiServicePayload,
+  ImageGenerationSettingsUpdate,
+  ModelConfigurationCreate,
+  ModelConfigurationUpdate,
+  NetworkSafetySettingsUpdate,
+  ProviderCreationUpdate,
+  ProviderModelsPayload,
+  ProviderOAuthCompletionResult,
+  ProviderOAuthLoginResult,
+  ProviderSettingsUpdate,
+  SettingsPayload,
   SettingsUpdate,
+  TranscriptionSettingsUpdate,
   VersionCheckResult,
+  WebSearchSettingsUpdate,
 } from '@/types/api';
 
 export async function fetchSettings(): Promise<SettingsPayload> {
@@ -35,21 +48,6 @@ export async function updateSettings(update: SettingsUpdate): Promise<SettingsPa
   }
   return apiClient.request<SettingsPayload>('/api/settings/update', { method: 'GET', query });
 }
-
-import type {
-  ApiServicePayload,
-  ImageGenerationSettingsUpdate,
-  ModelConfigurationCreate,
-  ModelConfigurationUpdate,
-  NetworkSafetySettingsUpdate,
-  ProviderCreationUpdate,
-  ProviderModelsPayload,
-  ProviderOAuthCompletionResult,
-  ProviderOAuthLoginResult,
-  ProviderSettingsUpdate,
-  TranscriptionSettingsUpdate,
-  WebSearchSettingsUpdate,
-} from '@/types/api';
 
 export async function createModelConfiguration(
   configuration: ModelConfigurationCreate,

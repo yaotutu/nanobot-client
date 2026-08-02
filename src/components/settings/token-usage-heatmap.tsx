@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import type { SettingsPalette } from '../screens/settings-screen';
+import type { SettingsPalette } from '@/features/settings/types';
 import type { SettingsPayload, UsageDayInfo } from '@/types/api';
 
 type TokenUsagePayload = NonNullable<SettingsPayload['usage']>;

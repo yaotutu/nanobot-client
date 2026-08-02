@@ -6,7 +6,7 @@ import { updateTranscriptionSettings } from '@/features/settings/api';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type { SettingsPayload, TranscriptionSettingsUpdate } from '@/types/api';
 
-import type { SettingsPalette, SettingsSectionKey } from '../screens/settings-screen';
+import type { SettingsPalette, SettingsSectionKey } from '@/features/settings/types';
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPage, SettingsPicker, SettingsRow, SettingsSection, SettingsSwitch, StatusPill } from './settings-controls';
 
 const FALLBACK: NonNullable<SettingsPayload['transcription']> = {

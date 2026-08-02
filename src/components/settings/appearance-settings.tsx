@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supportedLocales, type SupportedLocale } from '@/i18n/config';
 import type { LocalPreferences } from '@/stores/local-preferences-store';
 
-import type { SettingsPalette } from '../screens/settings-screen';
+import type { SettingsPalette } from '@/features/settings/types';
 import {
   SegmentedControl,
   SettingsPage,

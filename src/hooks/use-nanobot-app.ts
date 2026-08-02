@@ -7,7 +7,6 @@ import { useChatStore } from '@/features/chat/store';
 import { useConnectionStore } from '@/features/connection/store';
 import { useSidebarStore, selectSessions, selectSidebarState } from '@/features/sidebar/store';
 import { useCapabilitiesStore } from '@/features/capabilities/store';
-import { useSettingsStore } from '@/features/settings/store';
 import { useWorkspacesStore } from '@/features/workspaces/store';
 
 import type {
@@ -24,7 +23,6 @@ import type {
 } from '@/types/api';
 
 import { fetchThread } from '@/features/chat/api';
-import { listSlashCommands } from '@/features/capabilities/api';
 import { createNanobotSocket, type NanobotSocket, type MessageSendResult as SendMessageResult } from "@/features/connection/socket-transport";
 import { deriveWsUrl } from "@/services/api/bootstrap";
 import { DEFAULT_SERVER_URL as SERVER_URL } from "@/services/api/config";
@@ -193,6 +191,7 @@ export function useNanobotApp() {
   const resetCapabilities = useCapabilitiesStore((s) => s.resetAll);
 
   const workspaces = useWorkspacesStore((s) => s.workspaces);
+  const workspaceError = useWorkspacesStore((s) => s.error);
   const refreshWorkspacesAction = useWorkspacesStore((s) => s.refresh);
 
   // ---- 派生 ----
@@ -262,8 +261,6 @@ export function useNanobotApp() {
     const token = bootstrap.token;
     const wsPath = bootstrap.ws_path;
     const wsUrl = bootstrap.ws_url ?? null;
-    const baseUrl = (typeof window !== 'undefined' && (window as { __NANOBOT_BASE_URL__?: string }).__NANOBOT_BASE_URL__) || '';
-    void baseUrl; // baseUrl 由 socket 内部从 default 配置派生
     const derivedUrl = deriveWsUrl(SERVER_URL, wsPath, token, wsUrl);
     const socket = createNanobotSocket({
       url: derivedUrl,
@@ -369,7 +366,6 @@ export function useNanobotApp() {
     void refreshSidebarState();
     void refreshCapabilities();
     void refreshWorkspacesAction();
-    void listSlashCommands().catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, bootstrap?.token]);
 
@@ -674,7 +670,6 @@ export function useNanobotApp() {
     resetCapabilities();
     void useSidebarStore.getState().resetAll();
     void useWorkspacesStore.getState().resetAll();
-    void useSettingsStore.getState().resetAll();
     await logout();
   }, [logout, resetAllChat, resetCapabilities]);
 
@@ -694,7 +689,7 @@ export function useNanobotApp() {
     activeSession,
     activeWorkspaceScope,
     workspaces,
-    workspaceError: null,
+    workspaceError,
     messages,
     threadLoading,
     loadingOlder,

@@ -6,7 +6,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { fetchProviderModels } from '@/features/settings/api';
 import type { ProviderAdvancedField, ProviderModelsPayload, SettingsPayload } from '@/types/api';
 
-import type { SettingsPalette } from '../../screens/settings-screen';
+import type { SettingsPalette } from '@/features/settings/types';
 import { SegmentedControl, SettingsInput, SettingsPicker } from '../settings-controls';
 import { FieldLabel, IconButton } from './models-controls';
 import type { ProviderApiType, ProviderForm } from './models-utils';

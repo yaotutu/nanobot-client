@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
+import i18n from '@/i18n';
 import type { WorkspacesPayload } from '@/types/api';
 
 import { fetchWorkspaces } from './api';
@@ -29,8 +30,11 @@ export const useWorkspacesStore = create<WorkspacesStore>()(
       try {
         const workspaces = await fetchWorkspaces();
         set({ workspaces, loading: false, error: null });
-      } catch {
-        set({ loading: false, error: null, workspaces: null });
+      } catch (caught) {
+        const error = caught instanceof Error
+          ? caught.message
+          : i18n.t('app.error.gatewayHint');
+        set({ loading: false, error });
       }
     },
 

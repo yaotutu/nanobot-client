@@ -1,7 +1,7 @@
 import { Bot } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { SettingsPalette } from '../../screens/settings-screen';
+import type { SettingsPalette } from '@/features/settings/types';
 
 export function ProviderMark({ colors, label, showBrandLogos }: {
   colors: SettingsPalette;
