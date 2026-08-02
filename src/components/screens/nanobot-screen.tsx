@@ -105,7 +105,7 @@ import type {
 } from '@/types/api/workspaces';
 
 import { AutomationsScreen } from '../automations/AutomationsScreen';
-import { AppsScreen } from '../apps/AppsScreen';
+import { AppsScreen } from '@/features/capabilities/components/AppsScreen';
 import { SkillsScreen } from '../skills-screen';
 import { SettingsScreen } from './settings-screen';
 import { StreamErrorNotice } from '../widgets/stream-error-notice';
