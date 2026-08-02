@@ -7,8 +7,8 @@ import type {
   McpPresetInfo,
   McpPresetsPayload,
   SkillSummary,
-  SlashCommand,
-} from '@/types/api';
+} from '@/types/api/capabilities';
+import type { SlashCommand } from '@/types/api/chat';
 
 import {
   fetchInstalledCliApps,

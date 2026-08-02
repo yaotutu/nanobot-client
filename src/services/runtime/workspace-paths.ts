@@ -1,4 +1,7 @@
-import type { WorkspaceAccessMode, WorkspaceScopePayload } from '@/types/api';
+import type {
+  WorkspaceAccessMode,
+  WorkspaceScopePayload,
+} from '@/types/api/workspaces';
 
 export function scopeWithAccessMode(
   scope: WorkspaceScopePayload,

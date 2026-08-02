@@ -37,7 +37,7 @@ import type {
   NanobotChannelInstanceInfo,
   NanobotFeatureInfo,
   NanobotFeaturesPayload,
-} from "@/types/api";
+} from '@/types/api/channels';
 import type { SettingsPalette } from "@/features/settings/types";
 
 import {

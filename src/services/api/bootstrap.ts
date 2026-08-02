@@ -1,5 +1,5 @@
 import i18n from '@/i18n';
-import type { BootstrapResponse } from "@/types/api";
+import type { BootstrapResponse } from '@/types/api/runtime';
 export type { BootstrapResponse };
 
 export class BootstrapAuthRequiredError extends Error {

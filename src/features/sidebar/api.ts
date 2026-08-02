@@ -1,10 +1,10 @@
 import { apiClient } from '@/services/api/api';
+import type { AutomationsPayload } from '@/types/api/automations';
+import type { SessionDeleteResult } from '@/types/api/chat';
 import type {
-  AutomationsPayload,
   ChatSummary,
-  SessionDeleteResult,
   SidebarStatePayload,
-} from '@/types/api';
+} from '@/types/api/sidebar';
 
 interface SessionRow {
   key: string;
@@ -14,7 +14,7 @@ interface SessionRow {
   preview?: string;
   model_preset?: string | null;
   run_started_at?: number | null;
-  workspace_scope?: import('@/types/api').WorkspaceScopePayload | null;
+  workspace_scope?: import('@/types/api/workspaces').WorkspaceScopePayload | null;
 }
 
 function splitKey(key: string): { channel: string; chatId: string } {

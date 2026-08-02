@@ -26,7 +26,7 @@ import type {
   AutomationsPayload,
   AutomationUpdatePayload,
   SessionAutomationJob,
-} from '@/types/api';
+} from '@/types/api/automations';
 import type { Palette } from '@/ui/palette';
 
 import { AutomationListItem } from './AutomationListItem';

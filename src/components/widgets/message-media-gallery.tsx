@@ -17,7 +17,10 @@ import {
 } from 'react-native';
 
 import { toMediaAttachment } from '@/services/links/media';
-import type { UIImage, UIMediaAttachment } from '@/types/api';
+import type {
+  UIImage,
+  UIMediaAttachment,
+} from '@/types/api/chat';
 
 interface MediaPalette {
   background: string;

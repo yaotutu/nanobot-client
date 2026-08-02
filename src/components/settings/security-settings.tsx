@@ -16,7 +16,9 @@ import {
 import { fetchPairingRequests, runPairingAction } from '@/features/channels/api';
 import { updateNetworkSafetySettings } from '@/features/settings/api';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
-import type { PairingPayload, SettingsPayload, WebuiDefaultAccessMode } from '@/types/api';
+import type { PairingPayload } from '@/types/api/channels';
+import type { SettingsPayload } from '@/types/api/settings';
+import type { WebuiDefaultAccessMode } from '@/types/api/workspaces';
 
 import type { SettingsPalette } from '@/features/settings/types';
 

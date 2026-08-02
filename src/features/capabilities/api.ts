@@ -3,9 +3,11 @@ import type {
   CliAppsPayload,
   McpPresetsPayload,
   SkillsPayload,
+} from '@/types/api/capabilities';
+import type {
   SlashCommand,
   SlashCommandLifecycle,
-} from '@/types/api';
+} from '@/types/api/chat';
 
 const SLASH_COMMAND_LIFECYCLES = new Set<SlashCommandLifecycle>([
   'side_channel',
@@ -113,8 +115,8 @@ export async function fetchSkills(): Promise<SkillsPayload> {
   return apiClient.get<SkillsPayload>('/api/webui/skills');
 }
 
-export async function fetchSkillDetail(name: string): Promise<import('@/types/api').SkillDetail> {
-  return apiClient.get<import('@/types/api').SkillDetail>(
+export async function fetchSkillDetail(name: string): Promise<import('@/types/api/capabilities').SkillDetail> {
+  return apiClient.get<import('@/types/api/capabilities').SkillDetail>(
     `/api/webui/skills/${encodeURIComponent(name)}`,
   );
 }

@@ -25,7 +25,11 @@ import { isReasoningOnlyAssistant } from '@/features/chat/activity-timeline';
 import { coalesceActivityMessages } from '@/features/chat/activity-message-model';
 import type { FileEditDisplayMode, LocalActivityMode } from '@/stores/local-preferences-store';
 import type { Palette } from '@/ui/palette';
-import type { CliAppInfo, McpPresetInfo, UIMessage } from '@/types/api';
+import type {
+  CliAppInfo,
+  McpPresetInfo,
+} from '@/types/api/capabilities';
+import type { UIMessage } from '@/types/api/chat';
 
 interface AgentActivityClusterProps {
   cliApps?: CliAppInfo[];

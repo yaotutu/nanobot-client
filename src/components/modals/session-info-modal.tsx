@@ -15,7 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatDateTime, relativeTimeFromMs, safeNumberFormat } from '@/services/text/format';
-import type { SessionAutomationJob } from '@/types/api';
+import type { SessionAutomationJob } from '@/types/api/automations';
 
 const AUTOMATIONS_REFRESH_MS = 3_000;
 

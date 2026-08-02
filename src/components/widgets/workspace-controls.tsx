@@ -22,7 +22,7 @@ import type {
   WorkspaceAccessMode,
   WorkspaceScopePayload,
   WorkspacesPayload,
-} from '@/types/api';
+} from '@/types/api/workspaces';
 
 interface WorkspaceColors {
   background: string;

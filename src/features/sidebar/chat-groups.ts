@@ -1,6 +1,9 @@
 import { sessionTitle } from '@/services/text/format';
 import { normalizeWorkspacePath, projectNameFromPath, sameWorkspacePath } from '@/services/runtime/workspace-paths';
-import type { ChatSummary, SidebarSortMode } from '@/types/api';
+import type {
+  ChatSummary,
+  SidebarSortMode,
+} from '@/types/api/sidebar';
 
 export const COLLAPSED_CHATS_VISIBLE_COUNT = 8;
 

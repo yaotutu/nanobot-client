@@ -3,7 +3,7 @@ import type {
   FetchThreadOptions,
   FilePreviewPayload,
   WebuiThreadPersistedPayload,
-} from '@/types/api';
+} from '@/types/api/chat';
 
 export async function fetchThread(
   key: string,

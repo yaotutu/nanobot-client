@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import type { SessionAutomationJob } from '@/types/api';
+import type { SessionAutomationJob } from '@/types/api/automations';
 import type { Palette } from '@/ui/palette';
 
 import type { AutomationAction } from './automations-utils';

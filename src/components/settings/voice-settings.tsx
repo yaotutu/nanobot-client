@@ -4,7 +4,10 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { updateTranscriptionSettings } from '@/features/settings/api';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
-import type { SettingsPayload, TranscriptionSettingsUpdate } from '@/types/api';
+import type {
+  SettingsPayload,
+  TranscriptionSettingsUpdate,
+} from '@/types/api/settings';
 
 import type { SettingsPalette, SettingsSectionKey } from '@/features/settings/types';
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPage, SettingsPicker, SettingsRow, SettingsSection, SettingsSwitch, StatusPill } from './settings-controls';

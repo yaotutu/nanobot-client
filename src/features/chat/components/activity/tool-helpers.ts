@@ -32,10 +32,12 @@ import type { Palette } from '@/ui/palette';
 import type {
   CliAppInfo,
   McpPresetInfo,
+} from '@/types/api/capabilities';
+import type {
   ToolProgressEvent,
   UIFileEdit,
   UIMessage,
-} from '@/types/api';
+} from '@/types/api/chat';
 
 export type ToolStatus = 'running' | 'done' | 'error';
 

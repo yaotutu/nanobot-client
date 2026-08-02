@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { groupSessions } from '@/features/sidebar/chat-groups';
-import type { ChatSummary, SidebarStatePayload } from '@/types/api';
+import type {
+  ChatSummary,
+  SidebarStatePayload,
+} from '@/types/api/sidebar';
 
 const labels = {
   pinned: '置顶',

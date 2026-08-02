@@ -30,7 +30,7 @@ import {
   resolveRuntimeClientPolicy,
   type RuntimeMetadata,
 } from "@/services/runtime/runtime-capabilities";
-import type { SettingsPayload } from "@/types/api";
+import type { SettingsPayload } from '@/types/api/settings';
 
 import { AppearanceSettings } from "../settings/appearance-settings";
 import { ChannelsSettings } from "../settings/channels-settings";

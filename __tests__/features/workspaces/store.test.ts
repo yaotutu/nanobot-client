@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fetchWorkspaces } from '@/features/workspaces/api';
 import { useWorkspacesStore } from '@/features/workspaces/store';
-import type { WorkspacesPayload } from '@/types/api';
+import type { WorkspacesPayload } from '@/types/api/workspaces';
 
 vi.mock('@/features/workspaces/api', () => ({
   fetchWorkspaces: vi.fn(),

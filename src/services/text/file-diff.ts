@@ -1,4 +1,4 @@
-import type { UIFileDiff } from '@/types/api';
+import type { UIFileDiff } from '@/types/api/chat';
 
 export interface RenderableFileDiffLine {
   kind: 'context' | 'add' | 'delete';

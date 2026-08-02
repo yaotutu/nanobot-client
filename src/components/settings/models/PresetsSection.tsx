@@ -17,7 +17,7 @@ import {
   updateModelCallOrder,
   updateModelConfiguration,
 } from '@/features/settings/api';
-import type { ModelPresetInfo } from '@/types/api';
+import type { ModelPresetInfo } from '@/types/api/settings';
 
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPicker, SettingsSection, StatusPill } from '../settings-controls';
 import { ModelCatalog } from './ModelCatalog';

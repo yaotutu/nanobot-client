@@ -1,5 +1,5 @@
 import type { TurnUnit } from '@/features/chat/activity-timeline';
-import type { UIMessage } from '@/types/api';
+import type { UIMessage } from '@/types/api/chat';
 
 /**
  * Pure helpers for computing render metadata from a chat timeline.

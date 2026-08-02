@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import type { GoalStateWsPayload } from '@/types/api';
+import type { GoalStateWsPayload } from '@/types/api/runtime';
 
 import { MarkdownText } from './markdown-text';
 

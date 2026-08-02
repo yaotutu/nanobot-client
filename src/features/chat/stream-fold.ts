@@ -7,7 +7,12 @@ import {
   toolTraceLinesFromEvents,
   canonicalToolTrace,
 } from '@/features/chat/tool-traces';
-import type { InboundEvent, ToolProgressEvent, UIFileEdit, UIMessage } from '@/types/api';
+import type {
+  InboundEvent,
+  ToolProgressEvent,
+  UIFileEdit,
+  UIMessage,
+} from '@/types/api/chat';
 
 export const STREAM_END_IDLE_DELAY_MS = 1_000;
 

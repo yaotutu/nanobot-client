@@ -1,4 +1,4 @@
-import type { UIMessage } from '@/types/api';
+import type { UIMessage } from '@/types/api/chat';
 
 export interface PromptAnchor {
   answerPreview: string;

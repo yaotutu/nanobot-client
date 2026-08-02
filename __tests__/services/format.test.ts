@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { sessionTitle, visibleSessionPreview } from '@/services/text/format';
-import type { ChatSummary } from '@/types/api';
+import type { ChatSummary } from '@/types/api/sidebar';
 
 describe('sessionTitle', () => {
   it('returns override title when present', () => {

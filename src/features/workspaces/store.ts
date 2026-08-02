@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
 import i18n from '@/i18n';
-import type { WorkspacesPayload } from '@/types/api';
+import type { WorkspacesPayload } from '@/types/api/workspaces';
 
 import { fetchWorkspaces } from './api';
 

@@ -1,5 +1,5 @@
 import i18n, { currentLocale } from '@/i18n';
-import type { ChatSummary } from '@/types/api';
+import type { ChatSummary } from '@/types/api/sidebar';
 
 const LOW_INFORMATION_TITLE_PREVIEWS = new Set([
   'hi',

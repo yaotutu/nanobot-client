@@ -1,13 +1,15 @@
 import { type RefObject } from 'react';
 
+import type { SessionAutomationJob } from '@/types/api/automations';
+import type {
+  SessionDeleteResult,
+  UIMessage,
+} from '@/types/api/chat';
+import type { ConnectionStatus } from '@/types/api/runtime';
 import type {
   ChatSummary,
-  ConnectionStatus,
-  SessionAutomationJob,
-  SessionDeleteResult,
   SidebarStatePayload,
-  UIMessage,
-} from '@/types/api';
+} from '@/types/api/sidebar';
 import type { Palette } from '@/ui/palette';
 import type { TextInput } from 'react-native';
 

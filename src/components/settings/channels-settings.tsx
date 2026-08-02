@@ -27,7 +27,7 @@ import { currentLocale } from "@/i18n";
 import type {
   NanobotFeatureInfo,
   NanobotFeaturesPayload,
-} from "@/types/api";
+} from '@/types/api/channels';
 import type { SettingsPalette } from "@/features/settings/types";
 
 import {

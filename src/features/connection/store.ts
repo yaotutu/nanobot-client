@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
-import type { ConnectionStatus } from '@/types/api';
+import type { ConnectionStatus } from '@/types/api/runtime';
 
 interface ConnectionState {
   status: ConnectionStatus;

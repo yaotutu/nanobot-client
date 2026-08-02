@@ -6,7 +6,7 @@ import type {
   ChannelPresentation,
   ChannelSetupContractField,
   NanobotFeatureInfo,
-} from "@/types/api";
+} from '@/types/api/channels';
 
 const NANOBOT_DOCS_URL = "https://nanobot.wiki/docs/latest";
 const CHAT_APPS_DOCS_URL = `${NANOBOT_DOCS_URL}/getting-started/chat-apps`;

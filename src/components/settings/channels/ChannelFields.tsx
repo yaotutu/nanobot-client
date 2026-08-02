@@ -10,7 +10,7 @@ import {
 } from "react-native";
 
 import { channelCopy } from "./channels-utils";
-import type { ChannelConfigField } from "@/types/api";
+import type { ChannelConfigField } from '@/types/api/channels';
 import type { SettingsPalette } from "@/features/settings/types";
 
 export function ChannelFields({

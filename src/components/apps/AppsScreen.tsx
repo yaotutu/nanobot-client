@@ -28,7 +28,7 @@ import type {
   CliAppsPayload,
   McpPresetInfo,
   McpPresetsPayload,
-} from '@/types/api';
+} from '@/types/api/capabilities';
 import type { Palette } from '@/ui/palette';
 
 import { CliAppRow } from './CliAppRow';

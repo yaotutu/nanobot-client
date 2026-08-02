@@ -1,4 +1,7 @@
-import type { SlashCommand, SlashCommandLifecycle } from '@/types/api';
+import type {
+  SlashCommand,
+  SlashCommandLifecycle,
+} from '@/types/api/chat';
 
 export type ResolvedSlashCommandLifecycle = Exclude<
   SlashCommandLifecycle,

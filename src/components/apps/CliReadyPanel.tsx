@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { CliAppInfo } from '@/types/api';
+import type { CliAppInfo } from '@/types/api/capabilities';
 import type { Palette } from '@/ui/palette';
 
 import { ToolLogo } from './AppsShared';

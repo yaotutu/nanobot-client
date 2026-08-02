@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 
 import { sessionTitle, visibleSessionPreview } from '@/services/text/format';
-import type { ChatSummary } from '@/types/api';
+import type { ChatSummary } from '@/types/api/sidebar';
 
 interface SessionSearchColors {
   background: string;

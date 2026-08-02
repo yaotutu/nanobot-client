@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import type { CliAppInfo } from '@/types/api';
+import type { CliAppInfo } from '@/types/api/capabilities';
 import type { Palette } from '@/ui/palette';
 
 import type { AppAction } from './apps-utils';

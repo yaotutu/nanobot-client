@@ -15,7 +15,7 @@ import type {
   TranscriptionSettingsUpdate,
   VersionCheckResult,
   WebSearchSettingsUpdate,
-} from '@/types/api';
+} from '@/types/api/settings';
 
 export async function fetchSettings(): Promise<SettingsPayload> {
   return apiClient.get<SettingsPayload>('/api/settings');

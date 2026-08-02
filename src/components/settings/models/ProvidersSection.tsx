@@ -24,7 +24,7 @@ import type {
   ProviderOAuthAuthorizationRequired,
   ProviderSettingsInfo,
   ProviderSettingsUpdate,
-} from '@/types/api';
+} from '@/types/api/settings';
 
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsSection, StatusPill } from '../settings-controls';
 import { AdvancedProviderFields } from './ModelCatalog';

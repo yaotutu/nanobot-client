@@ -6,7 +6,7 @@ import type {
   ProviderOAuthPending,
   ProviderSettingsInfo,
   SettingsPayload,
-} from '@/types/api';
+} from '@/types/api/settings';
 
 import type { SettingsPalette } from '@/features/settings/types';
 

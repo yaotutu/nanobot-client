@@ -3,13 +3,13 @@ import { subscribeWithSelector } from 'zustand/middleware';
 
 import i18n from '@/i18n';
 import type {
-  ChatSummary,
-  GoalStateWsPayload,
   InboundEvent,
   StreamError,
   UIMessage,
-  WorkspaceScopePayload,
-} from '@/types/api';
+} from '@/types/api/chat';
+import type { GoalStateWsPayload } from '@/types/api/runtime';
+import type { ChatSummary } from '@/types/api/sidebar';
+import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 
 import { normalizeWorkspaceScope } from '@/services/runtime/workspace-paths';
 

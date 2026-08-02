@@ -6,7 +6,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { updateWebSearchSettings } from '@/features/settings/api';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
-import type { SettingsPayload, WebSearchProviderInfo, WebSearchSettingsUpdate } from '@/types/api';
+import type {
+  SettingsPayload,
+  WebSearchProviderInfo,
+  WebSearchSettingsUpdate,
+} from '@/types/api/settings';
 
 import type { SettingsPalette } from '@/features/settings/types';
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPage, SettingsPicker, SettingsRow, SettingsSection, SettingsSwitch, StatusPill } from './settings-controls';

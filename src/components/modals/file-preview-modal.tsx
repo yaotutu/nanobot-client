@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiError } from '@/services/api/api';
 import { fetchFilePreview } from '@/features/chat/api';
 import i18n from '@/i18n';
-import type { FilePreviewPayload } from '@/types/api';
+import type { FilePreviewPayload } from '@/types/api/chat';
 
 interface FilePreviewPalette {
   background: string;

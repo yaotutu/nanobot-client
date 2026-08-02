@@ -1,7 +1,7 @@
 import type {
   CliAppInfo,
   McpPresetInfo,
-} from '@/types/api';
+} from '@/types/api/capabilities';
 
 export type AppsFilter = 'ready' | 'cli' | 'mcp';
 export type AppAction = 'install' | 'update' | 'uninstall' | 'test';

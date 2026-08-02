@@ -10,7 +10,7 @@ import {
 } from "react-native";
 
 import type { SettingsPalette } from "@/features/settings/types";
-import type { NanobotChannelInstanceInfo } from "@/types/api";
+import type { NanobotChannelInstanceInfo } from '@/types/api/channels';
 
 import { ActionButton, Section, StatusBadge } from "./channel-controls";
 import {

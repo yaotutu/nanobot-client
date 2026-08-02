@@ -27,7 +27,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { fetchSkillDetail, fetchSkills } from '@/features/skills/api';
-import type { SkillDetail, SkillSummary } from '@/types/api';
+import type {
+  SkillDetail,
+  SkillSummary,
+} from '@/types/api/capabilities';
 import type { Palette } from '@/ui/palette';
 
 

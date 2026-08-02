@@ -1,5 +1,5 @@
 import { canonicalToolTrace, formatToolCallTrace } from '@/features/chat/tool-traces';
-import type { ToolProgressEvent } from '@/types/api';
+import type { ToolProgressEvent } from '@/types/api/chat';
 
 import i18n from '@/i18n';
 import { redactActivityText, safeActivityDetail } from '@/services/text/log-redaction';

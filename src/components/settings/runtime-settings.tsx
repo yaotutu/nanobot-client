@@ -33,7 +33,11 @@ import {
   setNanobotFeatureEnabled,
 } from '@/features/channels/api';
 import { restartRequirementDescription, type RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
-import type { ApiServicePayload, NanobotFeatureInfo, SettingsPayload } from '@/types/api';
+import type { NanobotFeatureInfo } from '@/types/api/channels';
+import type {
+  ApiServicePayload,
+  SettingsPayload,
+} from '@/types/api/settings';
 
 import type { SettingsPalette } from '@/features/settings/types';
 import {

@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import type { McpPresetInfo } from '@/types/api';
+import type { McpPresetInfo } from '@/types/api/capabilities';
 import type { Palette } from '@/ui/palette';
 
 import type { McpAction } from './apps-utils';

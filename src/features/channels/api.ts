@@ -5,7 +5,7 @@ import type {
   ChannelValidationPayload,
   NanobotFeaturesPayload,
   PairingPayload,
-} from '@/types/api';
+} from '@/types/api/channels';
 
 export async function fetchNanobotFeatures(): Promise<NanobotFeaturesPayload> {
   return apiClient.get<NanobotFeaturesPayload>('/api/settings/nanobot-features');

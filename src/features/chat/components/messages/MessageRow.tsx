@@ -13,9 +13,11 @@ import { formatDateTime } from '@/services/text/format';
 import type {
   CliAppInfo,
   McpPresetInfo,
+} from '@/types/api/capabilities';
+import type {
   SlashCommand,
   UIMessage,
-} from '@/types/api';
+} from '@/types/api/chat';
 import type { Palette } from '@/ui/palette';
 
 import { MarkdownText } from '@/components/widgets/markdown-text';

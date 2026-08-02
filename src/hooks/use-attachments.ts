@@ -9,8 +9,8 @@ import type {
   ComposerAttachment,
   OutboundMedia,
   SendAttachment,
-  WebUIIngressLimits,
-} from '@/types/api';
+} from '@/types/api/chat';
+import type { WebUIIngressLimits } from '@/types/api/runtime';
 
 const DEFAULT_MAX_COUNT = 4;
 const DEFAULT_MAX_FILE_BYTES = 6 * 1024 * 1024;

@@ -1,4 +1,7 @@
-import type { RuntimeCapabilities, RuntimeSurface } from '@/types/api';
+import type {
+  RuntimeCapabilities,
+  RuntimeSurface,
+} from '@/types/api/runtime';
 
 import i18n from '@/i18n';
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createStreamFoldState, finalizeStreamedTurn, foldStreamEvent } from '@/features/chat/stream-fold';
-import type { UIMessage } from '@/types/api';
+import type { UIMessage } from '@/types/api/chat';
 
 function emptyMessages(): UIMessage[] {
   return [];

@@ -36,14 +36,16 @@ import {
 
 import type {
   ComposerAttachment,
-  GoalStateWsPayload,
   SendAttachment,
   SendMessageOptions,
-  SettingsPayload,
   SlashCommand,
+} from '@/types/api/chat';
+import type { GoalStateWsPayload } from '@/types/api/runtime';
+import type { SettingsPayload } from '@/types/api/settings';
+import type {
   WorkspaceScopePayload,
   WorkspacesPayload,
-} from '@/types/api';
+} from '@/types/api/workspaces';
 import type { Palette } from '@/ui/palette';
 import { logoFallbackUrls } from '@/services/links/provider-brand';
 

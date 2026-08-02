@@ -75,26 +75,34 @@ import {
   skillMentionQuery,
   type SkillMentionCandidate,
 } from '@/features/chat/skill-mentions';
+import type { SessionAutomationJob } from '@/types/api/automations';
 import type {
-  BootstrapResponse,
-  ChatSummary,
   CliAppInfo,
-  ConnectionStatus,
-  GoalStateWsPayload,
   McpPresetInfo,
-  SidebarStatePayload,
+  SkillSummary,
+} from '@/types/api/capabilities';
+import type {
   SendAttachment,
   SendMessageOptions,
-  SessionAutomationJob,
   SessionDeleteResult,
-  SettingsPayload,
   SlashCommand,
-  SkillSummary,
   StreamError,
   UIMessage,
+} from '@/types/api/chat';
+import type {
+  BootstrapResponse,
+  ConnectionStatus,
+  GoalStateWsPayload,
+} from '@/types/api/runtime';
+import type { SettingsPayload } from '@/types/api/settings';
+import type {
+  ChatSummary,
+  SidebarStatePayload,
+} from '@/types/api/sidebar';
+import type {
   WorkspaceScopePayload,
   WorkspacesPayload,
-} from '@/types/api';
+} from '@/types/api/workspaces';
 
 import { AutomationsScreen } from '../automations/AutomationsScreen';
 import { AppsScreen } from '../apps/AppsScreen';

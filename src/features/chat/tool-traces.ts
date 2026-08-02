@@ -1,4 +1,4 @@
-import type { ToolProgressEvent } from '@/types/api';
+import type { ToolProgressEvent } from '@/types/api/chat';
 
 export function formatToolCallTrace(call: unknown): string | null {
   if (!call || typeof call !== "object") return null;

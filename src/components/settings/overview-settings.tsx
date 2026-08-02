@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { checkVersion } from '@/features/settings/api';
-import type { SettingsPayload } from '@/types/api';
+import type { SettingsPayload } from '@/types/api/settings';
 
 import type { SettingsPalette, SettingsSectionKey } from '@/features/settings/types';
 import { SettingsButton, SettingsPage, SettingsSection } from './settings-controls';

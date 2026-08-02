@@ -9,18 +9,14 @@ import { useSidebarStore, selectSessions, selectSidebarState } from '@/features/
 import { useCapabilitiesStore } from '@/features/capabilities/store';
 import { useWorkspacesStore } from '@/features/workspaces/store';
 
+import type { SessionAutomationJob } from '@/types/api/automations';
 import type {
-  SessionAutomationJob,
   SessionDeleteResult,
-
   SendAttachment,
   SendMessageOptions,
-
   UIMessage,
-
-  WorkspaceScopePayload,
-
-} from '@/types/api';
+} from '@/types/api/chat';
+import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 
 import { fetchThread } from '@/features/chat/api';
 import type { MessageSendResult as SendMessageResult } from '@/features/connection/socket-transport';

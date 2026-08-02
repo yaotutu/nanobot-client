@@ -1,4 +1,4 @@
-import type { SkillSummary } from '@/types/api';
+import type { SkillSummary } from '@/types/api/capabilities';
 
 export interface SkillMentionQuery {
   query: string;

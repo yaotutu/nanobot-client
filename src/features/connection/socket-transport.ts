@@ -12,14 +12,14 @@
  * 迁到 `features/chat/store.ts`。
  */
 import type {
-  ConnectionStatus,
   InboundEvent,
   OutboundMedia,
   StreamError,
   UICliAppAttachment,
   UIMcpPresetAttachment,
-  WorkspaceScopePayload,
-} from '@/types/api';
+} from '@/types/api/chat';
+import type { ConnectionStatus } from '@/types/api/runtime';
+import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 
 export type StatusListener = (status: ConnectionStatus) => void;
 export type EventListener = (event: InboundEvent) => void;

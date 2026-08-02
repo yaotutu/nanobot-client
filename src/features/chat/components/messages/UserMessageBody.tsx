@@ -4,9 +4,11 @@ import { matchingSlashCommand } from '@/features/chat/slash-command';
 import type {
   CliAppInfo,
   McpPresetInfo,
+} from '@/types/api/capabilities';
+import type {
   SlashCommand,
   UIMessage,
-} from '@/types/api';
+} from '@/types/api/chat';
 import type { Palette } from '@/ui/palette';
 
 interface UserMessageBodyProps {

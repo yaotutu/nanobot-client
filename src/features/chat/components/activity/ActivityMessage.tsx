@@ -29,7 +29,11 @@ import { isReasoningOnlyAssistant } from '@/features/chat/activity-timeline';
 import { useLogoFallback } from '@/hooks/use-logo-fallback';
 import { browserSafeFaviconUrls } from '@/services/links/web-url';
 import type { Palette } from '@/ui/palette';
-import type { CliAppInfo, McpPresetInfo, UIMessage } from '@/types/api';
+import type {
+  CliAppInfo,
+  McpPresetInfo,
+} from '@/types/api/capabilities';
+import type { UIMessage } from '@/types/api/chat';
 
 import {
   type CapabilityBrand,

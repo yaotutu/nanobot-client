@@ -7,7 +7,7 @@ import type {
   ChannelConnectPayload,
   NanobotChannelInstanceInfo,
   NanobotFeatureInfo,
-} from "@/types/api";
+} from '@/types/api/channels';
 
 export type ChannelFilter = "all" | "on" | "off";
 

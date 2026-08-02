@@ -4,7 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fetchProviderModels } from '@/features/settings/api';
-import type { ProviderAdvancedField, ProviderModelsPayload, SettingsPayload } from '@/types/api';
+import type {
+  ProviderAdvancedField,
+  ProviderModelsPayload,
+  SettingsPayload,
+} from '@/types/api/settings';
 
 import type { SettingsPalette } from '@/features/settings/types';
 import { SegmentedControl, SettingsInput, SettingsPicker } from '../settings-controls';

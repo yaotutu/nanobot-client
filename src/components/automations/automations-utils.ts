@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next';
 
 import { relativeTimeFromMs, safeDateTimeFormat, safeNumberFormat } from '@/services/text/format';
-import type { SessionAutomationJob } from '@/types/api';
+import type { SessionAutomationJob } from '@/types/api/automations';
 
 export type AutomationFilter = 'all' | 'active' | 'paused' | 'failed' | 'system';
 export type AutomationSort = 'next' | 'last' | 'updated' | 'name';

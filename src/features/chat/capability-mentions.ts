@@ -1,9 +1,11 @@
 import type {
   CliAppInfo,
   McpPresetInfo,
+} from '@/types/api/capabilities';
+import type {
   UICliAppAttachment,
   UIMcpPresetAttachment,
-} from '@/types/api';
+} from '@/types/api/chat';
 
 export interface CapabilityMentionQuery {
   query: string;

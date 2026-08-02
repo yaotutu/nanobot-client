@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import type { ModelPresetInfo } from '@/types/api';
+import type { ModelPresetInfo } from '@/types/api/settings';
 
 interface ModelPresetPalette {
   background: string;

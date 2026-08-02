@@ -2,7 +2,7 @@ import { apiClient } from '@/services/api/api';
 import type {
   AutomationsPayload,
   AutomationUpdatePayload,
-} from '@/types/api';
+} from '@/types/api/automations';
 
 export async function fetchAutomations(): Promise<AutomationsPayload> {
   return apiClient.get<AutomationsPayload>('/api/webui/automations');

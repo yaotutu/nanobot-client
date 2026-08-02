@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatDateTime } from '@/services/text/format';
 import { userPromptAnchors } from '@/features/chat/prompt-navigation';
-import type { UIMessage } from '@/types/api';
+import type { UIMessage } from '@/types/api/chat';
 
 interface PromptNavigatorColors {
   background: string;

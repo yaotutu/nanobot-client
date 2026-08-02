@@ -3,7 +3,10 @@ import {
   mergeToolProgressEvents,
   mergeUniqueToolTraceLines,
 } from '@/features/chat/tool-traces';
-import type { UIMediaAttachment, UIMessage } from '@/types/api';
+import type {
+  UIMediaAttachment,
+  UIMessage,
+} from '@/types/api/chat';
 
 /**
  * Live tool progress is already folded into one trace message. Persisted

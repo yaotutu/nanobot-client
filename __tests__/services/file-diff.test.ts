@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { countDiffLines, parseRenderableFileDiff } from '@/services/text/file-diff';
-import type { UIFileDiff } from '@/types/api';
+import type { UIFileDiff } from '@/types/api/chat';
 
 const sampleDiff: UIFileDiff = {
   format: 'unified',

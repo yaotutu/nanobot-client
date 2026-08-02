@@ -19,8 +19,8 @@ import type { Palette } from '@/ui/palette';
 import type {
   CliAppInfo,
   McpPresetInfo,
-  SlashCommand,
-} from '@/types/api';
+} from '@/types/api/capabilities';
+import type { SlashCommand } from '@/types/api/chat';
 import type { LocalPreferences } from '@/stores/local-preferences-store';
 
 
