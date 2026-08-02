@@ -106,7 +106,7 @@ import type {
 
 import { AutomationsScreen } from '../automations/AutomationsScreen';
 import { AppsScreen } from '@/features/capabilities/components/AppsScreen';
-import { SkillsScreen } from '../skills-screen';
+import { SkillsScreen } from '@/features/skills/components/SkillsScreen';
 import { SettingsScreen } from './settings-screen';
 import { StreamErrorNotice } from '../widgets/stream-error-notice';
 
