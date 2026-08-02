@@ -1251,7 +1251,9 @@
     "copied": "コピーしました"
   },
   "common": {
-    "dismiss": "閉じる"
+    "clearSearch": "検索をクリア",
+    "dismiss": "閉じる",
+    "refresh": "更新"
   },
   "errors": {
     "messageTooBig": {

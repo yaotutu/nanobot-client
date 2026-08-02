@@ -1251,7 +1251,9 @@
     "copied": "已复制"
   },
   "common": {
-    "dismiss": "关闭"
+    "clearSearch": "清除搜索",
+    "dismiss": "关闭",
+    "refresh": "刷新"
   },
   "errors": {
     "messageTooBig": {

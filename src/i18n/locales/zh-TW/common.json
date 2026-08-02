@@ -1251,7 +1251,9 @@
     "copied": "已複製"
   },
   "common": {
-    "dismiss": "關閉"
+    "clearSearch": "清除搜尋",
+    "dismiss": "關閉",
+    "refresh": "重新整理"
   },
   "errors": {
     "messageTooBig": {

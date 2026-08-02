@@ -1251,7 +1251,9 @@
     "copied": "Copied"
   },
   "common": {
-    "dismiss": "Dismiss"
+    "clearSearch": "Clear search",
+    "dismiss": "Dismiss",
+    "refresh": "Refresh"
   },
   "errors": {
     "messageTooBig": {

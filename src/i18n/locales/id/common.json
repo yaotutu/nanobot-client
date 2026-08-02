@@ -1251,7 +1251,9 @@
     "copied": "Tersalin"
   },
   "common": {
-    "dismiss": "Tutup"
+    "clearSearch": "Hapus pencarian",
+    "dismiss": "Tutup",
+    "refresh": "Segarkan"
   },
   "errors": {
     "messageTooBig": {

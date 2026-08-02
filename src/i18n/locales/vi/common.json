@@ -1251,7 +1251,9 @@
     "copied": "Đã sao chép"
   },
   "common": {
-    "dismiss": "Đóng"
+    "clearSearch": "Xóa tìm kiếm",
+    "dismiss": "Đóng",
+    "refresh": "Làm mới"
   },
   "errors": {
     "messageTooBig": {

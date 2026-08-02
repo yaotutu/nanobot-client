@@ -1251,7 +1251,9 @@
     "copied": "Copiado"
   },
   "common": {
-    "dismiss": "Descartar"
+    "clearSearch": "Limpar busca",
+    "dismiss": "Descartar",
+    "refresh": "Atualizar"
   },
   "errors": {
     "messageTooBig": {

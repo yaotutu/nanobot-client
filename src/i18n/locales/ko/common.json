@@ -1251,7 +1251,9 @@
     "copied": "복사됨"
   },
   "common": {
-    "dismiss": "닫기"
+    "clearSearch": "검색 지우기",
+    "dismiss": "닫기",
+    "refresh": "새로고침"
   },
   "errors": {
     "messageTooBig": {
