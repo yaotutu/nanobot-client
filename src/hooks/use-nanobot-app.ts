@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import i18n from '@/i18n';
 import { debugLog } from '@/services/runtime/debug-log';
 
@@ -23,9 +23,8 @@ import type {
 } from '@/types/api';
 
 import { fetchThread } from '@/features/chat/api';
-import { createNanobotSocket, type NanobotSocket, type MessageSendResult as SendMessageResult } from "@/features/connection/socket-transport";
-import { deriveWsUrl } from "@/services/api/bootstrap";
-import { DEFAULT_SERVER_URL as SERVER_URL } from "@/services/api/config";
+import type { MessageSendResult as SendMessageResult } from '@/features/connection/socket-transport';
+import { useSocketLifecycle } from '@/features/connection/use-socket-lifecycle';
 
 import { resolveRuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import { sessionTitle } from '@/services/text/format';
@@ -155,7 +154,6 @@ export function useNanobotApp() {
   const chatWorkspacesOverrides = useChatStore((s) => s.workspaceOverrides);
   const selectSession = useChatStore((s) => s.selectSession);
   const applyCanonicalHistory = useChatStore((s) => s.applyCanonicalHistory);
-  const applyInboundEvent = useChatStore((s) => s.applyInboundEvent);
   const prependOlder = useChatStore((s) => s.prependOlder);
   const setBeforeCursor = useChatStore((s) => s.setBeforeCursor);
   const setUserMessageOffset = useChatStore((s) => s.setUserMessageOffset);
@@ -164,22 +162,17 @@ export function useNanobotApp() {
   const setRunStartedAtAction = useChatStore((s) => s.setRunStartedAt);
   const setThreadLoading = useChatStore((s) => s.setThreadLoading);
   const setLoadingOlder = useChatStore((s) => s.setLoadingOlder);
-  const setRuntimeModelName = useChatStore((s) => s.setRuntimeModelName);
   const setWorkspaceOverride = useChatStore((s) => s.setWorkspaceOverride);
   const setDraftWorkspaceScope = useChatStore((s) => s.setDraftWorkspaceScope);
   const setChatError = useChatStore((s) => s.setError);
   const clearChatError = useChatStore((s) => s.clearError);
   const setStreamError = useChatStore((s) => s.setStreamError);
-  const applyRunStatus = useChatStore((s) => s.applyRunStatus);
   const markSideChannel = useChatStore((s) => s.markSideChannel);
   const prepareUserTurn = useChatStore((s) => s.prepareUserTurn);
   const resetAllChat = useChatStore((s) => s.resetAll);
 
   const connectionStatus = useConnectionStore((s) => s.status);
-  const markOpened = useConnectionStore((s) => s.markOpened);
-  const markReconnectNeeded = useConnectionStore((s) => s.markReconnectNeeded);
   const clearReconnectNeeded = useConnectionStore((s) => s.clearReconnectNeeded);
-  const setConnectionStatus = useConnectionStore((s) => s.setStatus);
 
   const slashCommands = useCapabilitiesStore((s) => s.slashCommands);
   const cliApps = useCapabilitiesStore((s) => s.cliApps);
@@ -200,9 +193,6 @@ export function useNanobotApp() {
     if (activeSession?.workspaceScope) return normalizeWorkspaceScope(activeSession.workspaceScope);
     return draftWorkspaceScope ?? workspaces?.default_scope ?? null;
   })();
-
-  // ---- socket 生命周期 ----
-  const socketRef = useRef<NanobotSocket | null>(null);
 
   // ---- 一次性 bootstrap 从 storage ----
   useEffect(() => {
@@ -243,80 +233,7 @@ export function useNanobotApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeKey, bootstrap]);
 
-  /**
-   * refreshCanonical 依赖 activeKey，但 socket effect 只在 token/phase 变化时重建。
-   * 用 ref 镜像确保 onStatus 回调始终调用最新版本，避免 stale closure。
-   */
-  const refreshCanonicalRef = useRef(refreshCanonical);
-  useEffect(() => {
-    refreshCanonicalRef.current = refreshCanonical;
-  });
-
-  // ---- 当 bootstrap 拿到 token 后挂载 socket ----
-  useEffect(() => {
-     
-    if (!bootstrap || phase !== 'ready') return;
-    const token = bootstrap.token;
-    const wsPath = bootstrap.ws_path;
-    const wsUrl = bootstrap.ws_url ?? null;
-    const derivedUrl = deriveWsUrl(SERVER_URL, wsPath, token, wsUrl);
-    const socket = createNanobotSocket({
-      url: derivedUrl,
-      reauthenticate: async () => {
-        try {
-          await refreshAuth();
-          const fresh = useAuthStore.getState().bootstrap;
-          if (!fresh) return null;
-          return deriveWsUrl(SERVER_URL, fresh.ws_path, fresh.token, fresh.ws_url ?? null);
-        } catch {
-          return null;
-        }
-      },
-      maxFrameBytes: bootstrap.limits?.transport.max_frame_bytes,
-    });
-    socketRef.current = socket;
-
-     
-    const offStatus = socket.onStatus((status) => {
-      setConnectionStatus(status);
-      if (status === 'open') {
-        markOpened();
-        // 直接从 store 读最新值，避免闭包冻结
-        if (useConnectionStore.getState().needsCanonicalReconnect) {
-          markReconnectNeeded();
-          void refreshCanonicalRef.current();
-        }
-      } else if (status === 'reconnecting' || status === 'error' || status === 'closed') {
-        if (useConnectionStore.getState().hasOpenedSocket) markReconnectNeeded();
-      }
-    });
-
-    const offRunStatus = socket.onRunStatus((chatId, startedAt) => {
-      applyRunStatus(chatId, startedAt);
-    });
-
-    const offTransportError = socket.onTransportError((err) => {
-      if (err.kind === 'workspace_scope_rejected') {
-        setChatError(i18n.t('errors.workspaceScopeRejected.body'));
-        void refreshWorkspacesAction();
-      }
-      setStreamError(err);
-    });
-
-    const offEvent = socket.onEvent((event) => {
-      applyInboundEvent(event);
-    });
-
-    return () => {
-      offStatus();
-      offRunStatus();
-      offTransportError();
-      offEvent();
-      socket.close();
-      socketRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bootstrap?.token, phase]);
+  const socketRef = useSocketLifecycle(refreshCanonical);
 
   // ---- 切换会话：自动加载 thread ----
   useEffect(() => {
@@ -380,15 +297,6 @@ export function useNanobotApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bootstrap?.expires_in, phase]);
 
-  // ---- 续期到时把新 ws url 推给 socket ----
-  useEffect(() => {
-    if (!bootstrap) return;
-    const url = deriveWsUrl(SERVER_URL, bootstrap.ws_path, bootstrap.token, bootstrap.ws_url ?? null);
-    socketRef.current?.updateUrl(url);
-    socketRef.current?.updateMaxFrameBytes(bootstrap.limits?.transport.max_frame_bytes);
-    setRuntimeModelName(bootstrap.model_name?.trim() || null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bootstrap?.expires_in]);
 
   // ---- refresh canonical ----
 
@@ -508,7 +416,7 @@ export function useNanobotApp() {
         throw caught;
       }
     },
-    [bootstrap, activeKey, activeWorkspaceScope, selectSession, markSideChannel, prepareUserTurn, setTurnActive, setRunStartedAtAction, setChatError, setWorkspaceOverride],
+    [bootstrap, activeKey, activeWorkspaceScope, selectSession, markSideChannel, prepareUserTurn, setTurnActive, setRunStartedAtAction, setChatError, setWorkspaceOverride, socketRef],
   );
 
   const stopTurn = useCallback(() => {
@@ -523,7 +431,7 @@ export function useNanobotApp() {
     }
     setTurnActive(false);
     setRunStartedAtAction(null);
-  }, [activeKey, setTurnActive, setRunStartedAtAction]);
+  }, [activeKey, setTurnActive, setRunStartedAtAction, socketRef]);
 
   const changeModelPreset = useCallback(
     async (name: string): Promise<void> => {
@@ -532,7 +440,7 @@ export function useNanobotApp() {
       if (!socket || !chatId) return;
       await socket.sendSystemCommand(chatId, `/model ${name}`);
     },
-    [activeKey],
+    [activeKey, socketRef],
   );
 
   const transcribeAudio = useCallback(
@@ -541,7 +449,7 @@ export function useNanobotApp() {
       if (!socket) throw new Error(i18n.t('connection.closed'));
       return socket.transcribeAudio(dataUrl, { durationMs: _options?.durationMs });
     },
-    [],
+    [socketRef],
   );
 
   const restartServer = useCallback(() => {
@@ -564,7 +472,7 @@ export function useNanobotApp() {
     void restart.accepted.catch(() => {
       setChatError(i18n.t('app.system.restartFailed', { defaultValue: 'Could not restart nanobot' }));
     });
-  }, [bootstrap, activeKey, sessions, markSideChannel, setChatError]);
+  }, [bootstrap, activeKey, sessions, markSideChannel, setChatError, socketRef]);
 
   const startNewChat = useCallback(() => {
     selectSession(null, []);
@@ -602,7 +510,7 @@ export function useNanobotApp() {
       }
       setDraftWorkspaceScope(nextScope);
     },
-    [activeSession?.chatId, activeKey, turnActive, setDraftWorkspaceScope],
+    [activeSession?.chatId, activeKey, turnActive, setDraftWorkspaceScope, socketRef],
   );
 
   const forkFromMessage = useCallback(
@@ -634,7 +542,7 @@ export function useNanobotApp() {
       void refreshSessions();
       return forkedChatId;
     },
-    [activeKey, sessions, sidebarTitleOverrides, selectSession, refreshSessions],
+    [activeKey, sessions, sidebarTitleOverrides, selectSession, refreshSessions, socketRef],
   );
 
   const retryFromMessage = useCallback(
@@ -646,7 +554,7 @@ export function useNanobotApp() {
       const content = message?.content ?? '';
       await sendMessage(content, [], { continueActiveTurn: false });
     },
-    [activeKey, messages, sendMessage],
+    [activeKey, messages, sendMessage, socketRef],
   );
 
   const removeSessionFn = useCallback(
@@ -669,7 +577,7 @@ export function useNanobotApp() {
     void useSidebarStore.getState().resetAll();
     void useWorkspacesStore.getState().resetAll();
     await logout();
-  }, [logout, resetAllChat, resetCapabilities]);
+  }, [logout, resetAllChat, resetCapabilities, socketRef]);
 
   return {
     phase,
