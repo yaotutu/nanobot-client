@@ -5,7 +5,7 @@ import {
   Search,
   X,
 } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
@@ -18,16 +18,11 @@ import {
   View,
 } from "react-native";
 
-import {
-  fetchNanobotFeatures,
-  setNanobotFeatureEnabled,
-} from "@/features/channels/api";
+import { setNanobotFeatureEnabled } from "@/features/channels/api";
+import { useChannelsCatalog } from "@/features/channels/hooks/use-channels-catalog";
 import { channelPresentation } from "@/features/channels/channel-presentation";
 import { currentLocale } from "@/i18n";
-import type {
-  NanobotFeatureInfo,
-  NanobotFeaturesPayload,
-} from '@/types/api/channels';
+import type { NanobotFeatureInfo } from "@/types/api/channels";
 import type { SettingsPalette } from "@/features/settings/types";
 
 import {
@@ -49,69 +44,41 @@ export function ChannelsSettings({
   showBrandLogos: boolean;
 }) {
   const { t } = useTranslation();
-  const [payload, setPayload] = useState<NanobotFeaturesPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    applyPayload,
+    error,
+    load,
+    loading,
+    payload,
+    refreshing,
+    setError,
+  } = useChannelsCatalog();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ChannelFilter>("all");
   const [selected, setSelected] = useState<string | null>(null);
   const [actionKey, setActionKey] = useState<string | null>(null);
-
-  const load = useCallback(
-    async (mode: "initial" | "refresh" | "silent" = "initial") => {
-      if (mode === "initial") setLoading(true);
-      if (mode === "refresh") setRefreshing(true);
-      try {
-        const next = await fetchNanobotFeatures();
-        setPayload(next);
-        setError(null);
-      } catch (caught) {
-        if (mode !== "silent") {
-          setError(
-            caught instanceof Error
-              ? caught.message
-              : channelCopy(t, "loadFailed", "Could not load channels."),
-          );
-        }
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [t],
-  );
+  const actionKeyRef = useRef<string | null>(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    let cancelled = false;
-    const refresh = () => {
-      fetchNanobotFeatures()
-        .then((next) => {
-          if (!cancelled) {
-            setPayload(next);
-            setError(null);
-          }
-        })
-        .catch((caught) => {
-          if (!cancelled) {
-            setError(
-              caught instanceof Error
-                ? caught.message
-                : channelCopy(t, "loadFailed", "Could not load channels."),
-            );
-          }
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
-    };
-    refresh();
-    const timer = setInterval(refresh, 5_000);
+    mountedRef.current = true;
     return () => {
-      cancelled = true;
-      clearInterval(timer);
+      mountedRef.current = false;
     };
-  }, [t]);
+  }, []);
+
+  const beginAction = (key: string): boolean => {
+    if (!mountedRef.current || actionKeyRef.current) return false;
+    actionKeyRef.current = key;
+    setActionKey(key);
+    return true;
+  };
+
+  const endAction = (key: string) => {
+    if (actionKeyRef.current !== key) return;
+    actionKeyRef.current = null;
+    if (mountedRef.current) setActionKey(null);
+  };
 
   const allChannels = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase(currentLocale());
@@ -147,24 +114,27 @@ export function ChannelsSettings({
     instanceId?: string,
   ) => {
     const key = `${enabled ? "enable" : "disable"}:${feature.name}:${instanceId ?? "default"}`;
-    setActionKey(key);
+    if (!beginAction(key)) return;
+    setError(null);
     try {
       const next = await setNanobotFeatureEnabled(enabled ? "enable" : "disable",
         feature.name,
         instanceId,
       );
-      setPayload(next);
+      if (!mountedRef.current) return;
+      applyPayload(next);
       setError(
         next.last_action?.ok === false ? next.last_action.message : null,
       );
     } catch (caught) {
+      if (!mountedRef.current) return;
       setError(
         caught instanceof Error
           ? caught.message
           : channelCopy(t, "actionFailed", "Channel action failed."),
       );
     } finally {
-      setActionKey(null);
+      endAction(key);
     }
   };
 
@@ -176,10 +146,9 @@ export function ChannelsSettings({
         feature={selectedFeature}
         onBack={() => setSelected(null)}
         onError={setError}
-        onPayload={setPayload}
+        onPayload={applyPayload}
         showBrandLogos={showBrandLogos}
         onToggle={toggle}
-        
       />
     );
   }
@@ -192,6 +161,7 @@ export function ChannelsSettings({
       refreshControl={
         <RefreshControl
           colors={[colors.muted]}
+          enabled={!loading && !refreshing}
           onRefresh={() => void load("refresh")}
           refreshing={refreshing}
           tintColor={colors.muted}
@@ -236,7 +206,8 @@ export function ChannelsSettings({
         />
         {query ? (
           <Pressable
-            accessibilityLabel={channelCopy(t, "clearSearch", "Clear search")}
+            accessibilityLabel={t("common.clearSearch")}
+            accessibilityRole="button"
             onPress={() => setQuery("")}
           >
             <X color={colors.muted} size={16} />
@@ -261,6 +232,8 @@ export function ChannelsSettings({
           ] as Array<[ChannelFilter, string]>
         ).map(([value, label]) => (
           <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: filter === value }}
             key={value}
             onPress={() => setFilter(value)}
             style={[
@@ -282,7 +255,10 @@ export function ChannelsSettings({
           </Pressable>
         ))}
         <Pressable
-          accessibilityLabel={channelCopy(t, "refresh", "Refresh channels")}
+          accessibilityLabel={t("common.refresh")}
+          accessibilityRole="button"
+          accessibilityState={{ busy: refreshing, disabled: loading || refreshing }}
+          disabled={loading || refreshing}
           onPress={() => void load("refresh")}
           style={styles.refreshButton}
         >
@@ -295,6 +271,7 @@ export function ChannelsSettings({
       </View>
       {error ? (
         <View
+          accessibilityRole="alert"
           style={[
             styles.errorBanner,
             { backgroundColor: colors.errorBackground },
@@ -304,6 +281,14 @@ export function ChannelsSettings({
           <Text style={[styles.errorText, { color: colors.errorText }]}>
             {error}
           </Text>
+          <View style={styles.errorActions}>
+            <Pressable accessibilityRole="button" onPress={() => void load(payload ? "refresh" : "initial")}>
+              <Text style={[styles.errorActionText, { color: colors.errorText }]}>{t("chat.retry")}</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" onPress={() => setError(null)}>
+              <Text style={[styles.errorActionText, { color: colors.errorText }]}>{t("common.dismiss")}</Text>
+            </Pressable>
+          </View>
         </View>
       ) : null}
       {loading ? (
@@ -331,6 +316,7 @@ export function ChannelsSettings({
                   "View {{name}} settings",
                   { name: presentation.displayName },
                 )}
+                accessibilityRole="button"
                 key={feature.name}
                 onPress={() => setSelected(feature.name)}
                 style={({ pressed }) => [
@@ -439,6 +425,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   errorText: { flex: 1, fontSize: 12.5, lineHeight: 18 },
+  errorActions: { alignItems: "flex-end", gap: 7 },
+  errorActionText: { fontSize: 11.5, fontWeight: "700" },
   loading: {
     minHeight: 220,
     alignItems: "center",
