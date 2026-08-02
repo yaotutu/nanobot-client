@@ -348,6 +348,16 @@ export const useChatStore = create<ChatStore>()(
         return;
       }
 
+      if (event.event === 'turn_end') {
+        if (streamEndTimer) clearTimeout(streamEndTimer);
+        set((s) => ({
+          turnActive: false,
+          runStartedAt: null,
+          messages: foldStreamEvent(s.messages, event, foldState),
+        }));
+        return;
+      }
+
       set((s) => ({ messages: foldStreamEvent(s.messages, event, foldState) }));
     },
 
@@ -447,7 +457,14 @@ export const useChatStore = create<ChatStore>()(
     applyRunStatus(chatId, startedAt) {
       const state = get();
       if (chatIdFromKey(state.activeKey) === chatId) {
-        set({ runStartedAt: startedAt });
+        // goal_status is the server's authoritative run lifecycle signal.
+        // Keep the composer in sync even if the final turn_end frame is lost
+        // during a reconnect or arrives after the UI has already rendered the
+        // assistant reply.
+        set({
+          runStartedAt: startedAt,
+          turnActive: startedAt !== null,
+        });
       }
     },
 

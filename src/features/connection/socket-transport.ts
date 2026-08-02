@@ -225,9 +225,14 @@ export class NanobotSocket {
           });
         }
         if (event.event === 'goal_status') {
-          if (event.status === 'running' && typeof event.started_at === 'number') {
-            this.runStartedAtByChatId.set(event.chat_id, event.started_at);
-            this.emitRunStatus(event.chat_id, event.started_at);
+          if (event.status === 'running') {
+            if (typeof event.started_at === 'number') {
+              this.runStartedAtByChatId.set(event.chat_id, event.started_at);
+              this.emitRunStatus(event.chat_id, event.started_at);
+            }
+            // Older gateways do not send message_accepted. A running status is
+            // the server's positive acknowledgement for a normal turn.
+            this.recordFallbackRunAcceptance(event.chat_id, true);
           }
           if (event.status === 'idle') {
             if (this.runStartedAtByChatId.delete(event.chat_id)) {
@@ -235,7 +240,20 @@ export class NanobotSocket {
             }
           }
         }
-        if (event.event === 'ready' && event.chat_id) {
+        if (
+          'chat_id' in event &&
+          event.chat_id &&
+          (event.event === 'delta' ||
+            event.event === 'reasoning_delta' ||
+            event.event === 'message' ||
+            event.event === 'stream_end' ||
+            event.event === 'turn_end')
+        ) {
+          // Resolve sends for gateways that omit message_accepted once the
+          // first turn event proves the frame was accepted.
+          this.recordFallbackRunAcceptance(event.chat_id);
+        }
+        if ((event.event === 'ready' || event.event === 'attached') && event.chat_id) {
           this.knownChats.add(event.chat_id);
           if (this.pendingNewChat) {
             clearTimeout(this.pendingNewChat.timer);
@@ -437,6 +455,16 @@ export class NanobotSocket {
   private emitTransportError(error: StreamError): void {
     for (const listener of this.transportErrorListeners) {
       try { listener(error); } catch { /* */ }
+    }
+  }
+
+  private recordFallbackRunAcceptance(chatId: string, startsNewRun?: boolean): void {
+    for (const pending of this.pendingMessageSends.values()) {
+      if (pending.chatId !== chatId || pending.acceptanceSettled) continue;
+      if (startsNewRun !== undefined && pending.startsNewRun !== startsNewRun) continue;
+      pending.acceptanceSettled = true;
+      pending.resolve();
+      return;
     }
   }
 

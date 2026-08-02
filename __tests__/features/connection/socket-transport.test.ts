@@ -265,6 +265,41 @@ describe('socket-transport', () => {
     expect(runStatuses[1]).toEqual({ chatId: 'c1', startedAt: null });
   });
 
+  it('resolves normal message sends from goal_status running when message_accepted is omitted', async () => {
+    const socket = makeSocket();
+    MockWebSocket.last()!.fireOpen();
+
+    const result = socket.sendMessage('c1', 'hello');
+
+    MockWebSocket.last()!.fireMessage(
+      JSON.stringify({
+        event: 'goal_status',
+        chat_id: 'c1',
+        status: 'running',
+        started_at: 12345,
+      }),
+    );
+
+    await expect(result.accepted).resolves.toBeUndefined();
+  });
+
+  it('resolves queued sends from the first turn event when no acceptance frame exists', async () => {
+    const socket = makeSocket();
+    MockWebSocket.last()!.fireOpen();
+
+    const result = socket.sendMessage('c1', 'hello', undefined, { startsNewRun: false });
+
+    MockWebSocket.last()!.fireMessage(
+      JSON.stringify({
+        event: 'delta',
+        chat_id: 'c1',
+        text: 'ok',
+      }),
+    );
+
+    await expect(result.accepted).resolves.toBeUndefined();
+  });
+
   it('does not emit onRunStatus for idle on unknown chat', () => {
     const socket = makeSocket();
     MockWebSocket.last()!.fireOpen();
@@ -445,6 +480,19 @@ describe('socket-transport', () => {
 
     MockWebSocket.last()!.fireMessage(
       JSON.stringify({ event: 'ready', chat_id: 'new-chat-id' }),
+    );
+
+    await expect(promise).resolves.toBe('new-chat-id');
+  });
+
+  it('newChat resolves when the gateway acknowledges with attached', async () => {
+    const socket = makeSocket();
+    MockWebSocket.last()!.fireOpen();
+
+    const promise = socket.newChat();
+
+    MockWebSocket.last()!.fireMessage(
+      JSON.stringify({ event: 'attached', chat_id: 'new-chat-id' }),
     );
 
     await expect(promise).resolves.toBe('new-chat-id');
