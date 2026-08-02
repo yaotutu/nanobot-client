@@ -2,12 +2,9 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
-  ChevronRight,
   CircleAlert,
   ClipboardCopy,
-  ExternalLink,
   Plus,
-  X,
 } from "lucide-react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
@@ -50,13 +47,11 @@ import {
   channelRunning,
   channelToggleChecked,
   defaultValues,
-  instanceDisplayName,
-  instanceRunning,
-  instanceStatusLabel,
-  maskFeishuAppId,
   statusLabel,
 } from "./channels-utils";
 import { ChannelMark } from "./ChannelMark";
+import { ChannelInstancesSection } from "./ChannelInstancesSection";
+import { ChannelValidationSection } from "./ChannelValidationSection";
 import { ChannelFields } from "./ChannelFields";
 import { ActionButton, Section, StatusBadge } from "./channel-controls";
 
@@ -741,134 +736,18 @@ export function ChannelDetail({
       </Section>
 
       {hasInstancePanel ? (
-        <Section
+        <ChannelInstancesSection
+          actionKey={actionKey}
+          busy={busy}
           colors={colors}
-          title={
-            feature.name === "feishu"
-              ? channelCopy(t, "assistants", "Assistants")
-              : channelCopy(t, "instances", "Instances")
+          featureName={feature.name}
+          instanceId={instanceId}
+          instances={instances}
+          onSelect={selectInstance}
+          onToggle={(nextEnabled, nextInstanceId) =>
+            onToggle(feature, nextEnabled, nextInstanceId)
           }
-        >
-          <Text style={[styles.helper, { color: colors.muted }]}>
-            {channelCopy(
-              t,
-              "instanceSummary",
-              "{{configured}} configured · {{running}} running",
-              {
-                configured: instances.filter((item) => item.configured).length,
-                running: instances.filter(instanceRunning).length,
-              },
-            )}
-          </Text>
-          <View style={styles.instanceList}>
-            {instances.map((item) => {
-              const selected = instanceId === item.id;
-              const itemRunning = instanceRunning(item);
-              const itemBusy =
-                actionKey?.endsWith(`:${feature.name}:${item.id}`) ?? false;
-              return (
-                <View
-                  key={item.id}
-                  style={[
-                    styles.instanceCard,
-                    {
-                      backgroundColor: selected
-                        ? colors.pressed
-                        : colors.background,
-                      borderColor: selected ? colors.foreground : colors.border,
-                    },
-                  ]}
-                >
-                  <View style={styles.instanceCardHeader}>
-                    <Pressable
-                      accessibilityLabel={channelCopy(
-                        t,
-                        "selectInstance",
-                        "View {{name}} instance",
-                        { name: instanceDisplayName(item) },
-                      )}
-                      accessibilityState={{ selected }}
-                      onPress={() => selectInstance(item.id)}
-                      style={styles.instanceSelect}
-                    >
-                      <View style={styles.instanceCopy}>
-                        <Text
-                          numberOfLines={1}
-                          style={[
-                            styles.instanceName,
-                            { color: colors.foreground },
-                          ]}
-                        >
-                          {instanceDisplayName(item)}
-                        </Text>
-                        <Text
-                          numberOfLines={1}
-                          style={[
-                            styles.instanceSummary,
-                            { color: colors.muted },
-                          ]}
-                        >
-                          {feature.name === "feishu"
-                            ? maskFeishuAppId(
-                                item.config_values?.["channels.feishu.appId"],
-                                t,
-                              )
-                            : item.id}
-                        </Text>
-                      </View>
-                      <ChevronRight color={colors.muted} size={16} />
-                    </Pressable>
-                    {itemBusy ? (
-                      <ActivityIndicator color={colors.muted} size="small" />
-                    ) : null}
-                    <Switch
-                      accessibilityLabel={channelCopy(
-                        t,
-                        "toggleInstance",
-                        "{{name}} instance",
-                        { name: instanceDisplayName(item) },
-                      )}
-                      disabled={busy || !item.configured}
-                      onValueChange={(value) =>
-                        void onToggle(feature, value, item.id)
-                      }
-                      value={Boolean(
-                        itemRunning || item.runtime_status === "starting",
-                      )}
-                    />
-                  </View>
-                  {selected ? (
-                    <View
-                      style={[
-                        styles.instanceExpanded,
-                        { borderTopColor: colors.border },
-                      ]}
-                    >
-                      <StatusBadge
-                        colors={colors}
-                        failed={item.runtime_status === "failed"}
-                        running={itemRunning}
-                        text={instanceStatusLabel(item, t)}
-                      />
-                      {feature.name === "feishu" && item.configured ? (
-                        <ActionButton
-                          colors={colors}
-                          disabled={busy || !item.enabled}
-                          label={
-                            itemBusy
-                              ? channelCopy(t, "reconnecting", "Reconnecting…")
-                              : channelCopy(t, "reconnect", "Reconnect")
-                          }
-                          onPress={() => void onToggle(feature, true, item.id)}
-                        />
-                      ) : null}
-                    </View>
-                  ) : null}
-                </View>
-              );
-            })}
-          </View>
-        </Section>
+        />
       ) : null}
 
       {supportsConnect &&
@@ -1210,78 +1089,11 @@ export function ChannelDetail({
       ) : null}
 
       {validation ? (
-        <Section
+        <ChannelValidationSection
           colors={colors}
-          title={channelCopy(t, "validationResult", "Validation result")}
-        >
-          <View style={styles.validationTitle}>
-            {validation.status === "connected" ||
-            validation.status === "configured" ? (
-              <Check color="#16865C" size={17} />
-            ) : (
-              <CircleAlert
-                color={
-                  validation.status === "invalid" ? colors.errorText : "#B27818"
-                }
-                size={17}
-              />
-            )}
-            <Text
-              style={[styles.validationStatus, { color: colors.foreground }]}
-            >
-              {validation.message || validation.status}
-            </Text>
-          </View>
-          {validation.identity ? (
-            <Text style={[styles.helper, { color: colors.muted }]}>
-              {[
-                validation.identity.name,
-                validation.identity.workspace,
-                validation.identity.account,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </Text>
-          ) : null}
-          {validation.checks.map((check) => (
-            <View key={check.id} style={styles.checkRow}>
-              {check.status === "pass" ? (
-                <Check color="#16865C" size={15} />
-              ) : check.status === "fail" ? (
-                <X color={colors.errorText} size={15} />
-              ) : (
-                <CircleAlert color="#B27818" size={15} />
-              )}
-              <View style={styles.checkCopy}>
-                <Text style={[styles.checkLabel, { color: colors.foreground }]}>
-                  {check.label}
-                </Text>
-                {check.message ? (
-                  <Text style={[styles.checkMessage, { color: colors.muted }]}>
-                    {check.message}
-                  </Text>
-                ) : null}
-                {check.action_url ? (
-                  <Pressable
-                    accessibilityRole="link"
-                    onPress={() => void openSetupUrl(check.action_url!)}
-                    style={styles.validationLink}
-                  >
-                    <ExternalLink color={colors.muted} size={13} />
-                    <Text
-                      style={[
-                        styles.validationLinkText,
-                        { color: colors.muted },
-                      ]}
-                    >
-                      {channelCopy(t, "open", "Open")}
-                    </Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            </View>
-          ))}
-        </Section>
+          onOpenUrl={openSetupUrl}
+          validation={validation}
+        />
       ) : null}
     </ScrollView>
   );
@@ -1380,43 +1192,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  instanceList: { gap: 8 },
-  instanceCard: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 14,
-    overflow: "hidden",
-  },
-  instanceCardHeader: {
-    minHeight: 62,
-    paddingHorizontal: 11,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  instanceSelect: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-  },
-  instanceCopy: { flex: 1, minWidth: 0 },
-  instanceName: { fontSize: 13, lineHeight: 18, fontWeight: "700" },
-  instanceSummary: {
-    marginTop: 2,
-    fontSize: 10.5,
-    lineHeight: 15,
-    fontFamily: "monospace",
-  },
-  instanceExpanded: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 11,
-    paddingVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-  },
   presetRow: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
   presetButton: {
     minHeight: 34,
@@ -1451,20 +1226,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   notice: { fontSize: 12.5, lineHeight: 18 },
-  validationTitle: { flexDirection: "row", alignItems: "center", gap: 7 },
-  validationStatus: { flex: 1, fontSize: 13, fontWeight: "700" },
-  checkRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  checkCopy: { flex: 1, gap: 2 },
-  checkLabel: { fontSize: 12.5, fontWeight: "600" },
-  checkMessage: { fontSize: 11.5, lineHeight: 17 },
-  validationLink: {
-    marginTop: 4,
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  validationLinkText: { fontSize: 11.5, fontWeight: "600" },
   stepsList: { gap: 10 },
   stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 9 },
   stepNumber: {
