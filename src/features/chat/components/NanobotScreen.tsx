@@ -1,7 +1,6 @@
 import { X } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
-  BackHandler,
   KeyboardAvoidingView,
   Pressable,
   StyleSheet,
@@ -11,11 +10,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { setAppLanguage } from '@/i18n';
-import { normalizeLocale } from '@/i18n/config';
-
-import { ApiError } from '@/services/api/api';
-import { fetchFilePreviewAvailability } from '@/features/chat/api';
 import {
   normalizeActivityTimeline,
   type TurnUnit,
@@ -28,12 +22,6 @@ import {
 } from "@/features/chat/components/timeline";
 import { useChatScroll } from "@/features/chat/hooks/useChatScroll";
 import { sessionTitle } from '@/services/text/format';
-import {
-  DEFAULT_LOCAL_PREFS,
-  readLocalPreferences,
-  writeLocalPreferences,
-  type LocalPreferences,
-} from '@/stores/local-preferences-store';
 import { Composer as ExtractedComposer } from "@/features/chat/components/Composer";
 import { ChatHeader } from "@/features/chat/components/ChatHeader";
 import { ChatModals } from "@/features/chat/components/ChatModals";
@@ -68,9 +56,12 @@ import type {
 
 import { StreamErrorNotice } from '@/features/chat/components/widgets/stream-error-notice';
 import { ChatSurface } from '@/features/chat/components/ChatSurface';
-import { UtilityViewRouter, type UtilityView } from '@/features/chat/components/UtilityViewRouter';
+import { UtilityViewRouter } from '@/features/chat/components/UtilityViewRouter';
 import { useModelSelection } from '@/features/chat/hooks/use-model-selection';
 import { useComposerController } from '@/features/chat/hooks/use-composer-controller';
+import { useFilePreviewAvailability } from '@/features/chat/hooks/use-file-preview-availability';
+import { useChatScreenState } from '@/features/chat/hooks/use-chat-screen-state';
+import { useChatPreferences } from '@/features/chat/hooks/use-chat-preferences';
 
 interface NanobotScreenProps {
   bootstrap: BootstrapResponse;
@@ -137,25 +128,31 @@ interface NanobotScreenProps {
 }
 
 
-interface FilePreviewAvailabilityCacheEntry {
-  available?: boolean;
-  promise: Promise<boolean>;
-  revision: number;
-}
-
 export function NanobotScreen(props: NanobotScreenProps) {
   const { hasMoreBefore, loadingOlder, onLoadOlder } = props;
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [sessionSearchOpen, setSessionSearchOpen] = useState(false);
-  const [utilityView, setUtilityView] = useState<UtilityView>('chat');
-  const [preferences, setPreferences] = useState<LocalPreferences>(DEFAULT_LOCAL_PREFS);
-  const [assistantQuoteSource, setAssistantQuoteSource] = useState<string | null>(null);
-  const [promptNavigatorOpen, setPromptNavigatorOpen] = useState(false);
-  const [sessionInfoOpen, setSessionInfoOpen] = useState(false);
+  const {
+    drawerOpen,
+    sessionSearchOpen,
+    utilityView,
+    assistantQuoteSource,
+    promptNavigatorOpen,
+    sessionInfoOpen,
+    filePreviewPath,
+    setDrawerOpen,
+    setSessionSearchOpen,
+    setUtilityView,
+    setAssistantQuoteSource,
+    setPromptNavigatorOpen,
+    setSessionInfoOpen,
+    setFilePreviewPath,
+    resetForSessionChange,
+    openUtility,
+    openSearch,
+  } = useChatScreenState();
+  const { preferences, changePreferences } = useChatPreferences();
   const [forkingMessageId, setForkingMessageId] = useState<string | null>(null);
-  const [filePreviewPath, setFilePreviewPath] = useState<string | null>(null);
   const dark = preferences.theme === 'dark';
   const colors = dark ? DARK_COLORS : LIGHT_COLORS;
   const {
@@ -245,81 +242,23 @@ export function NanobotScreen(props: NanobotScreenProps) {
     () => props.turnActive ? currentActivityClusterIndices(units) : new Set<number>(),
     [props.turnActive, units],
   );
-  const filePreviewAvailabilityCacheRef = useRef(
-    new Map<string, FilePreviewAvailabilityCacheEntry>(),
-  );
-  const filePreviewAvailabilityRevision = props.messages.length;
-  const resolveFilePreviewAvailability = useCallback((path: string) => {
-    if (!props.activeKey) return Promise.resolve(false);
-    const cacheKey = `${props.bootstrap.api_token}\n${props.activeKey}\n${path}`;
-    const cache = filePreviewAvailabilityCacheRef.current;
-    const cached = cache.get(cacheKey);
-    if (
-      cached
-      && (cached.available !== false || cached.revision === filePreviewAvailabilityRevision)
-    ) {
-      return cached.promise;
-    }
-    const pending = fetchFilePreviewAvailability(
-      props.activeKey,
-      path,
-    ).catch((error: unknown) => {
-      if (error instanceof ApiError) {
-        if (error.status === 404 && /API route not found/i.test(error.message)) return true;
-        if ([400, 403, 404, 415].includes(error.status)) return false;
-      }
-      return false;
-    });
-    const entry: FilePreviewAvailabilityCacheEntry = {
-      promise: pending,
-      revision: filePreviewAvailabilityRevision,
-    };
-    cache.set(cacheKey, entry);
-    void pending.then((available) => {
-      if (cache.get(cacheKey) === entry) entry.available = available;
-    });
-    return pending;
-  }, [
-    filePreviewAvailabilityRevision,
-    props.activeKey,
-    props.bootstrap.api_token,
-  ]);
+  const resolveFilePreviewAvailability = useFilePreviewAvailability({
+    activeKey: props.activeKey,
+    apiToken: props.bootstrap.api_token,
+    revision: props.messages.length,
+  });
 
   const chatTitle = props.activeSession
     ? props.sidebarState.title_overrides[props.activeSession.key] || sessionTitle(props.activeSession)
     : t('sidebar.newChat');
 
 
-  useEffect(() => {
-    let cancelled = false;
-    void readLocalPreferences().then((stored) => {
-      if (cancelled) return;
-      setPreferences(stored);
-      void setAppLanguage(normalizeLocale(stored.language));
-    });
-    return () => { cancelled = true; };
-  }, []);
 
-  const changePreferences = (next: LocalPreferences) => {
-    setPreferences(next);
-    void setAppLanguage(normalizeLocale(next.language));
-    void writeLocalPreferences(next);
-  };
-
-  useEffect(() => {
-    if (utilityView === 'chat') return;
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      setUtilityView('chat');
-      return true;
-    });
-    return () => subscription.remove();
-  }, [utilityView]);
 
   const handleSessionReset = useCallback(() => {
-    setPromptNavigatorOpen(false);
-    setSessionInfoOpen(false);
+    resetForSessionChange();
     setQuotedContext(null);
-  }, [setQuotedContext]);
+  }, [resetForSessionChange, setQuotedContext]);
 
   const {
     listRef,
@@ -344,9 +283,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
     onSessionReset: handleSessionReset,
   });
   const resetSessionUi = () => {
-    setUtilityView('chat');
-    setPromptNavigatorOpen(false);
-    setSessionInfoOpen(false);
+    resetForSessionChange();
     composerController.reset();
   };
 
@@ -554,26 +491,11 @@ export function NanobotScreen(props: NanobotScreenProps) {
         onSelectSession={selectSession}
         onStartNewChat={startNewChat}
         onStartNewChatInProject={startNewChatInProject}
-        onOpenSearch={() => {
-          setDrawerOpen(false);
-          setSessionSearchOpen(true);
-        }}
-        onOpenApps={() => {
-          setUtilityView('apps');
-          setDrawerOpen(false);
-        }}
-        onOpenSkills={() => {
-          setUtilityView('skills');
-          setDrawerOpen(false);
-        }}
-        onOpenAutomations={() => {
-          setUtilityView('automations');
-          setDrawerOpen(false);
-        }}
-        onOpenSettings={() => {
-          setUtilityView('settings');
-          setDrawerOpen(false);
-        }}
+        onOpenSearch={openSearch}
+        onOpenApps={() => openUtility('apps')}
+        onOpenSkills={() => openUtility('skills')}
+        onOpenAutomations={() => openUtility('automations')}
+        onOpenSettings={() => openUtility('settings')}
         onLogout={props.onLogout}
         onDeleteSession={props.onDeleteSession}
         onGetSessionAutomations={props.onGetSessionAutomations}
