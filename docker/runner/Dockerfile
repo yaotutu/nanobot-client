@@ -33,7 +33,7 @@ RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && cd ${ANDROID_HOME}/cmdline-tools \
     && curl -sSL -o cmdline-tools.zip \
        https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
     && unzip -q cmdline-tools.zip && mv cmdline-tools latest && rm cmdline-tools.zip \
-    && yes | sdkmanager --licenses > /dev/null \
+    && (set +o pipefail; yes | sdkmanager --licenses > /dev/null) \
     && sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools" \
     && sdkmanager "ndk;26.1.10909125"
 

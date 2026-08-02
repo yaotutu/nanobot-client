@@ -1,25 +1,23 @@
 # Self-hosted GitHub Actions runner for nanobot-client
-# Run:  docker compose up -d
-#      (after putting RUNNER_TOKEN into .env)
+# The image is published to GitHub Container Registry by runner-image.yml.
 
 services:
   runner:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: nanobot-runner:latest
+    image: ghcr.io/yaotutu/nanobot-runner:latest
+    platform: linux/amd64
     container_name: nanobot-runner
     restart: unless-stopped
     environment:
       REPO_URL: "https://github.com/yaotutu/nanobot-client"
-      RUNNER_TOKEN: "${RUNNER_TOKEN}"
+      RUNNER_TOKEN: "PASTE_GITHUB_RUNNER_TOKEN_HERE"
       RUNNER_NAME: "n100-nas"
       RUNNER_LABELS: "self-hosted,linux,x64,n100"
       RUNNER_REPLACE_EXISTING: "true"
-      # myoung34/github-runner hooks
       DISABLE_WAIT_FOR_DEBUGGER: "true"
+      HOME: "/home/runner"
+      ANDROID_HOME: "/opt/android-sdk"
+      ANDROID_SDK_ROOT: "/opt/android-sdk"
     volumes:
-      - ./work:/work
-      - ./gradle:/home/runner/.gradle
-      - ./ccache:/home/runner/.ccache
-      - ./android-sdk:/opt/android-sdk
+      - /volume3/docker/github-runner/nanobot-client/work:/home/runner/_work
+      - /volume3/docker/github-runner/nanobot-client/gradle:/home/runner/.gradle
+      - /volume3/docker/github-runner/nanobot-client/ccache:/home/runner/.ccache
