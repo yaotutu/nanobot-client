@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
+import { fetchSkills } from '@/features/skills/api';
 import type {
   CliAppInfo,
   CliAppsPayload,
@@ -13,7 +14,6 @@ import type { SlashCommand } from '@/types/api/chat';
 import {
   fetchInstalledCliApps,
   fetchMcpPresets,
-  fetchSkills,
   listSlashCommands,
 } from './api';
 

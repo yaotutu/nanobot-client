@@ -2,7 +2,6 @@ import { apiClient } from '@/services/api/api';
 import type {
   CliAppsPayload,
   McpPresetsPayload,
-  SkillsPayload,
 } from '@/types/api/capabilities';
 import type {
   SlashCommand,
@@ -108,15 +107,5 @@ export async function updateMcpServerTools(name: string, enabledTools: string[])
   return apiClient.request<McpPresetsPayload>(
     '/api/settings/mcp-presets/tools',
     { method: 'GET', headers: mcpValuesHeader({ name, enabled_tools: enabledTools }) },
-  );
-}
-
-export async function fetchSkills(): Promise<SkillsPayload> {
-  return apiClient.get<SkillsPayload>('/api/webui/skills');
-}
-
-export async function fetchSkillDetail(name: string): Promise<import('@/types/api/capabilities').SkillDetail> {
-  return apiClient.get<import('@/types/api/capabilities').SkillDetail>(
-    `/api/webui/skills/${encodeURIComponent(name)}`,
   );
 }

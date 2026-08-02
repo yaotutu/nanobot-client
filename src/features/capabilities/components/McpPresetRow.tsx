@@ -41,6 +41,7 @@ export function McpPresetRow({
   const { t } = useTranslation();
   const [toolsOpen, setToolsOpen] = useState(false);
   const busy = Boolean(actionKey?.endsWith(`:mcp:${preset.name}`));
+  const actionsDisabled = actionKey !== null;
   const ready = preset.installed && preset.configured;
   const hasFields = preset.required_fields.length > 0;
   const toolNames = preset.tool_names ?? [];
@@ -86,19 +87,21 @@ export function McpPresetRow({
         </View>
         {busy ? <ActivityIndicator color={colors.muted} size="small" /> : ready ? (
           <View style={styles.rowActions}>
-            <Pressable accessibilityLabel={t('settings.mcp.statusConfigured')} onPress={showMenu} style={[styles.actionButton, { backgroundColor: colors.card }]}>
+            <Pressable accessibilityLabel={t('settings.mcp.statusConfigured')} accessibilityRole="button" accessibilityState={{ disabled: actionsDisabled }} disabled={actionsDisabled} onPress={showMenu} style={[styles.actionButton, { backgroundColor: colors.card }]}>
               <Check color="#4F8A62" size={17} strokeWidth={2} />
             </Pressable>
-            <Pressable accessibilityLabel={t('settings.mcp.remove')} onPress={() => onAction('remove', preset)} style={styles.actionButton}>
+            <Pressable accessibilityLabel={t('settings.mcp.remove')} accessibilityRole="button" accessibilityState={{ disabled: actionsDisabled }} disabled={actionsDisabled} onPress={() => onAction('remove', preset)} style={styles.actionButton}>
               <Trash2 color={colors.errorText} size={16} strokeWidth={1.8} />
             </Pressable>
           </View>
         ) : (
           <Pressable
             accessibilityLabel={preset.install_supported ? t('settings.mcp.configure') : t('settings.mcp.statusComingSoon')}
-            disabled={!preset.install_supported}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: actionsDisabled || !preset.install_supported }}
+            disabled={actionsDisabled || !preset.install_supported}
             onPress={() => hasFields ? onToggleSetup() : onAction('enable', preset, values)}
-            style={[styles.actionButton, { opacity: preset.install_supported ? 1 : 0.38 }]}
+            style={[styles.actionButton, { opacity: preset.install_supported && !actionsDisabled ? 1 : 0.38 }]}
           >
             <Plus color={colors.muted} size={18} />
           </Pressable>
@@ -112,7 +115,7 @@ export function McpPresetRow({
               <Text style={[styles.setupTitle, { color: colors.foreground }]}>{t('settings.mcp.connectTitle', { name: preset.display_name })}</Text>
               <Text style={[styles.setupHint, { color: colors.muted }]}>{t('settings.mcp.connectHint')}</Text>
             </View>
-            <Pressable accessibilityLabel={t('settings.actions.cancel')} hitSlop={8} onPress={onToggleSetup}>
+            <Pressable accessibilityLabel={t('settings.actions.cancel')} accessibilityRole="button" hitSlop={8} onPress={onToggleSetup}>
               <X color={colors.muted} size={16} />
             </Pressable>
           </View>
@@ -135,9 +138,11 @@ export function McpPresetRow({
           ))}
           <Pressable
             accessibilityLabel={t('settings.mcp.connectTitle', { name: preset.display_name })}
-            disabled={!requiredReady || busy}
+            accessibilityRole="button"
+            accessibilityState={{ busy, disabled: !requiredReady || actionsDisabled }}
+            disabled={!requiredReady || actionsDisabled}
             onPress={() => onAction('enable', preset, values)}
-            style={[styles.connectButton, { backgroundColor: colors.foreground, opacity: requiredReady ? 1 : 0.38 }]}
+            style={[styles.connectButton, { backgroundColor: colors.foreground, opacity: requiredReady && !actionsDisabled ? 1 : 0.38 }]}
           >
             {busy ? <ActivityIndicator color={colors.background} size="small" /> : (
               <Text style={[styles.connectText, { color: colors.background }]}>{t('settings.mcp.setup')}</Text>
@@ -156,7 +161,9 @@ export function McpPresetRow({
             <View style={styles.toolScopeActions}>
               <Pressable
                 accessibilityLabel={`${preset.display_name} · ${t('settings.mcp.allTools')}`}
-                disabled={busy}
+                accessibilityRole="button"
+                accessibilityState={{ selected: allowAllTools, disabled: actionsDisabled }}
+                disabled={actionsDisabled}
                 onPress={() => setTools(['*'])}
                 style={[
                   styles.toolScopeButton,
@@ -170,7 +177,9 @@ export function McpPresetRow({
               </Pressable>
               <Pressable
                 accessibilityLabel={`${preset.display_name} · ${t('settings.mcp.noTools')}`}
-                disabled={busy}
+                accessibilityRole="button"
+                accessibilityState={{ selected: !allowAllTools && enabledSet.size === 0, disabled: actionsDisabled }}
+                disabled={actionsDisabled}
                 onPress={() => setTools([])}
                 style={[
                   styles.toolScopeButton,
@@ -193,7 +202,9 @@ export function McpPresetRow({
               return (
                 <Pressable
                   accessibilityLabel={`${selected ? t('settings.values.disabled') : t('settings.values.enabled')} ${toolName}`}
-                  disabled={busy}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected, disabled: actionsDisabled }}
+                  disabled={actionsDisabled}
                   key={toolName}
                   onPress={() => toggleTool(toolName)}
                   style={[

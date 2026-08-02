@@ -45,6 +45,7 @@ export function CustomMcpPanel({
   const remote = form.transport !== 'stdio';
   const customBusy = actionKey?.startsWith('custom:') ?? false;
   const importBusy = actionKey === 'import';
+  const actionsDisabled = actionKey !== null;
   const canSave = Boolean(form.name.trim()) && (remote ? Boolean(form.url.trim()) : Boolean(form.command.trim()));
   const update = <K extends keyof CustomMcpForm>(key: K, value: CustomMcpForm[K]) => {
     onFormChange({ ...form, [key]: value });
@@ -63,6 +64,8 @@ export function CustomMcpPanel({
       <View style={styles.customModeRow}>
         <Pressable
           accessibilityLabel={t('settings.mcp.customTitle')}
+          accessibilityRole="button"
+          accessibilityState={{ selected: mode === 'custom' }}
           onPress={() => onModeChange(mode === 'custom' ? null : 'custom')}
           style={[
             styles.customModeButton,
@@ -77,6 +80,8 @@ export function CustomMcpPanel({
         </Pressable>
         <Pressable
           accessibilityLabel={t('settings.mcp.importConfig')}
+          accessibilityRole="button"
+          accessibilityState={{ selected: mode === 'import' }}
           onPress={() => onModeChange(mode === 'import' ? null : 'import')}
           style={[
             styles.customModeButton,
@@ -115,6 +120,8 @@ export function CustomMcpPanel({
               return (
                 <Pressable
                   accessibilityLabel={`${t('settings.mcp.transport')} ${label}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
                   key={transport}
                   onPress={() => update('transport', transport)}
                   style={[
@@ -141,6 +148,8 @@ export function CustomMcpPanel({
           </FieldLabel>
           <Pressable
             accessibilityLabel={advancedOpen ? t('settings.mcp.hideAdvanced') : t('settings.mcp.advancedOptions')}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: advancedOpen }}
             onPress={() => onAdvancedChange(!advancedOpen)}
             style={styles.advancedButton}
           >
@@ -191,9 +200,11 @@ export function CustomMcpPanel({
           ) : null}
           <Pressable
             accessibilityLabel={t('settings.mcp.saveCustom')}
-            disabled={!canSave || customBusy}
+            accessibilityRole="button"
+            accessibilityState={{ busy: customBusy, disabled: !canSave || actionsDisabled }}
+            disabled={!canSave || actionsDisabled}
             onPress={onSave}
-            style={[styles.primaryPanelButton, { backgroundColor: colors.foreground, opacity: canSave ? 1 : 0.38 }]}
+            style={[styles.primaryPanelButton, { backgroundColor: colors.foreground, opacity: canSave && !actionsDisabled ? 1 : 0.38 }]}
           >
             {customBusy ? <ActivityIndicator color={colors.background} size="small" /> : <Check color={colors.background} size={15} />}
             <Text style={[styles.primaryPanelButtonText, { color: colors.background }]}>{t('settings.mcp.saveCustom')}</Text>
@@ -219,11 +230,13 @@ export function CustomMcpPanel({
           </FieldLabel>
           <Pressable
             accessibilityLabel={t('settings.mcp.importConfig')}
-            disabled={!configImport.trim() || importBusy}
+            accessibilityRole="button"
+            accessibilityState={{ busy: importBusy, disabled: !configImport.trim() || actionsDisabled }}
+            disabled={!configImport.trim() || actionsDisabled}
             onPress={onImport}
             style={[
               styles.primaryPanelButton,
-              { backgroundColor: colors.foreground, opacity: configImport.trim() ? 1 : 0.38 },
+              { backgroundColor: colors.foreground, opacity: configImport.trim() && !actionsDisabled ? 1 : 0.38 },
             ]}
           >
             {importBusy ? <ActivityIndicator color={colors.background} size="small" /> : <Database color={colors.background} size={15} />}

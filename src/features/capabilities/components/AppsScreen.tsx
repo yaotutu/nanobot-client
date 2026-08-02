@@ -1,5 +1,5 @@
 import { RefreshCw, Search, X } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -12,23 +12,9 @@ import {
   View,
 } from 'react-native';
 
-import {
-  fetchCliApps,
-  fetchMcpPresets,
-  importMcpConfig,
-  runCliAppAction,
-  runMcpPresetAction,
-  saveCustomMcpServer,
-  updateMcpServerTools,
-} from '@/features/capabilities/api';
-import { useCapabilitiesStore } from '@/features/capabilities/store';
+import { useAppsActions } from '@/features/capabilities/hooks/use-apps-actions';
+import { useAppsCatalog } from '@/features/capabilities/hooks/use-apps-catalog';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
-import type {
-  CliAppInfo,
-  CliAppsPayload,
-  McpPresetInfo,
-  McpPresetsPayload,
-} from '@/types/api/capabilities';
 import type { Palette } from '@/ui/palette';
 
 import { CliAppRow } from './CliAppRow';
@@ -36,20 +22,16 @@ import { CliReadyPanel } from './CliReadyPanel';
 import { CustomMcpPanel } from './CustomMcpPanel';
 import { McpPresetRow } from './McpPresetRow';
 import {
-  CLI_APPS_REFRESH_MAX_RETRIES,
-  CLI_APPS_REFRESH_RETRY_MS,
   DEFAULT_CUSTOM_MCP_FORM,
   itemReady,
   searchText,
   titleOf,
 } from './apps-utils';
 import type {
-  AppAction,
   AppsFilter,
   CatalogItem,
   CustomMcpForm,
   CustomMcpMode,
-  McpAction,
 } from './apps-utils';
 
 interface AppsScreenProps {
@@ -59,9 +41,6 @@ interface AppsScreenProps {
   restartPolicy: RuntimeClientPolicy;
 }
 
-const EMPTY_CLI_APPS_PAYLOAD = { apps: [], installed_count: 0 } satisfies CliAppsPayload;
-const EMPTY_MCP_PRESETS_PAYLOAD = { presets: [], installed_count: 0 } satisfies McpPresetsPayload;
-
 export function AppsScreen({
   colors,
   onBackToChat,
@@ -69,89 +48,50 @@ export function AppsScreen({
   restartPolicy,
 }: AppsScreenProps) {
   const { t } = useTranslation();
-  const cliPayload = useCapabilitiesStore((state) => state.cliAppsPayload) ?? EMPTY_CLI_APPS_PAYLOAD;
-  const mcpPayload = useCapabilitiesStore((state) => state.mcpPresetsPayload) ?? EMPTY_MCP_PRESETS_PAYLOAD;
-  const applyCliAppsPayload = useCapabilitiesStore((state) => state.applyCliAppsPayload);
-  const applyMcpPresetsPayload = useCapabilitiesStore((state) => state.applyMcpPresetsPayload);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const {
+    applyCliAppsPayload,
+    applyMcpPresetsPayload,
+    cliPayload,
+    load,
+    loading,
+    mcpPayload,
+    refreshing,
+    setStatus,
+    status,
+  } = useAppsCatalog();
+
+  const {
+    actionKey,
+    applyCliAction,
+    applyMcpAction,
+    cliFocusName,
+    importMcp,
+    restartRequired,
+    saveCustomMcp,
+    updateMcpTools,
+  } = useAppsActions({
+    applyCliAppsPayload,
+    applyMcpPresetsPayload,
+    setStatus,
+  });
+
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<AppsFilter>('ready');
-  const [actionKey, setActionKey] = useState<string | null>(null);
-  const [status, setStatus] = useState<{ message: string; error: boolean } | null>(null);
+  const mountedRef = useRef(true);
   const [setupPreset, setSetupPreset] = useState<string | null>(null);
   const [mcpValues, setMcpValues] = useState<Record<string, Record<string, string>>>({});
-  const [cliFocusName, setCliFocusName] = useState<string | null>(null);
   const [customMcpMode, setCustomMcpMode] = useState<CustomMcpMode>(null);
   const [customMcpAdvanced, setCustomMcpAdvanced] = useState(false);
   const [customMcpForm, setCustomMcpForm] = useState<CustomMcpForm>(DEFAULT_CUSTOM_MCP_FORM);
   const [mcpConfigImport, setMcpConfigImport] = useState('');
-  const [restartRequired, setRestartRequired] = useState(false);
   const [restartBusy, setRestartBusy] = useState(false);
-  const mountedRef = useRef(true);
-  const cliRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      if (cliRetryTimerRef.current) clearTimeout(cliRetryTimerRef.current);
     };
   }, []);
-
-  const load = useCallback(async (refresh = false) => {
-    if (!mountedRef.current) return;
-    if (cliRetryTimerRef.current) {
-      clearTimeout(cliRetryTimerRef.current);
-      cliRetryTimerRef.current = null;
-    }
-    if (refresh) setRefreshing(true);
-    else setLoading(true);
-    const [cliResult, mcpResult] = await Promise.allSettled([
-      fetchCliApps(),
-      fetchMcpPresets(),
-    ]);
-    if (!mountedRef.current) return;
-    if (cliResult.status === 'fulfilled') {
-      applyCliAppsPayload(cliResult.value);
-      if (cliResult.value.catalog_refresh_pending) {
-        const pollCliCatalog = (retryCount: number) => {
-          if (!mountedRef.current || retryCount >= CLI_APPS_REFRESH_MAX_RETRIES) return;
-          cliRetryTimerRef.current = setTimeout(() => {
-            cliRetryTimerRef.current = null;
-            void fetchCliApps()
-              .then((payload) => {
-                if (!mountedRef.current) return;
-                applyCliAppsPayload(payload);
-                if (payload.catalog_refresh_pending) pollCliCatalog(retryCount + 1);
-              })
-              .catch((caught) => {
-                if (!mountedRef.current) return;
-                setStatus({
-                  message: caught instanceof Error ? caught.message : t('settings.cliApps.refreshFailed', { defaultValue: 'Could not refresh the app catalog.' }),
-                  error: true,
-                });
-              });
-          }, CLI_APPS_REFRESH_RETRY_MS);
-        };
-        pollCliCatalog(0);
-      }
-    }
-    if (mcpResult.status === 'fulfilled') {
-      applyMcpPresetsPayload(mcpResult.value);
-    }
-    const errors = [cliResult, mcpResult]
-      .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
-      .map((result) => result.reason instanceof Error ? result.reason.message : t('settings.cliApps.loadFailed', { defaultValue: 'Could not load the tools catalog.' }));
-    setStatus(errors.length ? { message: errors.join('\n'), error: true } : null);
-    setLoading(false);
-    setRefreshing(false);
-  }, [applyCliAppsPayload, applyMcpPresetsPayload, t]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => void load(), 0);
-    return () => clearTimeout(timer);
-  }, [load]);
 
   const items = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
@@ -169,149 +109,12 @@ export function AppsScreen({
       });
   }, [cliPayload.apps, filter, mcpPayload.presets, query]);
 
-  const applyCliAction = async (action: AppAction, app: CliAppInfo) => {
-    const key = `${action}:cli:${app.name}`;
-    if (actionKey) return;
-    setActionKey(key);
-    setStatus(null);
-    try {
-      const payload = await runCliAppAction(action, app.name);
-      applyCliAppsPayload(payload);
-      setCliFocusName(action === 'uninstall' ? null : app.name);
-      setStatus({
-        message: payload.last_action?.message || t('settings.cliApps.actionCompleted', { defaultValue: '{{name}} action completed.', name: app.display_name }),
-        error: payload.last_action?.ok === false,
-      });
-    } catch (caught) {
-      setStatus({
-        message: caught instanceof Error ? caught.message : t('settings.cliApps.actionFailed', { defaultValue: '{{name}} action failed.', name: app.display_name }),
-        error: true,
-      });
-    } finally {
-      setActionKey(null);
-    }
-  };
-
-  const applyMcpAction = async (
-    action: McpAction,
-    preset: McpPresetInfo,
-    values: Record<string, string> = {},
-  ) => {
-    const key = `${action}:mcp:${preset.name}`;
-    if (actionKey) return;
-    setActionKey(key);
-    setStatus(null);
-    try {
-      const payload = await runMcpPresetAction(action,
-        preset.name,
-        values,
-      );
-      applyMcpPresetsPayload(payload);
-      if (payload.requires_restart) setRestartRequired(true);
-      setSetupPreset(null);
-      if (action === 'enable') {
-        setMcpValues((current) => ({ ...current, [preset.name]: {} }));
-      }
-      setStatus({
-        message: payload.last_action?.message || t('settings.mcp.actionCompleted', { defaultValue: '{{name}} action completed.', name: preset.display_name }),
-        error: payload.last_action?.ok === false,
-      });
-    } catch (caught) {
-      setStatus({
-        message: caught instanceof Error ? caught.message : t('settings.mcp.actionFailed', { defaultValue: '{{name}} action failed.', name: preset.display_name }),
-        error: true,
-      });
-    } finally {
-      setActionKey(null);
-    }
-  };
-
-  const applyMcpMutation = (
-    payload: McpPresetsPayload,
-    fallbackMessage: string,
-  ) => {
-    applyMcpPresetsPayload(payload);
-    if (payload.requires_restart) setRestartRequired(true);
-    setStatus({
-      message: payload.last_action?.message || fallbackMessage,
-      error: payload.last_action?.ok === false,
-    });
-  };
-
-  const saveCustomMcp = async () => {
-    const name = customMcpForm.name.trim();
-    const remote = customMcpForm.transport !== 'stdio';
-    if (!name || (remote ? !customMcpForm.url.trim() : !customMcpForm.command.trim()) || actionKey) return;
-    setActionKey(`custom:${name}`);
-    setStatus(null);
-    try {
-      const payload = await saveCustomMcpServer({
-        name,
-        transport: customMcpForm.transport,
-        command: customMcpForm.command,
-        args: customMcpForm.args,
-        url: customMcpForm.url,
-        env: customMcpForm.env,
-        headers: customMcpForm.headers,
-        tool_timeout: customMcpForm.toolTimeout,
-      });
-      applyMcpMutation(payload, t('settings.mcp.saved', { defaultValue: '{{name}} MCP saved.', name }));
-      setCustomMcpForm((current) => ({
-        ...DEFAULT_CUSTOM_MCP_FORM,
-        transport: current.transport,
-      }));
-    } catch (caught) {
-      setStatus({
-        message: caught instanceof Error ? caught.message : t('settings.mcp.saveFailed', { defaultValue: 'Could not save the custom MCP server.' }),
-        error: true,
-      });
-    } finally {
-      setActionKey(null);
-    }
-  };
-
-  const importMcp = async () => {
-    if (!mcpConfigImport.trim() || actionKey) return;
-    setActionKey('import');
-    setStatus(null);
-    try {
-      const payload = await importMcpConfig(mcpConfigImport);
-      applyMcpMutation(payload, t('settings.mcp.imported', { defaultValue: 'MCP configuration imported.' }));
-      setMcpConfigImport('');
-    } catch (caught) {
-      setStatus({
-        message: caught instanceof Error ? caught.message : t('settings.mcp.importFailed', { defaultValue: 'Could not import the MCP configuration.' }),
-        error: true,
-      });
-    } finally {
-      setActionKey(null);
-    }
-  };
-
-  const updateMcpTools = async (preset: McpPresetInfo, enabledTools: string[]) => {
-    if (actionKey) return;
-    setActionKey(`tools:mcp:${preset.name}`);
-    setStatus(null);
-    try {
-      const payload = await updateMcpServerTools(preset.name,
-        enabledTools,
-      );
-      applyMcpMutation(payload, t('settings.mcp.toolScopeUpdated', { defaultValue: '{{name}} tool scope updated.', name: preset.display_name }));
-    } catch (caught) {
-      setStatus({
-        message: caught instanceof Error ? caught.message : t('settings.mcp.toolScopeUpdateFailed', { defaultValue: 'Could not update MCP tool scope.' }),
-        error: true,
-      });
-    } finally {
-      setActionKey(null);
-    }
-  };
-
   const focusedApp = cliFocusName
     ? cliPayload.apps.find((app) => app.name === cliFocusName && app.installed) ?? null
     : null;
 
   const readyCount = cliPayload.installed_count + mcpPayload.installed_count;
+  const catalogBusy = loading || refreshing;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -331,7 +134,7 @@ export function AppsScreen({
           value={query}
         />
         {query ? (
-          <Pressable accessibilityLabel={t('settings.apps.clearSearch', { defaultValue: 'Clear search' })} hitSlop={8} onPress={() => setQuery('')}>
+          <Pressable accessibilityLabel={t('common.clearSearch')} accessibilityRole="button" hitSlop={8} onPress={() => setQuery('')}>
             <X color={colors.subtle} size={16} />
           </Pressable>
         ) : null}
@@ -346,7 +149,9 @@ export function AppsScreen({
           const active = filter === value;
           return (
             <Pressable
-              accessibilityLabel={t('settings.apps.filterLabel', { defaultValue: 'Filter: {{label}}', label })}
+              accessibilityLabel={label}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
               key={value}
               onPress={() => setFilter(value)}
               style={[
@@ -361,7 +166,7 @@ export function AppsScreen({
       </View>
 
       {status ? (
-        <View style={[
+        <View accessibilityRole={status.error ? 'alert' : undefined} style={[
           styles.status,
           {
             backgroundColor: status.error ? colors.errorBackground : colors.card,
@@ -369,7 +174,7 @@ export function AppsScreen({
           },
         ]}>
           <Text style={[styles.statusText, { color: status.error ? colors.errorText : colors.foreground }]}>{status.message}</Text>
-          <Pressable accessibilityLabel={t('settings.apps.dismissStatus', { defaultValue: 'Dismiss status' })} hitSlop={8} onPress={() => setStatus(null)}>
+          <Pressable accessibilityLabel={t('common.dismiss')} accessibilityRole="button" hitSlop={8} onPress={() => setStatus(null)}>
             <X color={status.error ? colors.errorText : colors.muted} size={16} />
           </Pressable>
         </View>
@@ -392,6 +197,8 @@ export function AppsScreen({
           {onRestart ? (
             <Pressable
               accessibilityLabel={t('app.system.restart')}
+              accessibilityRole="button"
+              accessibilityState={{ busy: restartBusy, disabled: restartBusy || !restartPolicy.canRestart }}
               disabled={restartBusy || !restartPolicy.canRestart}
               onPress={() => {
                 if (!restartPolicy.canRestart) return;
@@ -418,7 +225,15 @@ export function AppsScreen({
         <View style={[styles.countBadge, { backgroundColor: colors.card }]}>
           <Text style={[styles.countText, { color: colors.muted }]}>{items.length}</Text>
         </View>
-        <Pressable accessibilityLabel={t('settings.apps.refreshCatalog', { defaultValue: 'Refresh app catalog' })} hitSlop={8} onPress={() => void load(true)} style={styles.refreshButton}>
+        <Pressable
+          accessibilityLabel={t('common.refresh')}
+          accessibilityRole="button"
+          accessibilityState={{ busy: refreshing, disabled: catalogBusy }}
+          disabled={catalogBusy}
+          hitSlop={8}
+          onPress={() => void load(true)}
+          style={styles.refreshButton}
+        >
           {refreshing
             ? <ActivityIndicator color={colors.muted} size="small" />
             : <RefreshCw color={colors.muted} size={16} strokeWidth={1.8} />}
@@ -450,15 +265,27 @@ export function AppsScreen({
                   onAdvancedChange={setCustomMcpAdvanced}
                   onConfigImportChange={setMcpConfigImport}
                   onFormChange={setCustomMcpForm}
-                  onImport={() => void importMcp()}
+                  onImport={() => {
+                    void importMcp(mcpConfigImport).then((imported) => {
+                      if (imported && mountedRef.current) setMcpConfigImport('');
+                    });
+                  }}
                   onModeChange={setCustomMcpMode}
-                  onSave={() => void saveCustomMcp()}
+                  onSave={() => {
+                    void saveCustomMcp(customMcpForm).then((saved) => {
+                      if (!saved || !mountedRef.current) return;
+                      setCustomMcpForm((current) => ({
+                        ...DEFAULT_CUSTOM_MCP_FORM,
+                        transport: current.transport,
+                      }));
+                    });
+                  }}
                 />
               ) : null}
               <Text style={[styles.brandNotice, { color: colors.subtle }]}>{t('settings.legal.thirdPartyBrands')}</Text>
             </View>
           )}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.muted} />}
+          refreshControl={<RefreshControl enabled={!catalogBusy} refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.muted} />}
           renderItem={({ item }) => item.kind === 'cli' ? (
             <CliAppRow
               actionKey={actionKey}
@@ -470,7 +297,15 @@ export function AppsScreen({
             <McpPresetRow
               actionKey={actionKey}
               colors={colors}
-              onAction={applyMcpAction}
+              onAction={(action, preset, values) => {
+                void applyMcpAction(action, preset, values).then((succeeded) => {
+                  if (!succeeded || !mountedRef.current) return;
+                  setSetupPreset(null);
+                  if (action === 'enable') {
+                    setMcpValues((current) => ({ ...current, [preset.name]: {} }));
+                  }
+                });
+              }}
               onChangeValue={(field, value) => {
                 setMcpValues((current) => ({
                   ...current,

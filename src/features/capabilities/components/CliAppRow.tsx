@@ -28,6 +28,7 @@ export function CliAppRow({
 }) {
   const { t } = useTranslation();
   const busy = Boolean(actionKey?.endsWith(`:cli:${app.name}`));
+  const actionsDisabled = actionKey !== null;
   const description = app.description || app.requires || app.entry_point || app.name;
   const showMenu = () => {
     Alert.alert(app.display_name, description, [
@@ -55,19 +56,21 @@ export function CliAppRow({
       </View>
       {busy ? <ActivityIndicator color={colors.muted} size="small" /> : app.installed ? (
         <View style={styles.rowActions}>
-          <Pressable accessibilityLabel={t('settings.cliApps.statusInstalled')} onPress={showMenu} style={[styles.actionButton, { backgroundColor: colors.card }]}>
+          <Pressable accessibilityLabel={t('settings.cliApps.statusInstalled')} accessibilityRole="button" accessibilityState={{ disabled: actionsDisabled }} disabled={actionsDisabled} onPress={showMenu} style={[styles.actionButton, { backgroundColor: colors.card }]}>
             <Check color="#4F8A62" size={17} strokeWidth={2} />
           </Pressable>
-          <Pressable accessibilityLabel={t('settings.cliApps.uninstall')} onPress={() => onAction('uninstall', app)} style={styles.actionButton}>
+          <Pressable accessibilityLabel={t('settings.cliApps.uninstall')} accessibilityRole="button" accessibilityState={{ disabled: actionsDisabled }} disabled={actionsDisabled} onPress={() => onAction('uninstall', app)} style={styles.actionButton}>
             <Trash2 color={colors.errorText} size={16} strokeWidth={1.8} />
           </Pressable>
         </View>
       ) : (
         <Pressable
           accessibilityLabel={app.install_supported ? t('settings.cliApps.install') : t('settings.cliApps.unavailable')}
-          disabled={!app.install_supported}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: actionsDisabled || !app.install_supported }}
+          disabled={actionsDisabled || !app.install_supported}
           onPress={() => onAction('install', app)}
-          style={[styles.actionButton, { opacity: app.install_supported ? 1 : 0.38 }]}
+          style={[styles.actionButton, { opacity: app.install_supported && !actionsDisabled ? 1 : 0.38 }]}
         >
           <Plus color={colors.muted} size={18} />
         </Pressable>

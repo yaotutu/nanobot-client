@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchInstalledCliApps,
   fetchMcpPresets,
-  fetchSkills,
   listSlashCommands,
 } from '@/features/capabilities/api';
 import { useCapabilitiesStore } from '@/features/capabilities/store';
+import { fetchSkills } from '@/features/skills/api';
 import type {
   CliAppInfo,
   CliAppsPayload,
@@ -19,8 +19,11 @@ import type { SlashCommand } from '@/types/api/chat';
 vi.mock('@/features/capabilities/api', () => ({
   fetchInstalledCliApps: vi.fn(),
   fetchMcpPresets: vi.fn(),
-  fetchSkills: vi.fn(),
   listSlashCommands: vi.fn(),
+}));
+
+vi.mock('@/features/skills/api', () => ({
+  fetchSkills: vi.fn(),
 }));
 
 const slashCommand: SlashCommand = {
