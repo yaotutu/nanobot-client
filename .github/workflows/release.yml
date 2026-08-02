@@ -51,11 +51,16 @@ jobs:
 
       - name: Provide dev-only secret stub (CI only)
         run: |
-          # src/lib/dev-secret.ts is git-ignored (local dev convenience only).
-          # On a clean CI checkout the module must exist for the import in
-          # src/lib/credentials.ts to resolve; an empty value matches the
-          # documented "clean checkout" behavior (normal auth screen shown).
-          printf 'export const DEV_BOOTSTRAP_SECRET = "";\n' > src/lib/dev-secret.ts
+          # src/services/credentials/dev-secret.ts is git-ignored (see .gitignore L55).
+          # `require.context` in src/services/credentials/local-dev-bootstrap.ts
+          # scans for this file at Metro bundle time. On a clean CI checkout the
+          # file must exist with empty values so the bundle resolves cleanly.
+          # Empty values are safe: the runtime guard `if (!__DEV__) return ""`
+          # in local-dev-bootstrap.ts ensures the stub is never consulted in a
+          # release build, and DEV_SERVER_URL has no call sites in src/.
+          mkdir -p src/services/credentials
+          printf 'export const DEV_BOOTSTRAP_SECRET = "";\nexport const DEV_SERVER_URL = "";\n' \
+            > src/services/credentials/dev-secret.ts
 
       - name: Generate native Android project (CNG)
         run: npx expo prebuild --platform android --no-install --clean
