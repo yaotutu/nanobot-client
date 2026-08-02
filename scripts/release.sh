@@ -219,13 +219,32 @@ if [[ "$LOCAL_ONLY" == true ]]; then
   exit 0
 fi
 
-printf '\n==> Creating GitHub Release %s\n' "$TAG"
-RELEASE_URL="$(
+printf '\n==> Publishing GitHub Release %s\n' "$TAG"
+REPOSITORY="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+
+# Reuse a release for this tag if one already exists (for example a draft left
+# behind by an interrupted upload). Otherwise create the release without assets,
+# which also creates the git tag on the remote default branch. Assets are then
+# uploaded separately so gh can print an upload progress indicator for the APK.
+if gh release view "$TAG" --repo "$REPOSITORY" >/dev/null 2>&1; then
+  printf 'Release %s already exists; refreshing its assets.\n' "$TAG"
+else
   gh release create "$TAG" \
-    "$ARTIFACT_DIR/$APK_NAME" \
-    "$ARTIFACT_DIR/checksums.txt" \
+    --repo "$REPOSITORY" \
     --title "nanobot $TAG" \
     --notes "Android Release APK built from the local workspace."
-)" || fail "Unable to create GitHub Release $TAG. The version tag/release may already exist."
+fi
 
-printf 'GitHub Release: %s\n' "$RELEASE_URL"
+# Upload (or replace) assets. Run in the foreground so the progress bar shows.
+gh release upload "$TAG" \
+  "$ARTIFACT_DIR/$APK_NAME" \
+  "$ARTIFACT_DIR/checksums.txt" \
+  --repo "$REPOSITORY" \
+  --clobber || fail "Unable to upload assets to GitHub Release $TAG."
+
+# Publish in case the existing release was a draft.
+gh release edit "$TAG" --repo "$REPOSITORY" --draft=false >/dev/null \
+  || fail "Unable to publish GitHub Release $TAG."
+
+RELEASE_URL="$(gh release view "$TAG" --repo "$REPOSITORY" --json url --jq .url)"
+printf '\nGitHub Release: %s\n' "$RELEASE_URL"
