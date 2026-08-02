@@ -18,7 +18,7 @@ import { FilePreviewModal } from '@/components/modals/file-preview-modal';
 import { PromptNavigator } from '@/components/widgets/prompt-navigator';
 import { SessionInfoModal } from '@/components/modals/session-info-modal';
 import { SessionSearchModal } from '@/components/modals/session-search-modal';
-import { SidebarDrawer } from '@/components/sidebar-drawer';
+import { SidebarDrawer } from '@/features/sidebar/components/SidebarDrawer';
 
 export interface ChatModalsProps {
   colors: Palette;
