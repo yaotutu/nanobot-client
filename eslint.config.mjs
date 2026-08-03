@@ -8,6 +8,89 @@ const restrictedLayerImports = (patterns) => ({
   'no-restricted-imports': ['error', { patterns }],
 });
 
+const infrastructureLayerPatterns = [
+  { group: ['@/app', '@/app/*'], message: 'Infrastructure layers cannot depend on Expo Router.' },
+  { group: ['@/components', '@/components/*'], message: 'Infrastructure layers cannot depend on application components.' },
+  { group: ['@/features', '@/features/*'], message: 'Infrastructure layers cannot depend on feature modules.' },
+];
+
+const featureLayerPatterns = [
+  { group: ['@/app', '@/app/*'], message: 'Features cannot depend on Expo Router.' },
+  { group: ['@/components', '@/components/*'], message: 'Features cannot depend on application shell components.' },
+];
+
+const nonAppFeaturePatterns = [
+  ...featureLayerPatterns,
+  {
+    group: ['@/features/app', '@/features/app/*'],
+    message: 'Only features/app may compose application-level feature dependencies.',
+  },
+  {
+    group: [
+      '@/features/settings/components/SettingsScreen',
+      '@/features/capabilities/components/AppsScreen',
+      '@/features/skills/components/SkillsScreen',
+      '@/features/automations/components/AutomationsScreen',
+      '@/features/sidebar/components/SidebarDrawer',
+    ],
+    message: 'Top-level feature screens must be composed by features/app.',
+  },
+];
+
+const featureNames = [
+  'auth',
+  'automations',
+  'capabilities',
+  'channels',
+  'chat',
+  'connection',
+  'security',
+  'settings',
+  'sidebar',
+  'skills',
+  'workspaces',
+];
+
+const privateCrossFeaturePatterns = (feature) => featureNames
+  .filter((candidate) => candidate !== feature)
+  .map((candidate) => ({
+    group: [`@/features/${candidate}/*`],
+    message: `Import ${candidate} through its public feature entrypoint (@/features/${candidate}).`,
+  }));
+
+const featureLogicPatterns = [
+  {
+    group: [
+      '**/components',
+      '**/components/**',
+      '@/features/*/components',
+      '@/features/*/components/*',
+    ],
+    message: 'Feature hooks and models cannot depend on presentation components.',
+  },
+];
+
+const featureBoundaryConfigs = featureNames.flatMap((feature) => [
+  {
+    files: [`src/features/${feature}/**/*.{ts,tsx}`],
+    rules: restrictedLayerImports([
+      ...nonAppFeaturePatterns,
+      ...privateCrossFeaturePatterns(feature),
+    ]),
+  },
+  {
+    files: [
+      `src/features/${feature}/**/hooks/**/*.{ts,tsx}`,
+      `src/features/${feature}/**/model/**/*.{ts,tsx}`,
+    ],
+    rules: restrictedLayerImports([
+      ...nonAppFeaturePatterns,
+      ...featureLogicPatterns,
+      ...privateCrossFeaturePatterns(feature),
+    ]),
+  },
+]);
+
 export default tseslint.config(
   {
     ignores: [
@@ -55,38 +138,53 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/services/**/*.{ts,tsx}', 'src/ui/**/*.{ts,tsx}', 'src/types/**/*.{ts,tsx}'],
+    files: ['src/services/**/*.{ts,tsx}', 'src/ui/**/*.{ts,tsx}'],
+    rules: restrictedLayerImports(infrastructureLayerPatterns),
+  },
+  {
+    files: ['src/types/**/*.{ts,tsx}'],
     rules: restrictedLayerImports([
-      { group: ['@/app', '@/app/*'], message: 'Infrastructure layers cannot depend on Expo Router.' },
-      { group: ['@/components', '@/components/*'], message: 'Infrastructure layers cannot depend on application components.' },
-      { group: ['@/features', '@/features/*'], message: 'Infrastructure layers cannot depend on feature modules.' },
+      ...infrastructureLayerPatterns,
+      {
+        group: ['@/ui', '@/ui/*'],
+        message: 'Domain and API types cannot depend on UI presentation types.',
+      },
     ]),
   },
   {
-    files: ['src/features/**/*.{ts,tsx}'],
-    rules: restrictedLayerImports([
-      { group: ['@/app', '@/app/*'], message: 'Features cannot depend on Expo Router.' },
-      { group: ['@/components', '@/components/*'], message: 'Features cannot depend on application shell components.' },
-    ]),
+    files: ['src/features/app/**/*.{ts,tsx}'],
+    rules: restrictedLayerImports(featureLayerPatterns),
   },
   {
     files: ['src/features/**/*.{ts,tsx}'],
     ignores: ['src/features/app/**/*.{ts,tsx}'],
+    rules: restrictedLayerImports(nonAppFeaturePatterns),
+  },
+  {
+    files: [
+      'src/features/app/**/hooks/**/*.{ts,tsx}',
+      'src/features/app/**/model/**/*.{ts,tsx}',
+    ],
     rules: restrictedLayerImports([
-      { group: ['@/app', '@/app/*'], message: 'Features cannot depend on Expo Router.' },
-      { group: ['@/components', '@/components/*'], message: 'Features cannot depend on application shell components.' },
-      {
-        group: [
-          '@/features/settings/components/SettingsScreen',
-          '@/features/capabilities/components/AppsScreen',
-          '@/features/skills/components/SkillsScreen',
-          '@/features/automations/components/AutomationsScreen',
-          '@/features/sidebar/components/SidebarDrawer',
-        ],
-        message: 'Top-level feature screens must be composed by features/app.',
-      },
+      ...featureLayerPatterns,
+      ...featureLogicPatterns,
     ]),
   },
+  {
+    files: [
+      'src/features/**/hooks/**/*.{ts,tsx}',
+      'src/features/**/model/**/*.{ts,tsx}',
+    ],
+    ignores: [
+      'src/features/app/**/hooks/**/*.{ts,tsx}',
+      'src/features/app/**/model/**/*.{ts,tsx}',
+    ],
+    rules: restrictedLayerImports([
+      ...nonAppFeaturePatterns,
+      ...featureLogicPatterns,
+    ]),
+  },
+  ...featureBoundaryConfigs,
   {
     files: ['__tests__/**/*.{ts,tsx}'],
     languageOptions: {

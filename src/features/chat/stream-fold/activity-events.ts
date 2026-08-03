@@ -5,7 +5,7 @@ import {
   mergeUniqueToolTraceLines,
   normalizeToolProgressEvents,
   toolTraceLinesFromEvents,
-} from '@/features/chat/tool-traces';
+} from '@/features/chat/tool-model/tool-traces';
 import type {
   InboundEvent,
   ToolProgressEvent,

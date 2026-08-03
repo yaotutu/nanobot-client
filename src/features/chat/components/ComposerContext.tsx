@@ -3,7 +3,7 @@ import { FileText, Quote, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
-import { formatAttachmentBytes, queuedPromptPreview } from '@/features/chat/composer-model';
+import { formatAttachmentBytes, queuedPromptPreview } from '@/features/chat/composer/model/presentation';
 import type { ComposerAttachment } from '@/types/api/chat';
 import type { Palette } from '@/ui/palette';
 import type { QueuedPrompt } from '@/features/chat/hooks/use-composer-controller';

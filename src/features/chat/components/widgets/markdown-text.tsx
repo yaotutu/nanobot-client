@@ -16,7 +16,7 @@ import {
   fileReferenceFromLink,
   isLikelyFilePath,
   isNonNavigableFilePatternLink,
-} from '@/features/chat/file-reference';
+} from '@/features/chat/model/file-reference';
 
 interface MarkdownPalette {
   foreground: string;

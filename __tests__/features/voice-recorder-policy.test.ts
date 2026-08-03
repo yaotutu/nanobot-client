@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createRecordingAnalysis,
+  observeRecordingLevel,
+  recordingStopError,
+  shouldShowNoInputHint,
+} from '@/features/chat/voice/recording-analysis';
+import {
   boundedVoiceDurationSec,
   boundedVoiceUploadMb,
   meteringLevel,
@@ -20,6 +26,22 @@ describe('voice recorder policy', () => {
     expect(boundedVoiceDurationSec(0)).toBe(120);
     expect(boundedVoiceDurationSec(999)).toBe(600);
     expect(boundedVoiceUploadMb(-2)).toBe(1);
+  });
+
+  it('tracks silence and chooses stop validation errors in priority order', () => {
+    const analysis = createRecordingAnalysis();
+    observeRecordingLevel(analysis, -70);
+    expect(shouldShowNoInputHint(analysis)).toBe(true);
+    expect(recordingStopError({ durationMs: 1_000, maxReached: false, analysis }))
+      .toBe('noInput');
+    expect(recordingStopError({ durationMs: 100, maxReached: true, analysis }))
+      .toBe('tooLong');
+
+    expect(observeRecordingLevel(analysis, -20)).toBe(true);
+    expect(recordingStopError({ durationMs: 100, maxReached: false, analysis }))
+      .toBe('tooShort');
+    expect(recordingStopError({ durationMs: 1_000, maxReached: false, analysis }))
+      .toBeNull();
   });
 
   it('creates bounded waveform levels', () => {

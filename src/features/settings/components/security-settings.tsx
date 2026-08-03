@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 
-import { usePairingRequests } from '@/features/security/hooks/use-pairing-requests';
+import { usePairingRequests } from '@/features/security';
 import { updateNetworkSafetySettings } from '@/features/settings/api';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type { SettingsPayload } from '@/types/api/settings';

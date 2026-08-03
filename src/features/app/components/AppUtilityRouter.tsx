@@ -8,7 +8,7 @@ import type { SettingsPayload } from '@/types/api/settings';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type { Palette } from '@/ui/palette';
 
-export type AppUtilityView = 'chat' | 'apps' | 'skills' | 'automations' | 'settings';
+import type { AppUtilityView } from '@/features/app/model/navigation';
 
 interface AppUtilityRouterProps {
   bootstrap: BootstrapResponse;

@@ -12,7 +12,7 @@ import {
 
 import type { Palette } from '@/ui/palette';
 
-import type { CustomMcpForm, CustomMcpMode } from './apps-utils';
+import type { CustomMcpForm, CustomMcpMode } from '@/features/capabilities/model';
 
 export function CustomMcpPanel({
   actionKey,

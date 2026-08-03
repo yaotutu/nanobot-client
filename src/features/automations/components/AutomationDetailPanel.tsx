@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import type { SessionAutomationJob } from '@/types/api/automations';
 import type { Palette } from '@/ui/palette';
 
-import type { AutomationAction } from './automations-utils';
+import type { AutomationAction } from '@/features/automations/model';
 import {
   automationStatus,
   automationSummary,
@@ -30,7 +30,7 @@ import {
   formatSchedule,
   isLocalTrigger,
   originLabel,
-} from './automations-utils';
+} from '@/features/automations/model';
 
 function messageNeedsExpansion(message: string): boolean {
   return message.length > 360 || message.split(/\r?\n/).length > 6;

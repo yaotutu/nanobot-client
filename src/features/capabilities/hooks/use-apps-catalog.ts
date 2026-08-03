@@ -8,7 +8,7 @@ import type { CliAppsPayload, McpPresetsPayload } from '@/types/api/capabilities
 import {
   CLI_APPS_REFRESH_MAX_RETRIES,
   CLI_APPS_REFRESH_RETRY_MS,
-} from '../components/apps-utils';
+} from '@/features/capabilities/model';
 
 const EMPTY_CLI_APPS_PAYLOAD = { apps: [], installed_count: 0 } satisfies CliAppsPayload;
 const EMPTY_MCP_PRESETS_PAYLOAD = { presets: [], installed_count: 0 } satisfies McpPresetsPayload;

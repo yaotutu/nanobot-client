@@ -4,8 +4,8 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import type { CapabilityMentionCandidate } from '@/features/chat/capability-mentions';
-import type { SkillMentionCandidate } from '@/features/chat/skill-mentions';
+import type { CapabilityMentionCandidate } from '@/features/chat/composer/model/capability-mentions';
+import type { SkillMentionCandidate } from '@/features/chat/composer/model/skill-mentions';
 import { useLogoFallback } from '@/hooks/use-logo-fallback';
 import { logoFallbackUrls } from '@/services/links/provider-brand';
 import type { Palette } from '@/ui/palette';

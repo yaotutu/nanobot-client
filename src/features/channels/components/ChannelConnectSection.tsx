@@ -7,7 +7,7 @@ import {
   channelConnectInstruction,
   channelConnectStatusLabel,
   channelCopy,
-} from '@/features/channels/components/channels-utils';
+} from '@/features/channels/model';
 import type { ChannelConnectPayload } from '@/types/api/channels';
 import type { ChannelConnectMode } from '@/features/channels/hooks/use-channel-connect';
 import type { Palette } from '@/ui/palette';

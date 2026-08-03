@@ -12,7 +12,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { AgentActivityCluster } from '@/features/chat/components/activity/AgentActivityCluster';
-import { type TurnUnit } from '@/features/chat/activity-timeline';
+import { type TurnUnit } from '@/features/chat/activity/model/activity-timeline';
 import { MessageRow as ExtractedMessageRow } from '@/features/chat/components/messages/MessageRow';
 import { ForkBoundaryDivider as ExtractedForkBoundaryDivider } from '@/features/chat/components/messages/MessageRow.extras';
 import type { Palette } from '@/ui/palette';

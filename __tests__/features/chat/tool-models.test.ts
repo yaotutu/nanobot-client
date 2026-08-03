@@ -8,7 +8,7 @@ import {
   parseMcpRunTrace,
   summarizeFileEdits,
   toolEventStatesByTraceLine,
-} from '@/features/chat/components/activity/tool-helpers';
+} from '@/features/chat/activity/model/tool-helpers';
 import type { UIFileEdit, UIMessage } from '@/types/api/chat';
 
 function edit(overrides: Partial<UIFileEdit> = {}): UIFileEdit {

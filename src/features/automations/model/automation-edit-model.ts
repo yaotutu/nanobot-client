@@ -6,7 +6,7 @@ import {
   type EditDraft,
   type EveryUnit,
   type ScheduleKind,
-} from '@/features/automations/components/automations-utils';
+} from '@/features/automations/model';
 import type {
   AutomationUpdatePayload,
   SessionAutomationJob,

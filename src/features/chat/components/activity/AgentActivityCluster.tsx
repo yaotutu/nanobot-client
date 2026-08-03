@@ -20,9 +20,9 @@ import {
   messageHasOnlyFileActivity,
   summarizeFileEdits,
   traceLines,
-} from '@/features/chat/components/activity/tool-helpers';
-import { isReasoningOnlyAssistant } from '@/features/chat/activity-timeline';
-import { coalesceActivityMessages } from '@/features/chat/activity-message-model';
+} from '@/features/chat/activity/model/tool-helpers';
+import { isReasoningOnlyAssistant } from '@/features/chat/activity/model/activity-timeline';
+import { coalesceActivityMessages } from '@/features/chat/activity/model/activity-message-model';
 import type { FileEditDisplayMode, LocalActivityMode } from '@/stores/local-preferences-store';
 import type { Palette } from '@/ui/palette';
 import type {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatAttachmentBytes } from '@/features/chat/composer-model';
+import { formatAttachmentBytes } from '@/features/chat/composer/model/presentation';
 
 describe('formatAttachmentBytes', () => {
   it('formats bytes, kilobytes, and megabytes at stable boundaries', () => {

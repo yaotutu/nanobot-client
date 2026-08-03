@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next';
 
 import { ChannelFields } from '@/features/channels/components/ChannelFields';
 import { ActionButton, Section } from '@/features/channels/components/channel-controls';
-import { channelCopy } from '@/features/channels/components/channels-utils';
+import { channelCopy } from '@/features/channels/model';
 import type {
   ChannelConfigField,
   ChannelProviderPreset,
   ChannelSetupMode,
-  ChannelValidationPayload,
-} from '@/types/api/channels';
+} from '@/features/channels/presentation/types';
+import type { ChannelValidationPayload } from '@/types/api/channels';
 import type { Palette } from '@/ui/palette';
 
 interface ChannelConfigurationSectionProps {

@@ -1,5 +1,4 @@
 import { RefreshCw, Search, X } from 'lucide-react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -12,8 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import { useAppsActions } from '@/features/capabilities/hooks/use-apps-actions';
-import { useAppsCatalog } from '@/features/capabilities/hooks/use-apps-catalog';
+import { useAppsScreenController } from '@/features/capabilities/hooks/use-apps-screen-controller';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type { Palette } from '@/ui/palette';
 
@@ -21,19 +19,6 @@ import { CliAppRow } from './CliAppRow';
 import { CliReadyPanel } from './CliReadyPanel';
 import { CustomMcpPanel } from './CustomMcpPanel';
 import { McpPresetRow } from './McpPresetRow';
-import {
-  DEFAULT_CUSTOM_MCP_FORM,
-  itemReady,
-  searchText,
-  titleOf,
-} from './apps-utils';
-import type {
-  AppsFilter,
-  CatalogItem,
-  CustomMcpForm,
-  CustomMcpMode,
-} from './apps-utils';
-
 interface AppsScreenProps {
   colors: Palette;
   onBackToChat: () => void;
@@ -49,72 +34,41 @@ export function AppsScreen({
 }: AppsScreenProps) {
   const { t } = useTranslation();
   const {
-    applyCliAppsPayload,
-    applyMcpPresetsPayload,
-    cliPayload,
-    load,
-    loading,
-    mcpPayload,
-    refreshing,
-    setStatus,
-    status,
-  } = useAppsCatalog();
-
-  const {
     actionKey,
     applyCliAction,
-    applyMcpAction,
-    cliFocusName,
-    importMcp,
+    catalogBusy,
+    changeMcpValue,
+    customMcpAdvanced,
+    customMcpForm,
+    customMcpMode,
+    filter,
+    focusedApp,
+    handleImport,
+    handleMcpAction,
+    handleRestart,
+    handleSaveCustomMcp,
+    items,
+    load,
+    loading,
+    mcpConfigImport,
+    mcpValues,
+    query,
+    readyCount,
+    refreshing,
+    restartBusy,
     restartRequired,
-    saveCustomMcp,
-    updateMcpTools,
-  } = useAppsActions({
-    applyCliAppsPayload,
-    applyMcpPresetsPayload,
+    setCustomMcpAdvanced,
+    setCustomMcpForm,
+    setCustomMcpMode,
+    setFilter,
+    setMcpConfigImport,
+    setQuery,
     setStatus,
-  });
-
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<AppsFilter>('ready');
-  const mountedRef = useRef(true);
-  const [setupPreset, setSetupPreset] = useState<string | null>(null);
-  const [mcpValues, setMcpValues] = useState<Record<string, Record<string, string>>>({});
-  const [customMcpMode, setCustomMcpMode] = useState<CustomMcpMode>(null);
-  const [customMcpAdvanced, setCustomMcpAdvanced] = useState(false);
-  const [customMcpForm, setCustomMcpForm] = useState<CustomMcpForm>(DEFAULT_CUSTOM_MCP_FORM);
-  const [mcpConfigImport, setMcpConfigImport] = useState('');
-  const [restartBusy, setRestartBusy] = useState(false);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  const items = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase();
-    return [
-      ...cliPayload.apps.map((app): CatalogItem => ({ id: `cli:${app.name}`, kind: 'cli', app })),
-      ...mcpPayload.presets.map((preset): CatalogItem => ({ id: `mcp:${preset.name}`, kind: 'mcp', preset })),
-    ]
-      .filter((item) => {
-        if (needle) return searchText(item).includes(needle);
-        return filter === 'ready' ? itemReady(item) : item.kind === filter;
-      })
-      .sort((left, right) => {
-        const readyRank = Number(!itemReady(left)) - Number(!itemReady(right));
-        return readyRank || titleOf(left).localeCompare(titleOf(right));
-      });
-  }, [cliPayload.apps, filter, mcpPayload.presets, query]);
-
-  const focusedApp = cliFocusName
-    ? cliPayload.apps.find((app) => app.name === cliFocusName && app.installed) ?? null
-    : null;
-
-  const readyCount = cliPayload.installed_count + mcpPayload.installed_count;
-  const catalogBusy = loading || refreshing;
+    setupPreset,
+    status,
+    togglePresetSetup,
+    updateMcpTools,
+  } = useAppsScreenController({ onRestart, restartPolicy });
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -200,14 +154,7 @@ export function AppsScreen({
               accessibilityRole="button"
               accessibilityState={{ busy: restartBusy, disabled: restartBusy || !restartPolicy.canRestart }}
               disabled={restartBusy || !restartPolicy.canRestart}
-              onPress={() => {
-                if (!restartPolicy.canRestart) return;
-                setRestartBusy(true);
-                onRestart();
-                setTimeout(() => {
-                  if (mountedRef.current) setRestartBusy(false);
-                }, 4_000);
-              }}
+              onPress={handleRestart}
               style={[styles.restartButton, { backgroundColor: colors.foreground, opacity: restartPolicy.canRestart ? 1 : 0.42 }]}
             >
               {restartBusy ? (
@@ -265,21 +212,9 @@ export function AppsScreen({
                   onAdvancedChange={setCustomMcpAdvanced}
                   onConfigImportChange={setMcpConfigImport}
                   onFormChange={setCustomMcpForm}
-                  onImport={() => {
-                    void importMcp(mcpConfigImport).then((imported) => {
-                      if (imported && mountedRef.current) setMcpConfigImport('');
-                    });
-                  }}
+                  onImport={handleImport}
                   onModeChange={setCustomMcpMode}
-                  onSave={() => {
-                    void saveCustomMcp(customMcpForm).then((saved) => {
-                      if (!saved || !mountedRef.current) return;
-                      setCustomMcpForm((current) => ({
-                        ...DEFAULT_CUSTOM_MCP_FORM,
-                        transport: current.transport,
-                      }));
-                    });
-                  }}
+                  onSave={handleSaveCustomMcp}
                 />
               ) : null}
               <Text style={[styles.brandNotice, { color: colors.subtle }]}>{t('settings.legal.thirdPartyBrands')}</Text>
@@ -297,26 +232,10 @@ export function AppsScreen({
             <McpPresetRow
               actionKey={actionKey}
               colors={colors}
-              onAction={(action, preset, values) => {
-                void applyMcpAction(action, preset, values).then((succeeded) => {
-                  if (!succeeded || !mountedRef.current) return;
-                  setSetupPreset(null);
-                  if (action === 'enable') {
-                    setMcpValues((current) => ({ ...current, [preset.name]: {} }));
-                  }
-                });
-              }}
-              onChangeValue={(field, value) => {
-                setMcpValues((current) => ({
-                  ...current,
-                  [item.preset.name]: {
-                    ...(current[item.preset.name] ?? {}),
-                    [field]: value,
-                  },
-                }));
-              }}
+              onAction={handleMcpAction}
+              onChangeValue={(field, value) => changeMcpValue(item.preset.name, field, value)}
               onToolsChange={updateMcpTools}
-              onToggleSetup={() => setSetupPreset((current) => current === item.preset.name ? null : item.preset.name)}
+              onToggleSetup={() => togglePresetSetup(item.preset.name)}
               preset={item.preset}
               setupOpen={setupPreset === item.preset.name}
               values={mcpValues[item.preset.name] ?? {}}

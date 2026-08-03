@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { SettingsPage } from './settings-controls';
-import type { ModelsSettingsProps } from './models/models-utils';
+import type { ModelsSettingsProps } from '@/features/settings/model/models-utils';
 import { PresetsSection } from './models/PresetsSection';
 import { ProvidersSection } from './models/ProvidersSection';
 

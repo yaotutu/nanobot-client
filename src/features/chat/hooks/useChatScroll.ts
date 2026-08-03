@@ -5,7 +5,7 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 
-import type { TurnUnit } from '@/features/chat/activity-timeline';
+import type { TurnUnit } from '@/features/chat/activity/model/activity-timeline';
 import type { UIMessage } from '@/types/api/chat';
 
 const BOTTOM_THRESHOLD_PX = 72;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BackHandler } from 'react-native';
 
-import type { AppUtilityView } from '@/features/app/components/AppUtilityRouter';
+import type { AppUtilityView } from '@/features/app/model/navigation';
 
 export function useAppNavigation() {
   const [drawerOpen, setDrawerOpen] = useState(false);

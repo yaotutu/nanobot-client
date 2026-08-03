@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
 
 import { fetchThread } from '@/features/chat/api';
-import { hasPendingAgentActivity } from '@/features/chat/activity-timeline';
+import { hasPendingAgentActivity } from '@/features/chat/activity/model/activity-timeline';
 import { useChatStore } from '@/features/chat/store';
-import { useConnectionStore } from '@/features/connection/store';
-import type { NanobotSocket } from '@/features/connection/socket-transport';
+import { useConnectionStore } from '@/features/connection';
+import type { NanobotSocket } from '@/features/connection';
 import i18n from '@/i18n';
 
 import { chatIdFromKey } from '../model/chat-key';

@@ -1,13 +1,11 @@
-import { useCallback, useRef, useState } from 'react';
 import type { TFunction } from 'i18next';
+import { useCallback, useRef, useState } from 'react';
 
 import { configureChannel, validateChannel } from '@/features/channels/api';
-import { channelCopy, defaultValues } from '@/features/channels/components/channels-utils';
-import type {
-  ChannelConfigField,
-  ChannelValidationPayload,
-  NanobotFeaturesPayload,
-} from '@/types/api/channels';
+import { channelCopy, defaultValues } from '@/features/channels/model';
+import type { ChannelConfigField } from '@/features/channels/presentation/types';
+import type { ChannelValidationPayload } from '@/types/api/channels';
+import type { NanobotFeaturesPayload } from '@/types/api/nanobot-features';
 
 interface UseChannelConfigurationOptions {
   configValues?: Record<string, string>;

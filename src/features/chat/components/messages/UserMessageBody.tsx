@@ -1,6 +1,6 @@
 import { Text, StyleSheet } from 'react-native';
 
-import { matchingSlashCommand } from '@/features/chat/slash-command';
+import { matchingSlashCommand } from '@/features/chat/composer/model/slash-command';
 import type {
   CliAppInfo,
   McpPresetInfo,

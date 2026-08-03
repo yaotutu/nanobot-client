@@ -2,7 +2,7 @@ import { FileCode2, FileText } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { fileKindForPath, splitFilePath } from '@/features/chat/file-reference';
+import { fileKindForPath, splitFilePath } from '@/features/chat/model/file-reference';
 
 interface FileReferencePalette {
   muted: string;

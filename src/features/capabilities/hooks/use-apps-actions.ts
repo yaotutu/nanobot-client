@@ -20,7 +20,7 @@ import type {
   AppAction,
   CustomMcpForm,
   McpAction,
-} from '../components/apps-utils';
+} from '@/features/capabilities/model';
 
 interface UseAppsActionsOptions {
   applyCliAppsPayload: (payload: CliAppsPayload) => void;

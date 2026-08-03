@@ -10,7 +10,6 @@ export interface ChatHeaderProps {
   colors: Palette;
   dark: boolean;
   preferences: LocalPreferences;
-  utilityView: string;
   activeKey: string | null;
   chatTitle: string;
   hasUserPrompts: boolean;
@@ -34,19 +33,11 @@ export function ChatHeader(props: ChatHeaderProps) {
       >
         <Menu color={colors.muted} size={18} strokeWidth={1.8} />
       </Pressable>
-      {props.utilityView === 'apps' ? (
-        <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.muted }]}>{t('sidebar.apps')}</Text>
-      ) : props.utilityView === 'skills' ? (
-        <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.muted }]}>{t('sidebar.skills.title')}</Text>
-      ) : props.utilityView === 'automations' ? (
-        <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.muted }]}>{t('sidebar.automations')}</Text>
-      ) : props.utilityView === 'settings' ? (
-        <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.muted }]}>{t('sidebar.settings')}</Text>
-      ) : props.activeKey ? (
+      {props.activeKey ? (
         <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.muted }]}>{props.chatTitle}</Text>
       ) : <View style={styles.headerTitleFill} />}
       <View style={styles.headerActions}>
-        {props.utilityView === 'chat' && props.activeKey && props.hasUserPrompts ? (
+        {props.activeKey && props.hasUserPrompts ? (
           <Pressable
             accessibilityLabel={t('thread.promptNavigator.open')}
             hitSlop={6}
@@ -56,7 +47,7 @@ export function ChatHeader(props: ChatHeaderProps) {
             <ListTree color={colors.muted} size={17} strokeWidth={1.8} />
           </Pressable>
         ) : null}
-        {props.utilityView === 'chat' && props.activeKey ? (
+        {props.activeKey ? (
           <Pressable
             accessibilityLabel={t('thread.header.sessionInfo')}
             hitSlop={6}

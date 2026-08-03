@@ -4,8 +4,7 @@ import { useChatStore } from '@/features/chat/store';
 import type {
   MessageSendResult,
   NanobotSocket,
-} from '@/features/connection/socket-transport';
-import { useSidebarStore } from '@/features/sidebar/store';
+} from '@/features/connection';
 import i18n from '@/i18n';
 import { resolveRuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import { normalizeWorkspaceScope } from '@/services/runtime/workspace-paths';
@@ -85,6 +84,7 @@ export function useChatCommands({
   activeWorkspaceScope,
   bootstrap,
   messages,
+  onChatCreated,
   sessions,
   socketRef,
 }: {
@@ -92,6 +92,7 @@ export function useChatCommands({
   activeWorkspaceScope: WorkspaceScopePayload | null;
   bootstrap: BootstrapResponse | null;
   messages: UIMessage[];
+  onChatCreated: (chatId: string, workspaceScope: WorkspaceScopePayload | null) => void;
   sessions: ChatSummary[];
   socketRef: RefObject<NanobotSocket | null>;
 }) {
@@ -119,20 +120,7 @@ export function useChatCommands({
       if (!chatId) {
         try {
           chatId = await socket.newChat(5_000, workspaceScope);
-          const newKey = `websocket:${chatId}`;
-          const now = new Date().toISOString();
-          useSidebarStore.getState().addOptimistic({
-            key: newKey,
-            channel: 'websocket',
-            chatId,
-            createdAt: now,
-            updatedAt: now,
-            title: '',
-            preview: '',
-            workspaceScope,
-          });
-          useChatStore.getState().selectSession(newKey, useSidebarStore.getState().sessions);
-          if (workspaceScope) useChatStore.getState().setWorkspaceOverride(chatId, workspaceScope);
+          onChatCreated(chatId, workspaceScope);
         } catch (caught) {
           const message = caught instanceof Error ? caught.message : i18n.t('chat.createFailed');
           useChatStore.getState().setError(message);
@@ -183,7 +171,7 @@ export function useChatCommands({
         throw caught;
       }
     },
-    [activeKey, activeWorkspaceScope, bootstrap, socketRef],
+    [activeKey, activeWorkspaceScope, bootstrap, onChatCreated, socketRef],
   );
 
   const stopTurn = useCallback(() => {

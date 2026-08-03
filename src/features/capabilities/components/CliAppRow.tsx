@@ -12,7 +12,7 @@ import {
 import type { CliAppInfo } from '@/types/api/capabilities';
 import type { Palette } from '@/ui/palette';
 
-import type { AppAction } from './apps-utils';
+import type { AppAction } from '@/features/capabilities/model';
 import { ToolLogo, TypeBadge } from './AppsShared';
 
 export function CliAppRow({

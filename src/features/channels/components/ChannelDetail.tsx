@@ -3,13 +3,9 @@ import {
   CircleAlert,
   Plus,
 } from "lucide-react-native";
-import * as Clipboard from "expo-clipboard";
-import * as Linking from "expo-linking";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,26 +14,18 @@ import {
   View,
 } from "react-native";
 
-import { channelPresentation } from "@/features/channels/channel-presentation";
+import { useChannelDetailController } from '@/features/channels/hooks/use-channel-detail-controller';
+import { channelCopy, statusLabel } from '@/features/channels/model';
 import type {
-  NanobotChannelInstanceInfo,
   NanobotFeatureInfo,
   NanobotFeaturesPayload,
-} from '@/types/api/channels';
+} from '@/types/api/nanobot-features';
 import type { Palette } from '@/ui/palette';
 
-import {
-  channelCopy,
-  channelRunning,
-  channelToggleChecked,
-  statusLabel,
-} from "./channels-utils";
 import { ChannelMark } from "./ChannelMark";
 import { ChannelInstancesSection } from "./ChannelInstancesSection";
 import { ChannelValidationSection } from "./ChannelValidationSection";
 import { StatusBadge } from "./channel-controls";
-import { useChannelConfiguration } from "@/features/channels/hooks/use-channel-configuration";
-import { useChannelConnect } from "@/features/channels/hooks/use-channel-connect";
 import { ChannelConnectSection } from "./ChannelConnectSection";
 import { ChannelConfigurationSection } from "./ChannelConfigurationSection";
 import {
@@ -69,66 +57,42 @@ export function ChannelDetail({
   showBrandLogos: boolean;
 }) {
   const { t } = useTranslation();
-  const presentation = channelPresentation(feature);
-  const setup = presentation.setup;
-  const mode = setup.mode ?? "credentials";
-  const instances =
-    feature.name === "feishu" && !feature.instances?.length
-      ? [
-          {
-            id: "default",
-            name: "nanobot",
-            enabled: feature.enabled,
-            running: feature.running,
-            runtime_status: feature.runtime_status,
-            runtime_error: feature.runtime_error,
-            configured: Boolean(feature.configured),
-            config_values: feature.config_values ?? {},
-            configured_fields: feature.configured_fields ?? [],
-          } satisfies NanobotChannelInstanceInfo,
-        ]
-      : (feature.instances ?? []);
-  const hasInstancePanel =
-    feature.instances !== undefined || feature.name === "feishu";
-  const [selectedInstanceId, setInstanceId] = useState(instances[0]?.id);
-  const instance =
-    instances.find((item) => item.id === selectedInstanceId) ?? instances[0];
-  const instanceId = instance?.id;
-  const fields =
-    mode === "credentials"
-      ? (setup.fields ?? [])
-      : mode === "connect"
-        ? (setup.manualFields ?? [])
-        : [];
-  const requiredFields = fields.filter((field) => !field.optional);
-  const primaryFields =
-    mode === "credentials"
-      ? requiredFields.length
-        ? requiredFields
-        : fields.slice(0, 1)
-      : [];
-  const advancedFields =
-    mode === "connect" ? fields : fields.filter((field) => field.optional);
-  const configValues = instance?.config_values ?? feature.config_values;
-  const configuredFields = new Set(
-    instance?.configured_fields ?? feature.configured_fields ?? [],
-  );
-  const configuration = useChannelConfiguration({
-    configValues,
-    featureName: feature.name,
-    fields,
-    instanceId,
+  const detail = useChannelDetailController({
+    actionKey,
+    feature,
     onError,
     onPayload,
-    t,
+    onToggle,
   });
-  const connectController = useChannelConnect({
-    channelName: feature.name,
+  const {
+    advancedFields,
+    advancedOpen,
+    alwaysEnabled,
+    applyPreset,
+    busy,
+    channelToggleDisabled,
+    configuration,
+    connectController,
+    configuredFields,
+    copySetupText,
+    enabled,
+    hasInstancePanel,
+    instance,
     instanceId,
-    onError,
-    onPayload,
-    t,
-  });
+    instances,
+    missingSupport,
+    mode,
+    openSetupUrl,
+    presentation,
+    primaryFields,
+    requestFeatureToggle,
+    running,
+    selectInstance,
+    setAdvancedOpen,
+    setup,
+    setupNotice,
+    supportsConnect,
+  } = detail;
   const {
     changeValue,
     checkAndEnable,
@@ -149,106 +113,6 @@ export function ChannelDetail({
     connect,
     mode: connectMode,
   } = connectController;
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [setupNotice, setSetupNotice] = useState<string | null>(null);
-
-  const selectInstance = (nextInstanceId: string) => {
-    if (nextInstanceId === instanceId) return;
-    const nextInstance = instances.find((item) => item.id === nextInstanceId);
-    connectController.reset();
-    configuration.reset(nextInstance?.config_values);
-    setInstanceId(nextInstanceId);
-    setAdvancedOpen(false);
-    setSetupNotice(null);
-    onError(null);
-  };
-
-  const copySetupText = async (value: string, successMessage: string) => {
-    try {
-      await Clipboard.setStringAsync(value);
-      setSetupNotice(successMessage);
-      onError(null);
-    } catch (caught) {
-      onError(
-        caught instanceof Error
-          ? caught.message
-          : channelCopy(t, "copyFailed", "Could not copy content."),
-      );
-    }
-  };
-
-  const openSetupUrl = async (url: string) => {
-    try {
-      await Linking.openURL(url);
-      onError(null);
-    } catch (caught) {
-      onError(
-        caught instanceof Error
-          ? caught.message
-          : channelCopy(t, "openLinkFailed", "Could not open link."),
-      );
-    }
-  };
-
-  const applyPreset = (presetValues: Record<string, string>, label: string) => {
-    configuration.applyPreset(presetValues);
-    setSetupNotice(channelCopy(t, "presetApplied", "Applied {{name}} preset.", {
-      name: label,
-    }));
-  };
-
-  const busy = actionKey !== null || saving || validating || connectBusy;
-  const running = instance
-    ? instance.running || instance.runtime_status === "running"
-    : channelRunning(feature);
-  const alwaysEnabled =
-    feature.capabilities?.includes("always_enabled") === true;
-  const enabled = instance?.enabled ?? channelToggleChecked(feature);
-  const supportsConnect = mode === "connect";
-  const needsSetupBeforeEnable =
-    !enabled &&
-    feature.configured === false &&
-    !(presentation.canConnectBeforeConfigured && supportsConnect);
-  const channelToggleDisabled =
-    alwaysEnabled ||
-    busy ||
-    needsSetupBeforeEnable ||
-    (!feature.install_supported && !feature.installed && !feature.enabled);
-  const missingSupport = feature.enabled && !feature.installed;
-
-  const requestFeatureToggle = (nextEnabled: boolean) => {
-    if (
-      nextEnabled &&
-      presentation.canConnectBeforeConfigured &&
-      !enabled &&
-      feature.configured === false &&
-      supportsConnect
-    ) {
-      void beginConnect("replace");
-      return;
-    }
-    if (nextEnabled && !feature.installed && feature.install_supported) {
-      Alert.alert(
-        channelCopy(t, "installTitle", "Install {{name}} support", {
-          name: presentation.displayName,
-        }),
-        channelCopy(
-          t,
-          "installDescription",
-          "Enabling this channel first installs the required dependencies on the nanobot server, then starts the channel. Continue?",
-        ),
-        [
-          { text: channelCopy(t, "cancel", "Cancel"), style: "cancel" },
-          {
-            text: channelCopy(t, "installAndEnable", "Install and enable"),
-            onPress: () => void onToggle(feature, true),
-          },
-        ],
-      );
-      return;
-    }
-    void onToggle(feature, nextEnabled);
-  };
 
   return (
     <ScrollView

@@ -5,7 +5,7 @@ import { runAutomationAction, updateAutomation } from '@/features/automations/ap
 import {
   errorMessage,
   type AutomationAction,
-} from '@/features/automations/components/automations-utils';
+} from '@/features/automations/model';
 import type {
   AutomationsPayload,
   AutomationUpdatePayload,

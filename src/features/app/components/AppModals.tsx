@@ -1,7 +1,7 @@
 import { SessionSearchModal } from '@/features/chat/components/modals/session-search-modal';
 import { SidebarDrawer } from '@/features/sidebar/components/SidebarDrawer';
 import type { AppController } from '@/features/app/hooks/use-app-controller';
-import type { AppUtilityView } from '@/features/app/components/AppUtilityRouter';
+import type { AppUtilityView } from '@/features/app/model/navigation';
 import type { Palette } from '@/ui/palette';
 
 interface AppModalsProps {

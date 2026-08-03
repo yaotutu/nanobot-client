@@ -1,5 +1,5 @@
-import { ChevronRight } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
+import { ChevronRight } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Pressable,
@@ -7,19 +7,19 @@ import {
   Switch,
   Text,
   View,
-} from "react-native";
+} from 'react-native';
 
-import type { Palette } from '@/ui/palette';
-import type { NanobotChannelInstanceInfo } from '@/types/api/channels';
-
-import { ActionButton, Section, StatusBadge } from "./channel-controls";
 import {
   channelCopy,
   instanceDisplayName,
   instanceRunning,
   instanceStatusLabel,
   maskFeishuAppId,
-} from "./channels-utils";
+} from '@/features/channels/model';
+import type { NanobotChannelInstanceInfo } from '@/types/api/nanobot-features';
+import type { Palette } from '@/ui/palette';
+
+import { ActionButton, Section, StatusBadge } from './channel-controls';
 
 interface ChannelInstancesSectionProps {
   actionKey: string | null;

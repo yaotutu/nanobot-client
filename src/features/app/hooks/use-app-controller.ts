@@ -5,14 +5,14 @@ import { useAuthBootstrapLifecycle } from '@/features/app/hooks/use-auth-bootstr
 import { useAuthStore, selectAuthPhase, selectBootstrap } from '@/features/auth/store';
 import { useCapabilitiesStore } from '@/features/capabilities/store';
 import { useChatCommands } from '@/features/chat/hooks/use-chat-commands';
-import { useSessionCommands } from '@/features/chat/hooks/use-session-commands';
+import { useAppSessionCommands } from '@/features/app/hooks/use-app-session-commands';
 import {
   useCanonicalRefresh,
   useThreadLifecycle,
 } from '@/features/chat/hooks/use-thread-lifecycle';
 import { chatIdFromKey } from '@/features/chat/model/chat-key';
 import { useChatStore } from '@/features/chat/store';
-import { useConnectionStore } from '@/features/connection/store';
+import { useConnectionStore } from '@/features/connection';
 import { useSocketLifecycle } from '@/features/app/hooks/use-socket-lifecycle';
 import {
   useSidebarStore,
@@ -95,15 +95,7 @@ export function useAppController() {
     enabled: Boolean(bootstrap),
     socketRef,
   });
-  const chatCommands = useChatCommands({
-    activeKey,
-    activeWorkspaceScope,
-    bootstrap,
-    messages,
-    sessions,
-    socketRef,
-  });
-  const sessionCommands = useSessionCommands({
+  const sessionCommands = useAppSessionCommands({
     activeKey,
     activeSession,
     activeWorkspaceScope,
@@ -113,6 +105,15 @@ export function useAppController() {
     socketRef,
     turnActive,
     workspaces,
+  });
+  const chatCommands = useChatCommands({
+    activeKey,
+    activeWorkspaceScope,
+    bootstrap,
+    messages,
+    onChatCreated: sessionCommands.selectCreatedChat,
+    sessions,
+    socketRef,
   });
 
   return {

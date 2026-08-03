@@ -13,8 +13,8 @@ import type {
 import type { Palette } from '@/ui/palette';
 import { SegmentedControl, SettingsInput, SettingsPicker } from '../settings-controls';
 import { FieldLabel, IconButton } from './models-controls';
-import type { ProviderApiType, ProviderForm } from './models-utils';
-import { providerIsConfigured } from './models-utils';
+import type { ProviderApiType, ProviderForm } from '@/features/settings/model/models-utils';
+import { providerIsConfigured } from '@/features/settings/model/models-utils';
 
 export function ModelCatalog({ colors, settings, provider, value, onChange }: {
   colors: Palette;

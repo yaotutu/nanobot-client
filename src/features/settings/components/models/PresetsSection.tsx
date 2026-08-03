@@ -13,13 +13,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPicker, SettingsSection, StatusPill } from '../settings-controls';
 import { ModelCatalog } from './ModelCatalog';
 import { FieldLabel, IconButton, ProviderMark } from './models-controls';
-import type { ModelsSettingsProps } from './models-utils';
-import { usePresetActions } from './presets/use-preset-actions';
+import type { ModelsSettingsProps } from '@/features/settings/model/models-utils';
+import { usePresetActions } from '@/features/settings/hooks/models/presets/use-preset-actions';
 import {
   CONTEXT_WINDOW_OPTIONS,
   formatTokens,
   providerIsConfigured,
-} from './models-utils';
+} from '@/features/settings/model/models-utils';
 
 export function PresetsSection({ colors, settings, showBrandLogos, onSettingsChange }: ModelsSettingsProps) {
   const { t } = useTranslation();

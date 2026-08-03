@@ -14,7 +14,7 @@ import {
 import type { McpPresetInfo } from '@/types/api/capabilities';
 import type { Palette } from '@/ui/palette';
 
-import type { McpAction } from './apps-utils';
+import type { McpAction } from '@/features/capabilities/model';
 import { ToolLogo, TypeBadge } from './AppsShared';
 
 export function McpPresetRow({

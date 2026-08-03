@@ -3,8 +3,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ActionButton, Section } from '@/features/channels/components/channel-controls';
-import { channelCopy } from '@/features/channels/components/channels-utils';
-import type { ChannelSetupMode, ChannelSetupPresentation } from '@/types/api/channels';
+import { channelCopy } from '@/features/channels/model';
+import type {
+  ChannelSetupMode,
+  ChannelSetupPresentation,
+} from '@/features/channels/presentation/types';
 import type { Palette } from '@/ui/palette';
 
 interface ChannelSetupSectionProps {

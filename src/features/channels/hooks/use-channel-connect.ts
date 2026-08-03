@@ -1,14 +1,15 @@
+import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import type { TFunction } from 'i18next';
 
 import {
   cancelChannelConnect,
   pollChannelConnect,
   startChannelConnect,
 } from '@/features/channels/api';
-import { channelCopy } from '@/features/channels/components/channels-utils';
-import type { ChannelConnectPayload, NanobotFeaturesPayload } from '@/types/api/channels';
+import { channelCopy } from '@/features/channels/model';
+import type { ChannelConnectPayload } from '@/types/api/channels';
+import type { NanobotFeaturesPayload } from '@/types/api/nanobot-features';
 
 export type ChannelConnectMode = 'replace' | 'create';
 

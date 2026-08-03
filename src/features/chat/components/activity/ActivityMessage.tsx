@@ -25,7 +25,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { isReasoningOnlyAssistant } from '@/features/chat/activity-timeline';
+import { isReasoningOnlyAssistant } from '@/features/chat/activity/model/activity-timeline';
 import { useLogoFallback } from '@/hooks/use-logo-fallback';
 import { browserSafeFaviconUrls } from '@/services/links/web-url';
 import type { Palette } from '@/ui/palette';
@@ -42,7 +42,7 @@ import {
   brandBorderColor,
   compactReasoningPreview,
   toolRows,
-} from './tool-helpers';
+} from '@/features/chat/activity/model/tool-helpers';
 
 export function ActivityMessage({
   active,

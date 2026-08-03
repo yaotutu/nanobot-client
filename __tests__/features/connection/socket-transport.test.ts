@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+import { reconnectDelayMs } from '@/features/connection/socket-reconnect-policy';
 import {
   createNanobotSocket,
   isSystemCommandTurnId,
@@ -153,6 +154,13 @@ describe('socket-transport', () => {
     await vi.advanceTimersByTimeAsync(500);
     expect(MockWebSocket.instances).toHaveLength(2);
     expect(reauthenticate).toHaveBeenCalledOnce();
+  });
+
+  it('caps reconnect backoff and normalizes invalid attempts', () => {
+    expect(reconnectDelayMs(-1)).toBe(500);
+    expect(reconnectDelayMs(0)).toBe(500);
+    expect(reconnectDelayMs(1)).toBe(1_000);
+    expect(reconnectDelayMs(20)).toBe(15_000);
   });
 
   // ---- inbound event routing ----

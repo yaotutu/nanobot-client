@@ -31,8 +31,8 @@ import {
   StatusPill,
 } from './settings-controls';
 import { TimezonePicker } from './runtime/TimezonePicker';
-import { useApiService } from './runtime/use-api-service';
-import { useObservabilityFeature } from './runtime/use-observability-feature';
+import { useApiService } from '@/features/settings/hooks/runtime/use-api-service';
+import { useObservabilityFeature } from '@/features/settings/hooks/runtime/use-observability-feature';
 
 interface RuntimeSettingsProps {
   colors: Palette;

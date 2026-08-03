@@ -5,7 +5,7 @@ import {
   describeGenericToolRun,
   parseGenericToolTrace,
   type GenericToolRunItem,
-} from '@/features/chat/generic-tool-model';
+} from '@/features/chat/tool-model/generic-tool-model';
 
 function run(line: string, status: GenericToolRunItem['status']): GenericToolRunItem {
   const trace = parseGenericToolTrace(line);

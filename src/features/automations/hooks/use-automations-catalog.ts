@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AppState } from 'react-native';
 
 import { fetchAutomations } from '@/features/automations/api';
-import { errorMessage } from '@/features/automations/components/automations-utils';
+import { errorMessage } from '@/features/automations/model';
 import type { AutomationsPayload } from '@/types/api/automations';
 
 const AUTOMATIONS_POLL_INTERVAL_MS = 5_000;

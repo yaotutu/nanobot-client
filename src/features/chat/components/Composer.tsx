@@ -1,201 +1,121 @@
-import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput, View } from 'react-native';
 
-import type { CapabilityMentionCandidate } from '@/features/chat/capability-mentions';
-import type { SkillMentionCandidate } from '@/features/chat/skill-mentions';
+import type { ComposerProps } from '@/features/chat/composer/model/view-contract';
 import { RunGoalStatus } from '@/features/chat/components/widgets/run-goal-status';
-import { WorkspaceProjectPicker } from '@/features/workspaces/components/WorkspaceControls';
-import type { VoiceRecorderController } from '@/features/chat/hooks/use-voice-recorder';
-import type { ComposerAttachment } from '@/types/api/chat';
-import type { GoalStateWsPayload } from '@/types/api/runtime';
-import type { SettingsPayload } from '@/types/api/settings';
-import type { WorkspaceScopePayload, WorkspacesPayload } from '@/types/api/workspaces';
-import type { Palette } from '@/ui/palette';
+import { WorkspaceProjectPicker } from '@/features/workspaces';
+
 import { ComposerContext } from './ComposerContext';
 import { ComposerSuggestions } from './ComposerSuggestions';
 import { ComposerToolbar } from './ComposerToolbar';
-import type { ComposerSlashCommand, QueuedPrompt } from '@/features/chat/hooks/use-composer-controller';
 import { composerStyles as styles } from './composer-styles';
 
-interface ComposerProps {
-  activeModelPreset: string;
-  colors: Palette;
-  dark: boolean;
-  value: string;
-  goalState?: GoalStateWsPayload;
-  inputRef: RefObject<TextInput | null>;
-  modelName: string;
-  mentionCandidates: CapabilityMentionCandidate[];
-  skillCandidates: SkillMentionCandidate[];
-  modelPresets: SettingsPayload['model_presets'];
-  quotedContext: string | null;
-  variant: 'hero' | 'thread';
-  turnActive: boolean;
-  disabled: boolean;
-  workspaceScope: WorkspaceScopePayload | null;
-  workspaceDefaultScope: WorkspaceScopePayload | null;
-  workspaceControls: WorkspacesPayload['controls'] | null;
-  workspaceError: string | null;
-  workspaceScopeDisabled: boolean;
-  attachments: ComposerAttachment[];
-  attachmentBusy: boolean;
-  attachmentFull: boolean;
-  attachmentError: string | null;
-  readyAttachmentCount: number;
-  queuedPrompts: QueuedPrompt[];
-  runStartedAt: number | null;
-  slashCommands: ComposerSlashCommand[];
-  voiceError: string | null;
-  voiceRecorder: VoiceRecorderController;
-  onAddAttachment: () => void;
-  onClearQuote: () => void;
-  onCursorChange: (cursor: number) => void;
-  onMentionCandidateSelect: (candidate: CapabilityMentionCandidate) => void;
-  onSkillCandidateSelect: (candidate: SkillMentionCandidate) => void;
-  onModelPresetChange: (name: string) => Promise<void>;
-  onOpenModelSettings: () => void;
-  onRemoveAttachment: (id: string) => void;
-  onRemoveQueuedPrompt: (id: string) => void;
-  onChangeText: (value: string) => void;
-  onSelectSlashCommand: (command: ComposerSlashCommand) => void;
-  onWorkspaceScopeChange: (scope: WorkspaceScopePayload) => void;
-  onSend: () => void;
-  onStop: () => void;
-}
-
 export function Composer({
-  activeModelPreset,
-  colors,
-  dark,
-  value,
-  goalState,
+  appearance,
   inputRef,
-  modelName,
-  mentionCandidates,
-  skillCandidates,
-  modelPresets,
-  quotedContext,
-  variant,
-  turnActive,
-  disabled,
-  workspaceScope,
-  workspaceDefaultScope,
-  workspaceControls,
-  workspaceError,
-  workspaceScopeDisabled,
   attachments,
-  attachmentBusy,
-  attachmentFull,
-  attachmentError,
-  readyAttachmentCount,
-  queuedPrompts,
-  runStartedAt,
-  slashCommands,
-  voiceError,
-  voiceRecorder,
-  onAddAttachment,
-  onClearQuote,
-  onCursorChange,
-  onMentionCandidateSelect,
-  onSkillCandidateSelect,
-  onModelPresetChange,
-  onOpenModelSettings,
-  onRemoveAttachment,
-  onRemoveQueuedPrompt,
-  onChangeText,
-  onSelectSlashCommand,
-  onWorkspaceScopeChange,
-  onSend,
-  onStop,
+  draft,
+  model,
+  runtime,
+  suggestions,
+  voice,
+  workspace,
 }: ComposerProps) {
   const { t } = useTranslation();
-  const hasDraft = Boolean(value.trim()) || Boolean(quotedContext?.trim()) || readyAttachmentCount > 0;
-  const canSend = hasDraft && !disabled && !attachmentBusy && !attachments.some((item) => item.status === 'error');
-  const stopButton = turnActive && !hasDraft;
-  const voiceBusy = voiceRecorder.phase !== 'idle';
+  const { colors, dark, variant } = appearance;
+  const hasDraft = Boolean(draft.value.trim())
+    || Boolean(draft.quotedContext?.trim())
+    || attachments.readyCount > 0;
+  const canSend = hasDraft
+    && !runtime.disabled
+    && !attachments.busy
+    && !attachments.items.some((item) => item.status === 'error');
+  const stopButton = runtime.turnActive && !hasDraft;
+  const voiceBusy = voice.recorder.phase !== 'idle';
 
   return (
     <View
-      accessibilityState={{ busy: disabled || attachmentBusy }}
+      accessibilityState={{ busy: runtime.disabled || attachments.busy }}
       style={[
         styles.composer,
         variant === 'hero' ? styles.composerHero : styles.composerThread,
         { borderColor: colors.border, backgroundColor: colors.card },
       ]}
     >
-      <RunGoalStatus colors={colors} dark={dark} goalState={goalState} runStartedAt={runStartedAt} />
+      <RunGoalStatus
+        colors={colors}
+        dark={dark}
+        goalState={runtime.goalState}
+        runStartedAt={runtime.runStartedAt}
+      />
       <ComposerSuggestions
         colors={colors}
-        mentionCandidates={mentionCandidates}
-        onMentionCandidateSelect={onMentionCandidateSelect}
-        onSelectSlashCommand={onSelectSlashCommand}
-        onSkillCandidateSelect={onSkillCandidateSelect}
-        skillCandidates={skillCandidates}
-        slashCommands={slashCommands}
+        mentionCandidates={suggestions.mentionCandidates}
+        onMentionCandidateSelect={suggestions.onMentionSelect}
+        onSelectSlashCommand={suggestions.onSlashCommandSelect}
+        onSkillCandidateSelect={suggestions.onSkillSelect}
+        skillCandidates={suggestions.skillCandidates}
+        slashCommands={suggestions.slashCommands}
       />
       <ComposerContext
-        attachmentError={attachmentError}
-        attachments={attachments}
+        attachmentError={attachments.error}
+        attachments={attachments.items}
         colors={colors}
-        onClearQuote={onClearQuote}
-        onRemoveAttachment={onRemoveAttachment}
-        onRemoveQueuedPrompt={onRemoveQueuedPrompt}
-        queuedPrompts={queuedPrompts}
-        quotedContext={quotedContext}
-        voiceError={voiceError}
+        onClearQuote={draft.onClearQuote}
+        onRemoveAttachment={attachments.onRemove}
+        onRemoveQueuedPrompt={runtime.onRemoveQueuedPrompt}
+        queuedPrompts={runtime.queuedPrompts}
+        quotedContext={draft.quotedContext}
+        voiceError={voice.error}
       />
       <TextInput
         ref={inputRef}
         accessibilityLabel={t('thread.composer.inputAria')}
-        editable={!disabled && !voiceBusy}
+        editable={!runtime.disabled && !voiceBusy}
         maxLength={65_536}
         multiline
-        onChangeText={onChangeText}
-        onSelectionChange={(event) => onCursorChange(event.nativeEvent.selection.start)}
-        placeholder={turnActive ? t('thread.composer.placeholderStreaming') : variant === 'hero' ? t('thread.composer.placeholderHero') : t('thread.composer.placeholderThread')}
+        onChangeText={draft.onChangeText}
+        onSelectionChange={(event) => draft.onCursorChange(event.nativeEvent.selection.start)}
+        placeholder={
+          runtime.turnActive
+            ? t('thread.composer.placeholderStreaming')
+            : variant === 'hero'
+              ? t('thread.composer.placeholderHero')
+              : t('thread.composer.placeholderThread')
+        }
         placeholderTextColor={colors.subtle}
-        style={[styles.composerInput, variant === 'hero' && styles.composerInputHero, { color: colors.foreground }]}
+        style={[
+          styles.composerInput,
+          variant === 'hero' && styles.composerInputHero,
+          { color: colors.foreground },
+        ]}
         textAlignVertical="top"
-        value={value}
+        value={draft.value}
       />
       <ComposerToolbar
-        activeModelPreset={activeModelPreset}
-        attachmentBusy={attachmentBusy}
-        attachmentFull={attachmentFull}
+        appearance={appearance}
+        attachments={attachments}
         canSend={canSend}
-        colors={colors}
-        disabled={disabled}
-        modelName={modelName}
-        modelPresets={modelPresets}
-        onAddAttachment={onAddAttachment}
-        onModelPresetChange={onModelPresetChange}
-        onOpenModelSettings={onOpenModelSettings}
-        onSend={onSend}
-        onStop={onStop}
-        onWorkspaceScopeChange={onWorkspaceScopeChange}
+        model={model}
+        runtime={runtime}
         stopButton={stopButton}
-        turnActive={turnActive}
-        variant={variant}
-        voiceRecorder={voiceRecorder}
-        workspaceControls={workspaceControls}
-        workspaceScope={workspaceScope}
-        workspaceScopeDisabled={workspaceScopeDisabled}
+        voice={voice}
+        workspace={workspace}
       />
       <WorkspaceProjectPicker
         colors={colors}
-        controls={workspaceControls}
-        defaultScope={workspaceDefaultScope}
-        disabled={disabled || workspaceScopeDisabled}
-        error={workspaceError}
+        controls={workspace.controls}
+        defaultScope={workspace.defaultScope}
+        disabled={runtime.disabled || workspace.disabled}
+        error={workspace.error}
         isHero={variant === 'hero'}
-        onChange={onWorkspaceScopeChange}
-        scope={workspaceScope}
+        onChange={workspace.onChange}
+        scope={workspace.scope}
       />
     </View>
   );
 }
 
 export { AttachmentChip } from './ComposerContext';
-export { formatAttachmentBytes, queuedPromptPreview } from '@/features/chat/composer-model';
+export { formatAttachmentBytes, queuedPromptPreview } from '@/features/chat/composer/model/presentation';
 export { MentionCandidateLogo } from './ComposerSuggestions';

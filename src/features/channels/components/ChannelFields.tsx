@@ -9,8 +9,8 @@ import {
   View,
 } from "react-native";
 
-import { channelCopy } from "./channels-utils";
-import type { ChannelConfigField } from '@/types/api/channels';
+import { channelCopy } from "@/features/channels/model";
+import type { ChannelConfigField } from '@/features/channels/presentation/types';
 import type { Palette } from '@/ui/palette';
 
 export function ChannelFields({

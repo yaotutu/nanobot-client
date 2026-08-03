@@ -10,7 +10,7 @@ import {
   formatNext,
   originLabel,
   statusDotColor,
-} from './automations-utils';
+} from '@/features/automations/model';
 import { StatusBadge } from './AutomationDetailPanel';
 
 export function AutomationListItem({

@@ -18,13 +18,13 @@ import { SettingsButton, SettingsInput, SettingsNotice, SettingsSection, StatusP
 import { AdvancedProviderFields } from './ModelCatalog';
 import { ProviderCatalog } from './ProviderCatalog';
 import { FieldLabel, IconButton, ProviderMark } from './models-controls';
-import type { ModelsSettingsProps } from './models-utils';
-import { useProviderActions } from './providers/use-provider-actions';
+import type { ModelsSettingsProps } from '@/features/settings/model/models-utils';
+import { useProviderActions } from '@/features/settings/hooks/models/providers/use-provider-actions';
 import {
   CUSTOM_PROVIDER_FIELDS,
   CUSTOM_PROVIDER_KEY,
   providerForm,
-} from './models-utils';
+} from '@/features/settings/model/models-utils';
 
 export function ProvidersSection({ colors, settings, showBrandLogos, onSettingsChange, onRestart, runtimePolicy }: ModelsSettingsProps) {
   const { t } = useTranslation();

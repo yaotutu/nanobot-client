@@ -7,10 +7,8 @@ import {
   Search,
   X,
 } from 'lucide-react-native';
-import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -21,11 +19,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { useAutomationActions } from '@/features/automations/hooks/use-automation-actions';
-import { useAutomationsCatalog } from '@/features/automations/hooks/use-automations-catalog';
-import type {
-  SessionAutomationJob,
-} from '@/types/api/automations';
+import { useAutomationsScreenController } from '@/features/automations/hooks/use-automations-screen-controller';
 import type { Palette } from '@/ui/palette';
 
 import { AutomationListItem } from './AutomationListItem';
@@ -33,17 +27,11 @@ import { AutomationDetailPanel } from './AutomationDetailPanel';
 import { AutomationEditModal, SortSheet } from './AutomationEditSheet';
 import {
   FILTERS,
-  automationNeedsAttention,
-  automationStatusKey,
-  matchesFilter,
-  matchesSearch,
-  parseSearchQuery,
-  sortJobs,
-} from './automations-utils';
+} from '@/features/automations/model';
 import type {
   AutomationFilter,
   AutomationSort,
-} from './automations-utils';
+} from '@/features/automations/model';
 
 interface AutomationsScreenProps {
   colors: Palette;
@@ -51,57 +39,34 @@ interface AutomationsScreenProps {
 }
 
 export function AutomationsScreen({ colors, onOpenLinkedChat }: AutomationsScreenProps) {
-  const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage || i18n.language;
+  const { t } = useTranslation();
   const {
-    applyPayload,
+    actionKey,
+    act,
+    counts,
+    editingJob,
     error,
+    filter,
+    filtered,
+    jobs,
     load,
     loading,
     payload,
+    query,
     refreshing,
+    requestDelete,
+    saveEdit,
+    selectedJob,
+    setEditingJob,
     setError,
-  } = useAutomationsCatalog();
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<AutomationFilter>('all');
-  const [sort, setSort] = useState<AutomationSort>('next');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [sortOpen, setSortOpen] = useState(false);
-  const [editingJob, setEditingJob] = useState<SessionAutomationJob | null>(null);
-  const jobs = useMemo(() => payload?.jobs ?? [], [payload]);
-  const counts = useMemo(() => ({
-    all: jobs.length,
-    active: jobs.filter((job) => ['active', 'running'].includes(automationStatusKey(job))).length,
-    paused: jobs.filter((job) => automationStatusKey(job) === 'paused').length,
-    failed: jobs.filter(automationNeedsAttention).length,
-    system: jobs.filter((job) => Boolean(job.protected)).length,
-  }), [jobs]);
-  const filtered = useMemo(() => {
-    const tokens = parseSearchQuery(query);
-    return sortJobs(jobs, sort, locale)
-      .filter((job) => matchesFilter(job, filter))
-      .filter((job) => tokens.length === 0 || matchesSearch(job, tokens, t, locale));
-  }, [filter, jobs, locale, query, sort, t]);
-  const selectedJob = filtered.find((job) => job.id === selectedId) ?? filtered[0] ?? null;
-
-  const clearSelection = useCallback(() => setSelectedId(null), []);
-  const closeEditor = useCallback(() => setEditingJob(null), []);
-  const silentRefresh = useCallback(() => { void load('silent'); }, [load]);
-  const { actionKey, act, save: saveEdit } = useAutomationActions({
-    applyPayload,
-    onDeleted: clearSelection,
-    onSaved: closeEditor,
-    refresh: silentRefresh,
-    setError,
-  });
-
-  const requestDelete = (job: SessionAutomationJob) => {
-    const name = job.name || job.id;
-    Alert.alert(t('settings.automations.deleteTitle'), t('settings.automations.deleteDescription', { name }), [
-      { text: t('settings.automations.cancel'), style: 'cancel' },
-      { text: t('settings.automations.delete'), style: 'destructive', onPress: () => void act('delete', job) },
-    ]);
-  };
+    setFilter,
+    setQuery,
+    setSelectedId,
+    setSort,
+    setSortOpen,
+    sort,
+    sortOpen,
+  } = useAutomationsScreenController();
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>

@@ -5,12 +5,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppModals } from '@/features/app/components/AppModals';
 import { AppUtilityRouter } from '@/features/app/components/AppUtilityRouter';
+import { AppUtilityWorkspace } from '@/features/app/components/AppUtilityWorkspace';
 import { useAppController, type AppController } from '@/features/app/hooks/use-app-controller';
 import { useAppModelSelection } from '@/features/app/hooks/use-app-model-selection';
 import { useAppNavigation } from '@/features/app/hooks/use-app-navigation';
 import { useAppPreferences } from '@/features/app/hooks/use-app-preferences';
 import { AuthScreen } from '@/features/auth/components/AuthScreen';
 import { NanobotScreen } from '@/features/chat/components/NanobotScreen';
+import type { ChatScreenController } from '@/features/chat/model/chat-screen-contract';
 import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
 
 export function AppShell() {
@@ -61,6 +63,55 @@ function ReadyAppShell({ app }: { app: AppController }) {
     turnModelName: app.turnModelName,
   });
 
+  const chatController: ChatScreenController = {
+    session: {
+      activeKey: app.activeKey,
+      activeSession: app.activeSession,
+      sidebarState: app.sidebarState,
+    },
+    capabilities: {
+      bootstrap,
+      cliApps: app.cliApps,
+      mcpPresets: app.mcpPresets,
+      skills: app.skills,
+      slashCommands: app.slashCommands,
+    },
+    thread: {
+      messages: app.messages,
+      loading: app.threadLoading,
+      loadingOlder: app.loadingOlder,
+      hasMoreBefore: app.hasMoreBefore,
+      userMessageOffset: app.userMessageOffset,
+      forkBoundaryMessageCount: app.forkBoundaryMessageCount,
+      loadOlder: app.loadOlder,
+      retryFromMessage: app.retryFromMessage,
+      forkFromMessage: app.forkFromMessage,
+    },
+    runtime: {
+      turnActive: app.turnActive,
+      runStartedAt: app.runStartedAt,
+      goalState: app.goalState,
+      sendMessage: app.sendMessage,
+      stopTurn: app.stopTurn,
+      transcribeAudio: app.transcribeAudio,
+    },
+    workspace: {
+      activeScope: app.activeWorkspaceScope,
+      catalog: app.workspaces,
+      error: app.workspaceError,
+      updateScope: app.updateWorkspaceScope,
+    },
+    errors: {
+      current: app.error,
+      stream: app.streamError,
+      clear: app.clearError,
+      dismissStream: app.dismissStreamError,
+    },
+    automations: {
+      getForSession: app.getSessionAutomations,
+    },
+  };
+
   const selectSession = useCallback((key: string | null) => {
     navigation.resetChat();
     app.selectSession(key);
@@ -81,36 +132,43 @@ function ReadyAppShell({ app }: { app: AppController }) {
     app.selectSession(sessionKey);
   }, [app, navigation]);
 
-  const utilityContent = navigation.utilityView === 'chat' ? null : (
-    <AppUtilityRouter
-      bootstrap={bootstrap}
-      colors={colors}
-      onBackToChat={navigation.returnToChat}
-      onChangePreferences={changePreferences}
-      onOpenLinkedChat={openLinkedChat}
-      onRestart={app.restartServer}
-      onSettingsChange={model.setSettings}
-      preferences={preferences}
-      runtimePolicy={model.runtimePolicy}
-      view={navigation.utilityView}
-    />
-  );
-
   return (
     <View style={styles.root}>
-      <NanobotScreen
-        app={app}
-        colors={colors}
-        dark={dark}
-        model={model}
-        navigationRevision={navigation.chatResetRevision}
-        onChangePreferences={changePreferences}
-        onOpenDrawer={() => navigation.setDrawerOpen(true)}
-        onOpenSettings={() => navigation.openUtility('settings')}
-        preferences={preferences}
-        utilityContent={utilityContent}
-        utilityView={navigation.utilityView}
-      />
+      {navigation.utilityView === 'chat' ? (
+        <NanobotScreen
+          colors={colors}
+          controller={chatController}
+          dark={dark}
+          model={model}
+          navigationRevision={navigation.chatResetRevision}
+          onChangePreferences={changePreferences}
+          onOpenDrawer={() => navigation.setDrawerOpen(true)}
+          onOpenSettings={() => navigation.openUtility('settings')}
+          preferences={preferences}
+        />
+      ) : (
+        <AppUtilityWorkspace
+          colors={colors}
+          dark={dark}
+          onChangePreferences={changePreferences}
+          onOpenDrawer={() => navigation.setDrawerOpen(true)}
+          preferences={preferences}
+          view={navigation.utilityView}
+        >
+          <AppUtilityRouter
+            bootstrap={bootstrap}
+            colors={colors}
+            onBackToChat={navigation.returnToChat}
+            onChangePreferences={changePreferences}
+            onOpenLinkedChat={openLinkedChat}
+            onRestart={app.restartServer}
+            onSettingsChange={model.setSettings}
+            preferences={preferences}
+            runtimePolicy={model.runtimePolicy}
+            view={navigation.utilityView}
+          />
+        </AppUtilityWorkspace>
+      )}
       <AppModals
         app={app}
         colors={colors}

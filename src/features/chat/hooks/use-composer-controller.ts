@@ -1,35 +1,20 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, type TextInput } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import {
-  activeCapabilityMentionPayloads,
-  capabilityMentionCandidates,
-  capabilityMentionQuery,
-  insertCapabilityMention,
-  type CapabilityMentionCandidate,
-} from '@/features/chat/capability-mentions';
-import {
-  insertSkillMention,
-  skillMentionCandidates,
-  skillMentionQuery,
-  type SkillMentionCandidate,
-} from '@/features/chat/skill-mentions';
-import {
-  isSideChannelLifecycle,
-  slashCommandLifecycle,
-  slashQuery,
-} from '@/features/chat/slash-command';
+import { activeCapabilityMentionPayloads } from '@/features/chat/composer/model/capability-mentions';
+import { useComposerDraft } from '@/features/chat/composer/hooks/use-composer-draft';
+import { useComposerQueue } from '@/features/chat/composer/hooks/use-composer-queue';
+import { useComposerSuggestions } from '@/features/chat/composer/hooks/use-composer-suggestions';
 import { useAttachments } from '@/features/chat/hooks/use-attachments';
 import {
   type VoiceRecorderError,
   useVoiceRecorder,
 } from '@/features/chat/hooks/use-voice-recorder';
 import {
-  selectComposerRecents,
-  selectComposerRecentsHydrated,
-  useComposerRecentsStore,
-} from '@/stores/composer-recents-store';
+  isSideChannelLifecycle,
+  slashCommandLifecycle,
+} from '@/features/chat/composer/model/slash-command';
 import {
   formatQuotedUserMessage,
   normalizeQuotedContext,
@@ -43,16 +28,10 @@ import type {
 import type { WebUIIngressLimits } from '@/types/api/runtime';
 import type { SettingsPayload } from '@/types/api/settings';
 
-export interface QueuedPrompt {
-  id: string;
-  text: string;
-  attachments: SendAttachment[];
-  options?: SendMessageOptions;
-}
-
-export interface ComposerSlashCommand extends SlashCommand {
-  recent: boolean;
-}
+export type {
+  ComposerSlashCommand,
+  QueuedPrompt,
+} from '@/features/chat/composer/model/types';
 
 interface UseComposerControllerOptions {
   cliApps: CliAppInfo[];
@@ -88,198 +67,65 @@ export function useComposerController(options: UseComposerControllerOptions) {
     turnActive,
   } = options;
   const { t } = useTranslation();
-  const [text, setText] = useState('');
-  const [quotedContext, setQuotedContext] = useState<string | null>(null);
-  const [slashMenuDismissed, setSlashMenuDismissed] = useState(false);
-  const [mentionMenuDismissed, setMentionMenuDismissed] = useState(false);
-  const [cursor, setCursor] = useState(0);
-  const recentCommands = useComposerRecentsStore(selectComposerRecents);
-  const recentsHydrated = useComposerRecentsStore(selectComposerRecentsHydrated);
-  const hydrateRecents = useComposerRecentsStore((state) => state.hydrate);
-  const recordRecentCommand = useComposerRecentsStore((state) => state.record);
-  const [sending, setSending] = useState(false);
-  const [queuedPrompts, setQueuedPrompts] = useState<QueuedPrompt[]>([]);
-  const [voiceError, setVoiceError] = useState<VoiceRecorderError | null>(null);
+  const draft = useComposerDraft();
   const attachments = useAttachments(limits);
-  const inputRef = useRef<TextInput>(null);
-  const queueCounterRef = useRef(0);
-  const wasTurnActiveRef = useRef(turnActive);
-  const skipNextQueueFlushRef = useRef(false);
-  const sendingRef = useRef(false);
-
-  const focusAt = useCallback((nextCursor: number) => {
-    setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.setNativeProps({
-        selection: { start: nextCursor, end: nextCursor },
-      });
-    }, 0);
-  }, []);
+  const queue = useComposerQueue({ onSendMessage, onStopTurn, turnActive });
+  const [voiceError, setVoiceError] = useState<VoiceRecorderError | null>(null);
 
   const voiceRecorder = useVoiceRecorder({
-    disabled: sending || turnActive,
+    disabled: queue.sending || turnActive,
     maxDurationSec: settings?.transcription?.max_duration_sec,
     maxUploadMb: settings?.transcription?.max_upload_mb,
     onClearError: () => setVoiceError(null),
     onError: setVoiceError,
-    onTranscript: (transcript) => {
-      setText((current) => {
-        if (!current) return transcript;
-        return `${current}${/\s$/.test(current) ? '' : ' '}${transcript}`;
-      });
-      inputRef.current?.focus();
-    },
+    onTranscript: draft.appendTranscript,
     onTranscribeAudio,
   });
 
-  useEffect(() => {
-    if (!recentsHydrated) void hydrateRecents();
-  }, [hydrateRecents, recentsHydrated]);
-
-  const currentSlashQuery = slashMenuDismissed ? null : slashQuery(text);
-  const visibleSlashCommands = useMemo(() => {
-    if (currentSlashQuery === null) return [];
-    const query = currentSlashQuery.trim().toLowerCase();
-    return slashCommands
-      .filter((command) => {
-        if (!query && command.command === '/restart') return false;
-        if (!query && !turnActive && command.command === '/stop') return false;
-        if (!query) return true;
-        return [command.command, command.title, command.description, command.argHint]
-          .join(' ')
-          .toLowerCase()
-          .includes(query);
-      })
-      .sort((left, right) => {
-        if (turnActive) {
-          if (left.command === '/stop') return -1;
-          if (right.command === '/stop') return 1;
-        }
-        if (query) return 0;
-        const leftRecent = recentCommands.indexOf(left.command);
-        const rightRecent = recentCommands.indexOf(right.command);
-        if (leftRecent === -1 && rightRecent === -1) return 0;
-        if (leftRecent === -1) return 1;
-        if (rightRecent === -1) return -1;
-        return leftRecent - rightRecent;
-      })
-      .slice(0, 8)
-      .map((command): ComposerSlashCommand => ({
-        ...command,
-        recent: recentCommands.includes(command.command),
-      }));
-  }, [currentSlashQuery, recentCommands, slashCommands, turnActive]);
-  const currentSkillQuery = slashMenuDismissed ? null : skillMentionQuery(text, cursor);
-  const visibleSkillCandidates = useMemo(
-    () => skillMentionCandidates(currentSkillQuery, skills, recentCommands),
-    [currentSkillQuery, recentCommands, skills],
-  );
-  const currentMentionQuery = mentionMenuDismissed
-    ? null
-    : capabilityMentionQuery(text, cursor);
-  const visibleMentionCandidates = useMemo(
-    () => capabilityMentionCandidates(currentMentionQuery, cliApps, mcpPresets),
-    [cliApps, currentMentionQuery, mcpPresets],
-  );
-
-  const clearDraft = useCallback(() => {
-    setText('');
-    setQuotedContext(null);
-    setSlashMenuDismissed(false);
-    setMentionMenuDismissed(false);
-    setCursor(0);
-  }, []);
-
-  const handleStop = useCallback(() => {
-    skipNextQueueFlushRef.current = queuedPrompts.length > 0;
-    setQueuedPrompts([]);
-    onStopTurn();
-  }, [onStopTurn, queuedPrompts.length]);
-
-  useEffect(() => {
-    const wasTurnActive = wasTurnActiveRef.current;
-    wasTurnActiveRef.current = turnActive;
-    if (!wasTurnActive || turnActive) return;
-    if (skipNextQueueFlushRef.current) {
-      skipNextQueueFlushRef.current = false;
-      return;
-    }
-    if (queuedPrompts.length === 0 || sendingRef.current) return;
-    const next = queuedPrompts[0];
-    const timer = setTimeout(() => {
-      setQueuedPrompts((current) => current.filter((prompt) => prompt.id !== next.id));
-      sendingRef.current = true;
-      setSending(true);
-      void onSendMessage(next.text, next.attachments, next.options)
-        .catch(() => {
-          setQueuedPrompts((current) => [next, ...current]);
-        })
-        .finally(() => {
-          sendingRef.current = false;
-          setSending(false);
-        });
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [onSendMessage, queuedPrompts, turnActive]);
-
-  const recordRecent = useCallback((command: string) => {
-    recordRecentCommand(command);
-  }, [recordRecentCommand]);
-
-  const selectSlashCommand = useCallback((command: ComposerSlashCommand) => {
-    if (command.command === '/stop' && turnActive) {
-      handleStop();
-      clearDraft();
-      setSlashMenuDismissed(true);
-      return;
-    }
-    recordRecent(command.command);
-    const nextValue = command.acceptsArgs ? `${command.command} ` : command.command;
-    setText(nextValue);
-    setSlashMenuDismissed(true);
-    setMentionMenuDismissed(false);
-    setCursor(nextValue.length);
-    focusAt(nextValue.length);
-  }, [clearDraft, focusAt, handleStop, recordRecent, turnActive]);
-
-  const selectSkillCandidate = useCallback((candidate: SkillMentionCandidate) => {
-    if (!currentSkillQuery) return;
-    recordRecent(candidate.command);
-    const next = insertSkillMention(text, currentSkillQuery, candidate);
-    setText(next.value);
-    setCursor(next.cursor);
-    setSlashMenuDismissed(true);
-    setMentionMenuDismissed(false);
-    focusAt(next.cursor);
-  }, [currentSkillQuery, focusAt, recordRecent, text]);
-
-  const selectMentionCandidate = useCallback((candidate: CapabilityMentionCandidate) => {
-    if (!currentMentionQuery) return;
-    const next = insertCapabilityMention(text, currentMentionQuery, candidate);
-    setText(next.value);
-    setCursor(next.cursor);
-    setMentionMenuDismissed(true);
-    setSlashMenuDismissed(false);
-    focusAt(next.cursor);
-  }, [currentMentionQuery, focusAt, text]);
+  const suggestions = useComposerSuggestions({
+    cliApps,
+    clearDraft: draft.clear,
+    cursor: draft.cursor,
+    focusAt: draft.focusAt,
+    handleStop: queue.stop,
+    mcpPresets,
+    mentionMenuDismissed: draft.mentionMenuDismissed,
+    setCursor: draft.setCursor,
+    setMentionMenuDismissed: draft.setMentionMenuDismissed,
+    setSlashMenuDismissed: draft.setSlashMenuDismissed,
+    setText: draft.setText,
+    skills,
+    slashCommands,
+    slashMenuDismissed: draft.slashMenuDismissed,
+    text: draft.text,
+    turnActive,
+  });
 
   const submit = useCallback(async () => {
-    const content = text.trim();
-    const outboundContent = formatQuotedUserMessage(content, quotedContext);
+    const content = draft.text.trim();
+    const outboundContent = formatQuotedUserMessage(content, draft.quotedContext);
     const readyAttachments = attachments.readyAttachments;
-    const capabilityPayloads = activeCapabilityMentionPayloads(content, cliApps, mcpPresets);
+    const capabilityPayloads = activeCapabilityMentionPayloads(
+      content,
+      cliApps,
+      mcpPresets,
+    );
     const messageOptions: SendMessageOptions = {
-      ...(capabilityPayloads.cliApps.length ? { cliApps: capabilityPayloads.cliApps } : {}),
-      ...(capabilityPayloads.mcpPresets.length ? { mcpPresets: capabilityPayloads.mcpPresets } : {}),
-      ...(quotedContext?.trim()
-        ? { quotedContext: normalizeQuotedContext(quotedContext) }
+      ...(capabilityPayloads.cliApps.length
+        ? { cliApps: capabilityPayloads.cliApps }
+        : {}),
+      ...(capabilityPayloads.mcpPresets.length
+        ? { mcpPresets: capabilityPayloads.mcpPresets }
+        : {}),
+      ...(draft.quotedContext?.trim()
+        ? { quotedContext: normalizeQuotedContext(draft.quotedContext) }
         : {}),
     };
     if (
       (!outboundContent && readyAttachments.length === 0)
       || attachments.encoding
       || attachments.hasErrors
-      || sendingRef.current
+      || queue.sendingRef.current
     ) return;
 
     const hasPlainTextCommandPayload = readyAttachments.length === 0
@@ -289,21 +135,19 @@ export function useComposerController(options: UseComposerControllerOptions) {
       ? slashCommandLifecycle(content, slashCommands)
       : null;
     if (slashLifecycle === 'stop_active_turn' && turnActive) {
-      clearDraft();
-      handleStop();
+      draft.clear();
+      queue.stop();
       return;
     }
 
     const sideChannel = isSideChannelLifecycle(slashLifecycle);
     if (turnActive && !sideChannel && !content.trimStart().startsWith('/')) {
-      queueCounterRef.current += 1;
-      setQueuedPrompts((current) => [...current, {
-        id: `queued-prompt-${Date.now()}-${queueCounterRef.current}`,
+      queue.enqueue({
         text: content,
-        attachments: [...readyAttachments],
+        attachments: readyAttachments,
         options: messageOptions,
-      }]);
-      clearDraft();
+      });
+      draft.clear();
       attachments.clear();
       return;
     }
@@ -311,38 +155,27 @@ export function useComposerController(options: UseComposerControllerOptions) {
     const sendOptions: SendMessageOptions = {
       ...messageOptions,
       ...(sideChannel ? { sideChannel: true } : {}),
-      ...(slashLifecycle === 'finalize_active_turn' ? { finalizeActiveTurn: true } : {}),
+      ...(slashLifecycle === 'finalize_active_turn'
+        ? { finalizeActiveTurn: true }
+        : {}),
     };
-    const pendingQuote = quotedContext;
-    clearDraft();
-    setQueuedPrompts([]);
-    sendingRef.current = true;
-    setSending(true);
-    try {
-      await onSendMessage(content, readyAttachments, sendOptions);
-      attachments.clear();
-    } catch {
-      setText(content);
-      setQuotedContext(pendingQuote);
-      setSlashMenuDismissed(false);
-      setMentionMenuDismissed(false);
-      setCursor(content.length);
-      focusAt(content.length);
-    } finally {
-      sendingRef.current = false;
-      setSending(false);
-    }
+    const pendingQuote = draft.quotedContext;
+    draft.clear();
+    queue.replace([]);
+    const sent = await queue.send({
+      text: content,
+      attachments: readyAttachments,
+      options: sendOptions,
+    });
+    if (sent) attachments.clear();
+    else draft.restore(content, pendingQuote);
   }, [
     attachments,
-    clearDraft,
     cliApps,
-    focusAt,
-    handleStop,
+    draft,
     mcpPresets,
-    onSendMessage,
-    quotedContext,
+    queue,
     slashCommands,
-    text,
     turnActive,
   ]);
 
@@ -354,56 +187,38 @@ export function useComposerController(options: UseComposerControllerOptions) {
     ]);
   }, [attachments, t]);
 
-  const clearQueue = useCallback(() => {
-    setQueuedPrompts([]);
-    skipNextQueueFlushRef.current = false;
-  }, []);
-
   const reset = useCallback(() => {
-    clearDraft();
-    clearQueue();
+    draft.clear();
+    queue.clear();
     attachments.clear();
-  }, [attachments, clearDraft, clearQueue]);
-
-  const confirmQuote = useCallback((content: string) => {
-    setQuotedContext(normalizeQuotedContext(content));
-    setTimeout(() => inputRef.current?.focus(), 0);
-  }, []);
+  }, [attachments, draft, queue]);
 
   return {
     attachments,
-    clearQueue,
-    confirmQuote,
-    handleStop,
-    inputRef,
-    onChangeText: (value: string) => {
-      setText(value);
-      setSlashMenuDismissed(false);
-      setMentionMenuDismissed(false);
-    },
-    onCursorChange: (nextCursor: number) => {
-      setCursor(nextCursor);
-      setSlashMenuDismissed(false);
-      setMentionMenuDismissed(false);
-    },
+    clearQueue: queue.clear,
+    confirmQuote: draft.confirmQuote,
+    handleStop: queue.stop,
+    inputRef: draft.inputRef,
+    onChangeText: draft.onChangeText,
+    onCursorChange: draft.onCursorChange,
     openAttachmentMenu,
-    queuedPrompts,
-    removeQueuedPrompt: (id: string) => {
-      setQueuedPrompts((current) => current.filter((prompt) => prompt.id !== id));
-    },
+    queuedPrompts: queue.queuedPrompts,
+    removeQueuedPrompt: queue.remove,
     reset,
-    selectMentionCandidate,
-    selectSkillCandidate,
-    selectSlashCommand,
-    sending,
-    setQuotedContext,
+    selectMentionCandidate: suggestions.selectMentionCandidate,
+    selectSkillCandidate: suggestions.selectSkillCandidate,
+    selectSlashCommand: suggestions.selectSlashCommand,
+    sending: queue.sending,
+    setQuotedContext: draft.setQuotedContext,
     submit,
-    text,
-    quotedContext,
-    visibleMentionCandidates,
-    visibleSkillCandidates,
-    visibleSlashCommands,
+    text: draft.text,
+    quotedContext: draft.quotedContext,
+    visibleMentionCandidates: suggestions.visibleMentionCandidates,
+    visibleSkillCandidates: suggestions.visibleSkillCandidates,
+    visibleSlashCommands: suggestions.visibleSlashCommands,
     voiceError,
     voiceRecorder,
   };
 }
+
+export type ComposerController = ReturnType<typeof useComposerController>;
