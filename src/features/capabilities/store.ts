@@ -1,13 +1,11 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
-import { fetchSkills } from '@/features/skills/api';
 import type {
   CliAppInfo,
   CliAppsPayload,
   McpPresetInfo,
   McpPresetsPayload,
-  SkillSummary,
 } from '@/types/api/capabilities';
 import type { SlashCommand } from '@/types/api/chat';
 
@@ -17,7 +15,7 @@ import {
   listSlashCommands,
 } from './api';
 
-type CapabilityResource = 'slashCommands' | 'cliApps' | 'mcpPresets' | 'skills';
+type CapabilityResource = 'slashCommands' | 'cliApps' | 'mcpPresets';
 type CapabilityErrors = Record<CapabilityResource, string | null>;
 
 interface CapabilitiesState {
@@ -26,7 +24,6 @@ interface CapabilitiesState {
   cliAppsPayload: CliAppsPayload | null;
   mcpPresets: McpPresetInfo[];
   mcpPresetsPayload: McpPresetsPayload | null;
-  skills: SkillSummary[];
   loading: boolean;
   errors: CapabilityErrors;
 }
@@ -35,7 +32,6 @@ interface CapabilitiesActions {
   refreshAll(): Promise<void>;
   applyCliAppsPayload(payload: CliAppsPayload): void;
   applyMcpPresetsPayload(payload: McpPresetsPayload): void;
-  setSkills(skills: SkillSummary[]): void;
   resetAll(): void;
 }
 
@@ -45,13 +41,17 @@ const EMPTY_ERRORS: CapabilityErrors = {
   slashCommands: null,
   cliApps: null,
   mcpPresets: null,
-  skills: null,
 };
 
 function rejectionMessage(result: PromiseSettledResult<unknown>): string | null {
   if (result.status === 'fulfilled') return null;
   return result.reason instanceof Error ? result.reason.message : String(result.reason);
 }
+
+let refreshPromise: Promise<void> | null = null;
+let refreshSequence = 0;
+let activeRefreshId: number | null = null;
+let generation = 0;
 
 export const useCapabilitiesStore = create<CapabilitiesStore>()(
   subscribeWithSelector((set) => ({
@@ -60,37 +60,47 @@ export const useCapabilitiesStore = create<CapabilitiesStore>()(
     cliAppsPayload: null,
     mcpPresets: [],
     mcpPresetsPayload: null,
-    skills: [],
     loading: false,
     errors: { ...EMPTY_ERRORS },
 
     async refreshAll() {
+      if (refreshPromise) return refreshPromise;
+      const requestGeneration = generation;
+      const refreshId = ++refreshSequence;
+      activeRefreshId = refreshId;
       set({ loading: true });
-      const [slash, cli, mcp, skills] = await Promise.allSettled([
-        listSlashCommands(),
-        fetchInstalledCliApps(),
-        fetchMcpPresets(),
-        fetchSkills(),
-      ]);
-      set((state) => ({
-        slashCommands: slash.status === 'fulfilled' ? slash.value : state.slashCommands,
-        cliApps: cli.status === 'fulfilled'
-          ? cli.value.apps.filter((app) => app.installed)
-          : state.cliApps,
-        cliAppsPayload: cli.status === 'fulfilled' ? cli.value : state.cliAppsPayload,
-        mcpPresets: mcp.status === 'fulfilled'
-          ? mcp.value.presets.filter((preset) => preset.installed && preset.configured)
-          : state.mcpPresets,
-        mcpPresetsPayload: mcp.status === 'fulfilled' ? mcp.value : state.mcpPresetsPayload,
-        skills: skills.status === 'fulfilled' ? skills.value.skills : state.skills,
-        loading: false,
-        errors: {
-          slashCommands: rejectionMessage(slash),
-          cliApps: rejectionMessage(cli),
-          mcpPresets: rejectionMessage(mcp),
-          skills: rejectionMessage(skills),
-        },
-      }));
+      const request = (async () => {
+        const [slash, cli, mcp] = await Promise.allSettled([
+          listSlashCommands(),
+          fetchInstalledCliApps(),
+          fetchMcpPresets(),
+        ]);
+        if (requestGeneration !== generation) return;
+        set((state) => ({
+          slashCommands: slash.status === 'fulfilled' ? slash.value : state.slashCommands,
+          cliApps: cli.status === 'fulfilled'
+            ? cli.value.apps.filter((app) => app.installed)
+            : state.cliApps,
+          cliAppsPayload: cli.status === 'fulfilled' ? cli.value : state.cliAppsPayload,
+          mcpPresets: mcp.status === 'fulfilled'
+            ? mcp.value.presets.filter((preset) => preset.installed && preset.configured)
+            : state.mcpPresets,
+          mcpPresetsPayload: mcp.status === 'fulfilled' ? mcp.value : state.mcpPresetsPayload,
+          loading: false,
+          errors: {
+            slashCommands: rejectionMessage(slash),
+            cliApps: rejectionMessage(cli),
+            mcpPresets: rejectionMessage(mcp),
+          },
+        }));
+      })().finally(() => {
+        if (activeRefreshId === refreshId) {
+          activeRefreshId = null;
+          refreshPromise = null;
+        }
+      });
+      refreshPromise = request;
+      return request;
     },
 
     applyCliAppsPayload(payload) {
@@ -109,21 +119,16 @@ export const useCapabilitiesStore = create<CapabilitiesStore>()(
       }));
     },
 
-    setSkills(skills) {
-      set((state) => ({
-        skills,
-        errors: { ...state.errors, skills: null },
-      }));
-    },
-
     resetAll() {
+      generation += 1;
+      activeRefreshId = null;
+      refreshPromise = null;
       set({
         slashCommands: [],
         cliApps: [],
         cliAppsPayload: null,
         mcpPresets: [],
         mcpPresetsPayload: null,
-        skills: [],
         loading: false,
         errors: { ...EMPTY_ERRORS },
       });
@@ -135,5 +140,4 @@ export const selectCliApps = (s: CapabilitiesStore) => s.cliApps;
 export const selectCliAppsPayload = (s: CapabilitiesStore) => s.cliAppsPayload;
 export const selectMcpPresets = (s: CapabilitiesStore) => s.mcpPresets;
 export const selectMcpPresetsPayload = (s: CapabilitiesStore) => s.mcpPresetsPayload;
-export const selectSkills = (s: CapabilitiesStore) => s.skills;
 export const selectSlashCommands = (s: CapabilitiesStore) => s.slashCommands;

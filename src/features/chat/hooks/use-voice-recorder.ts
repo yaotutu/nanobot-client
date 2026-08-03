@@ -9,17 +9,23 @@ import { File } from 'expo-file-system';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
-export type VoiceRecorderPhase = 'idle' | 'recording' | 'transcribing';
-export type VoiceRecorderError =
-  | 'unsupported'
-  | 'permission'
-  | 'notConfigured'
-  | 'tooLong'
-  | 'tooShort'
-  | 'noInput'
-  | 'noDevice'
-  | 'failed';
+import {
+  boundedVoiceDurationSec,
+  boundedVoiceUploadMb,
+  DEFAULT_MAX_DURATION_SEC,
+  DEFAULT_MAX_UPLOAD_MB,
+  METERING_SILENCE_DB,
+  MIN_RECORDING_MS,
+  NO_INPUT_HINT_MS,
+  voiceErrorFromUnknown,
+  waveformFromMetering,
+  WAVEFORM_BARS,
+  type VoiceRecorderError,
+} from '@/features/chat/voice/voice-recorder-policy';
 
+export type { VoiceRecorderError } from '@/features/chat/voice/voice-recorder-policy';
+
+export type VoiceRecorderPhase = 'idle' | 'recording' | 'transcribing';
 interface UseVoiceRecorderOptions {
   disabled?: boolean;
   maxDurationSec?: number;
@@ -43,45 +49,10 @@ export interface VoiceRecorderController {
   onPressOut: () => void;
 }
 
-const MIN_RECORDING_MS = 650;
-const NO_INPUT_HINT_MS = 1_100;
-const DEFAULT_MAX_DURATION_SEC = 120;
-const DEFAULT_MAX_UPLOAD_MB = 25;
-const METERING_SILENCE_DB = -55;
-const WAVEFORM_BARS = 16;
-
 const RECORDING_OPTIONS = {
   ...RecordingPresets.HIGH_QUALITY,
   isMeteringEnabled: true,
 };
-
-function voiceErrorFromUnknown(error: unknown): VoiceRecorderError {
-  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
-  if (message.includes('permission') || message.includes('denied') || message.includes('not allowed')) {
-    return 'permission';
-  }
-  if (message.includes('not_configured') || message.includes('disabled')) return 'notConfigured';
-  if (message.includes('duration') || message.includes('too_long')) return 'tooLong';
-  if (message.includes('missing_audio') || message.includes('empty')) return 'noInput';
-  if (message.includes('no device') || message.includes('no_device') || message.includes('input')) {
-    return 'noDevice';
-  }
-  return 'failed';
-}
-
-function meteringLevel(db?: number): number {
-  if (typeof db !== 'number' || !Number.isFinite(db)) return 0.08;
-  return Math.max(0.06, Math.min(1, (db + 60) / 60));
-}
-
-function waveformFromMetering(db: number | undefined, durationMs: number): number[] {
-  const level = meteringLevel(db);
-  const phase = Math.floor(durationMs / 80);
-  return Array.from({ length: WAVEFORM_BARS }, (_, index) => {
-    const ripple = 0.52 + Math.abs(Math.sin((index + phase) * 0.82)) * 0.48;
-    return Math.max(0.06, Math.min(1, level * ripple));
-  });
-}
 
 export function useVoiceRecorder({
   disabled = false,
@@ -112,8 +83,8 @@ export function useVoiceRecorder({
   const peakDbRef = useRef(Number.NEGATIVE_INFINITY);
   const noInputHintVisibleRef = useRef(false);
 
-  const boundedMaxDurationSec = Math.max(1, Math.min(600, maxDurationSec || DEFAULT_MAX_DURATION_SEC));
-  const boundedMaxUploadMb = Math.max(1, maxUploadMb || DEFAULT_MAX_UPLOAD_MB);
+  const boundedMaxDurationSec = boundedVoiceDurationSec(maxDurationSec);
+  const boundedMaxUploadMb = boundedVoiceUploadMb(maxUploadMb);
 
   const setRecorderPhase = useCallback((next: VoiceRecorderPhase) => {
     phaseRef.current = next;

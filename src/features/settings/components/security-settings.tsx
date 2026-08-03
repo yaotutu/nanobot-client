@@ -1,9 +1,8 @@
 import { Check, CircleAlert, RefreshCw, ShieldCheck, X } from 'lucide-react-native';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
-  AppState,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -13,17 +12,16 @@ import {
   View,
 } from 'react-native';
 
-import { fetchPairingRequests, runPairingAction } from '@/features/channels/api';
+import { usePairingRequests } from '@/features/security/hooks/use-pairing-requests';
 import { updateNetworkSafetySettings } from '@/features/settings/api';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
-import type { PairingPayload } from '@/types/api/channels';
 import type { SettingsPayload } from '@/types/api/settings';
 import type { WebuiDefaultAccessMode } from '@/types/api/workspaces';
 
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 
 interface SecuritySettingsProps {
-  colors: SettingsPalette;
+  colors: Palette;
   settings: SettingsPayload;
   onSettingsChange: (settings: SettingsPayload) => void;
   onRestart: () => void;
@@ -37,67 +35,17 @@ export function SecuritySettings({ colors, settings, onSettingsChange, onRestart
   const [allowLocal, setAllowLocal] = useState(settingsAllowLocal);
   const [accessMode, setAccessMode] = useState<WebuiDefaultAccessMode>(settingsAccessMode);
   const [saving, setSaving] = useState(false);
-  const [pairing, setPairing] = useState<PairingPayload | null>(null);
-  const [pairingLoading, setPairingLoading] = useState(true);
-  const [pairingAction, setPairingAction] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [safetyError, setSafetyError] = useState<string | null>(null);
-  const [pairingError, setPairingError] = useState<string | null>(null);
   const dirty = allowLocal !== settingsAllowLocal || accessMode !== settingsAccessMode;
-
-  const loadPairing = useCallback(async (refresh = false) => {
-    if (refresh) setRefreshing(true);
-    try {
-      setPairing(await fetchPairingRequests());
-      setPairingError(null);
-    } catch (caught) {
-      setPairingError(caught instanceof Error ? caught.message : t('settings.security.loadPairingFailed', { defaultValue: 'Could not load pairing requests.' }));
-    } finally {
-      setPairingLoading(false);
-      setRefreshing(false);
-    }
-  }, [t]);
-
-  useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setInterval> | null = null;
-
-    const refresh = () => {
-      fetchPairingRequests()
-        .then((next) => {
-          if (!cancelled) {
-            setPairing(next);
-            setPairingError(null);
-          }
-        })
-        .catch((caught) => {
-          if (!cancelled) setPairingError(caught instanceof Error ? caught.message : t('settings.security.loadPairingFailed', { defaultValue: 'Could not load pairing requests.' }));
-        })
-        .finally(() => {
-          if (!cancelled) setPairingLoading(false);
-        });
-    };
-    const startPolling = () => {
-      if (timer) clearInterval(timer);
-      refresh();
-      timer = setInterval(refresh, 5_000);
-    };
-    const stopPolling = () => {
-      if (timer) clearInterval(timer);
-      timer = null;
-    };
-
-    if (AppState.currentState === 'active') startPolling();
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') startPolling();
-      else stopPolling();
-    });
-    return () => {
-      cancelled = true;
-      stopPolling();
-      subscription.remove();
-    };
-  }, [t]);
+  const {
+    actionKey: pairingAction,
+    act: actPairing,
+    error: pairingError,
+    load: loadPairing,
+    loading: pairingLoading,
+    pairing,
+    refreshing,
+  } = usePairingRequests();
 
   const save = async () => {
     setSaving(true);
@@ -115,18 +63,6 @@ export function SecuritySettings({ colors, settings, onSettingsChange, onRestart
     }
   };
 
-  const actPairing = async (action: 'approve' | 'deny', code: string) => {
-    setPairingAction(`${action}:${code}`);
-    setPairingError(null);
-    try {
-      setPairing(await runPairingAction(action, code));
-    } catch (caught) {
-      setPairingError(caught instanceof Error ? caught.message : t('settings.security.pairingActionFailed', { defaultValue: 'Pairing action failed.' }));
-    } finally {
-      setPairingAction(null);
-    }
-  };
-
   const advanced = settings.advanced;
   const nativeSurface = (settings.surface ?? settings.runtime_surface) === 'native';
 
@@ -134,7 +70,7 @@ export function SecuritySettings({ colors, settings, onSettingsChange, onRestart
     <ScrollView
       contentContainerStyle={styles.page}
       contentInsetAdjustmentBehavior="automatic"
-      refreshControl={<RefreshControl colors={[colors.muted]} onRefresh={() => void loadPairing(true)} refreshing={refreshing} tintColor={colors.muted} />}
+      refreshControl={<RefreshControl colors={[colors.muted]} onRefresh={() => void loadPairing('refresh')} refreshing={refreshing} tintColor={colors.muted} />}
       showsVerticalScrollIndicator={false}
     >
       {safetyError ? <View style={[styles.error, { backgroundColor: colors.errorBackground }]}><CircleAlert color={colors.errorText} size={16} /><Text style={[styles.errorText, { color: colors.errorText }]}>{safetyError}</Text></View> : null}
@@ -178,7 +114,7 @@ export function SecuritySettings({ colors, settings, onSettingsChange, onRestart
       <Section colors={colors} title={t('thread.composer.slash.commands.pairing.title')}>
         {pairingError ? <View style={[styles.inlineError, { backgroundColor: colors.errorBackground }]}><CircleAlert color={colors.errorText} size={15} /><Text style={[styles.inlineErrorText, { color: colors.errorText }]}>{pairingError}</Text></View> : null}
         {pairing?.last_action ? <View style={[styles.actionMessage, { backgroundColor: pairing.last_action.ok ? '#E6F5EE' : colors.errorBackground }]}><Text style={[styles.actionMessageText, { color: pairing.last_action.ok ? '#16865C' : colors.errorText }]}>{pairing.last_action.message}</Text></View> : null}
-        <View style={styles.pairingHeader}><Text style={[styles.settingDescription, { color: colors.muted }]}>{t('thread.composer.slash.commands.pairing.description')}</Text><Pressable accessibilityLabel={t('settings.security.refreshPairing', { defaultValue: 'Refresh pairing requests' })} onPress={() => void loadPairing(true)} style={styles.refreshButton}>{refreshing ? <ActivityIndicator color={colors.muted} size="small" /> : <RefreshCw color={colors.muted} size={16} />}</Pressable></View>
+        <View style={styles.pairingHeader}><Text style={[styles.settingDescription, { color: colors.muted }]}>{t('thread.composer.slash.commands.pairing.description')}</Text><Pressable accessibilityLabel={t('settings.security.refreshPairing', { defaultValue: 'Refresh pairing requests' })} onPress={() => void loadPairing('refresh')} style={styles.refreshButton}>{refreshing ? <ActivityIndicator color={colors.muted} size="small" /> : <RefreshCw color={colors.muted} size={16} />}</Pressable></View>
         {pairingLoading ? <View style={styles.loading}><ActivityIndicator color={colors.muted} /><Text style={{ color: colors.muted }}>{t('settings.security.loadingPairing', { defaultValue: 'Loading pairing requests…' })}</Text></View> : (pairing?.requests ?? []).length === 0 ? <Text style={[styles.empty, { color: colors.muted }]}>{t('settings.security.noPairingRequests', { defaultValue: 'No pending pairing requests.' })}</Text> : pairing?.requests.map((request) => (
           <View key={request.code} style={[styles.pairingRow, { backgroundColor: colors.background }]}>
             <View style={styles.pairingCopy}><Text style={[styles.pairingCode, { color: colors.foreground }]}>{request.code}</Text><Text style={[styles.pairingMeta, { color: colors.muted }]}>{request.channel} · {request.sender_id}{request.expires_in_seconds != null ? ` · ${t('settings.security.expiresIn', { count: request.expires_in_seconds, defaultValue: '{{count}}s remaining' })}` : ''}</Text></View>
@@ -191,19 +127,19 @@ export function SecuritySettings({ colors, settings, onSettingsChange, onRestart
   );
 }
 
-function Section({ colors, title, children }: { colors: SettingsPalette; title: string; children: React.ReactNode }) {
+function Section({ colors, title, children }: { colors: Palette; title: string; children: React.ReactNode }) {
   return <View style={styles.section}><Text style={[styles.sectionLabel, { color: colors.muted }]}>{title}</Text><View style={[styles.card, { backgroundColor: colors.card }]}>{children}</View></View>;
 }
 
-function SettingRow({ colors, title, description, children }: { colors: SettingsPalette; title: string; description: string; children: React.ReactNode }) {
+function SettingRow({ colors, title, description, children }: { colors: Palette; title: string; description: string; children: React.ReactNode }) {
   return <View style={styles.settingRow}><View style={styles.settingCopy}><Text style={[styles.settingTitle, { color: colors.foreground }]}>{title}</Text><Text style={[styles.settingDescription, { color: colors.muted }]}>{description}</Text></View>{children}</View>;
 }
 
-function ReadOnly({ colors, label, value }: { colors: SettingsPalette; label: string; value: string }) {
+function ReadOnly({ colors, label, value }: { colors: Palette; label: string; value: string }) {
   return <View style={styles.readOnly}><Text style={[styles.readOnlyLabel, { color: colors.muted }]}>{label}</Text><Text style={[styles.readOnlyValue, { color: colors.foreground }]}>{value}</Text></View>;
 }
 
-function Button({ colors, label, onPress, disabled = false, primary = false }: { colors: SettingsPalette; label: string; onPress: () => void; disabled?: boolean; primary?: boolean }) {
+function Button({ colors, label, onPress, disabled = false, primary = false }: { colors: Palette; label: string; onPress: () => void; disabled?: boolean; primary?: boolean }) {
   return <Pressable disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.button, { backgroundColor: primary ? colors.foreground : colors.background, borderColor: colors.border, opacity: disabled ? 0.45 : pressed ? 0.72 : 1 }]}><Text style={[styles.buttonText, { color: primary ? colors.background : colors.foreground }]}>{label}</Text></Pressable>;
 }
 

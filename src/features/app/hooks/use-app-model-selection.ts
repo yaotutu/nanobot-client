@@ -8,7 +8,7 @@ import type { BootstrapResponse } from '@/types/api/runtime';
 import type { ChatSummary } from '@/types/api/sidebar';
 import type { SettingsPayload } from '@/types/api/settings';
 
-interface UseModelSelectionOptions {
+interface UseAppModelSelectionOptions {
   activeSession: ChatSummary | null;
   bootstrap: BootstrapResponse;
   modelSettingsRevision: number;
@@ -17,14 +17,14 @@ interface UseModelSelectionOptions {
   turnModelName: string | null;
 }
 
-export function useModelSelection({
+export function useAppModelSelection({
   activeSession,
   bootstrap,
   modelSettingsRevision,
   onModelPresetChange,
   runtimeModelName,
   turnModelName,
-}: UseModelSelectionOptions) {
+}: UseAppModelSelectionOptions) {
   const { t } = useTranslation();
   const [settings, setSettings] = useState<SettingsPayload | null>(null);
   const [localSelection, setLocalSelection] = useState<{
@@ -96,3 +96,5 @@ export function useModelSelection({
     setSettings,
   };
 }
+
+export type AppModelSelection = ReturnType<typeof useAppModelSelection>;

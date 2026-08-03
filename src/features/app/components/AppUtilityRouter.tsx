@@ -8,9 +8,9 @@ import type { SettingsPayload } from '@/types/api/settings';
 import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type { Palette } from '@/ui/palette';
 
-export type UtilityView = 'chat' | 'apps' | 'skills' | 'automations' | 'settings';
+export type AppUtilityView = 'chat' | 'apps' | 'skills' | 'automations' | 'settings';
 
-interface UtilityViewRouterProps {
+interface AppUtilityRouterProps {
   bootstrap: BootstrapResponse;
   colors: Palette;
   onBackToChat: () => void;
@@ -20,10 +20,10 @@ interface UtilityViewRouterProps {
   onSettingsChange: (settings: SettingsPayload) => void;
   preferences: LocalPreferences;
   runtimePolicy: RuntimeClientPolicy;
-  view: Exclude<UtilityView, 'chat'>;
+  view: Exclude<AppUtilityView, 'chat'>;
 }
 
-export function UtilityViewRouter(props: UtilityViewRouterProps) {
+export function AppUtilityRouter(props: AppUtilityRouterProps) {
   switch (props.view) {
     case 'apps':
       return (

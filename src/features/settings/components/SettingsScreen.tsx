@@ -5,16 +5,15 @@ import {
   LayoutDashboard,
   MessageCircle,
   Mic,
-  Palette,
+  Palette as PaletteIcon,
   RefreshCw,
   Server,
   ShieldCheck,
 } from "lucide-react-native";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
-  AppState,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -22,11 +21,12 @@ import {
   View,
 } from "react-native";
 
-import { fetchSettings, fetchSettingsUsage } from '@/features/settings/api';
-import type { SettingsPalette, SettingsSectionKey } from '@/features/settings/types';
+import { useSettingsCatalog } from '@/features/settings/hooks/use-settings-catalog';
+import { useSettingsUsage } from '@/features/settings/hooks/use-settings-usage';
+import type { SettingsSectionKey } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 import type { LocalPreferences } from "@/stores/local-preferences-store";
 import {
-  mergeRuntimeMetadata,
   resolveRuntimeClientPolicy,
   type RuntimeMetadata,
 } from "@/services/runtime/runtime-capabilities";
@@ -44,7 +44,7 @@ import { WebSettings } from "./web-settings";
 
 const SECTIONS = [
   { key: "overview" as const, translationKey: "overview", icon: LayoutDashboard },
-  { key: "appearance" as const, translationKey: "appearance", icon: Palette },
+  { key: "appearance" as const, translationKey: "appearance", icon: PaletteIcon },
   { key: "models" as const, translationKey: "models", icon: Bot },
   { key: "image" as const, translationKey: "image", icon: ImageIcon },
   { key: "voice" as const, translationKey: "voice", icon: Mic },
@@ -55,7 +55,7 @@ const SECTIONS = [
 ];
 
 interface SettingsScreenProps {
-  colors: SettingsPalette;
+  colors: Palette;
   preferences: LocalPreferences;
   onChangePreferences: (preferences: LocalPreferences) => void;
   onRestart: () => void;
@@ -73,87 +73,19 @@ export function SettingsScreen({
 }: SettingsScreenProps) {
   const { t } = useTranslation();
   const [section, setSection] = useState<SettingsSectionKey>("overview");
-  const [settings, setSettings] = useState<SettingsPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const settingsRef = useRef<SettingsPayload | null>(null);
-  const applySettings = useCallback(
-    (payload: SettingsPayload) => {
-      const next = mergeRuntimeMetadata(
-        payload,
-        settingsRef.current ?? runtimeMetadata,
-      );
-      settingsRef.current = next;
-      setSettings(next);
-      onSettingsChange?.(next);
-    },
-    [onSettingsChange, runtimeMetadata],
-  );
-
-  const load = useCallback(
-    async (refresh = false) => {
-      if (refresh) setRefreshing(true);
-      else setLoading(true);
-      try {
-        applySettings(await fetchSettings());
-        setError(null);
-      } catch (caught) {
-        setError(caught instanceof Error ? caught.message : t("settings.status.loadError"));
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [applySettings, t],
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchSettings()
-      .then((payload) => {
-        if (!cancelled) {
-          applySettings(payload);
-          setError(null);
-        }
-      })
-      .catch((caught) => {
-        if (!cancelled)
-          setError(caught instanceof Error ? caught.message : t("settings.status.loadError"));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [applySettings, t]);
-
-  const hasSettings = settings !== null;
-  useEffect(() => {
-    if (section !== "overview" || !hasSettings) return;
-    let cancelled = false;
-    const refreshUsage = () => {
-      void fetchSettingsUsage()
-        .then((usage) => {
-          if (cancelled) return;
-          setSettings((current) => (current ? { ...current, usage } : current));
-        })
-        .catch(() => {
-          // Usage is best-effort and must not replace or block the settings payload.
-        });
-    };
-    refreshUsage();
-    const interval = setInterval(refreshUsage, 5_000);
-    const subscription = AppState.addEventListener("change", (nextState) => {
-      if (nextState === "active") refreshUsage();
-    });
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      subscription.remove();
-    };
-  }, [hasSettings, section]);
+  const {
+    applySettings,
+    applyUsage,
+    error,
+    load,
+    loading,
+    refreshing,
+    settings,
+  } = useSettingsCatalog({ onSettingsChange, runtimeMetadata });
+  useSettingsUsage({
+    enabled: section === 'overview' && settings !== null,
+    onUsage: applyUsage,
+  });
 
   const runtimePolicy = resolveRuntimeClientPolicy(settings, runtimeMetadata);
   const content = settings
@@ -299,7 +231,7 @@ export function SettingsScreen({
         <Pressable
           accessibilityLabel={t("settings.channels.checkConnection")}
           disabled={refreshing}
-          onPress={() => void load(true)}
+          onPress={() => void load('refresh')}
           style={styles.refreshButton}
         >
           {refreshing ? (

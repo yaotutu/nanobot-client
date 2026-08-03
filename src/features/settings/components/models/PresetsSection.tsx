@@ -6,51 +6,44 @@ import {
   ListOrdered,
   X,
 } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-
-import {
-  createModelConfiguration,
-  deleteModelConfiguration,
-  migrateModelConfigurations,
-  updateModelCallOrder,
-  updateModelConfiguration,
-} from '@/features/settings/api';
-import type { ModelPresetInfo } from '@/types/api/settings';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPicker, SettingsSection, StatusPill } from '../settings-controls';
 import { ModelCatalog } from './ModelCatalog';
 import { FieldLabel, IconButton, ProviderMark } from './models-controls';
-import type { ModelDraft, ModelsSettingsProps } from './models-utils';
+import type { ModelsSettingsProps } from './models-utils';
+import { usePresetActions } from './presets/use-preset-actions';
 import {
   CONTEXT_WINDOW_OPTIONS,
   formatTokens,
-  newPresetDraft,
-  parsePositiveInteger,
-  parseTemperature,
-  presetDraft,
   providerIsConfigured,
 } from './models-utils';
 
 export function PresetsSection({ colors, settings, showBrandLogos, onSettingsChange }: ModelsSettingsProps) {
   const { t } = useTranslation();
-  const namedPresets = settings.model_presets.filter((preset) => !preset.is_default);
-  const initialPreset = namedPresets.find((preset) => preset.name === settings.model_call_order[0]) ?? namedPresets[0] ?? null;
-  const [selectedName, setSelectedName] = useState(initialPreset?.name ?? '');
-  const [draft, setDraft] = useState<ModelDraft | null>(initialPreset ? presetDraft(initialPreset) : null);
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const selectedPreset = namedPresets.find((preset) => preset.name === selectedName) ?? null;
-  const callOrder = settings.model_call_order;
-  const orderedNames = new Set(callOrder);
-  const visibleRows = [
-    ...callOrder.map((name, index) => ({ name, index, preset: namedPresets.find((preset) => preset.name === name) })),
-    ...namedPresets.filter((preset) => !orderedNames.has(preset.name)).map((preset) => ({ name: preset.name, index: -1, preset })),
-  ];
+  const {
+    advancedOpen,
+    applyOrder,
+    beginCreate,
+    busy,
+    callOrder,
+    cancelEdit,
+    confirmDelete,
+    creating,
+    draft,
+    editorOpen,
+    error,
+    migrate,
+    openPreset,
+    savePreset,
+    selectedName,
+    selectedPreset,
+    setAdvancedOpen,
+    updateDraft,
+    visibleRows,
+  } = usePresetActions({ settings, onSettingsChange });
 
   const providerOptions = useMemo(() => {
     const rows = settings.providers.filter((provider) => provider.configured && provider.model_selectable !== false);
@@ -60,138 +53,6 @@ export function PresetsSection({ colors, settings, showBrandLogos, onSettingsCha
     if (draft?.provider === 'auto') result.unshift({ value: 'auto', label: 'Auto', description: t('settings.models.autoProviderCustomOnly') });
     return result;
   }, [draft?.provider, settings.providers, t]);
-
-  const applyOrder = async (nextOrder: string[]) => {
-    if (busy || nextOrder.length === 0) return;
-    setBusy('order');
-    setError(null);
-    try {
-      onSettingsChange(await updateModelCallOrder(nextOrder));
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t('settings.models.callOrderUpdateFailed', { defaultValue: 'Could not update model call order.' }));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const openPreset = (preset: ModelPresetInfo) => {
-    if (selectedName === preset.name && editorOpen && !creating) {
-      setEditorOpen(false);
-      return;
-    }
-    setSelectedName(preset.name);
-    setDraft(presetDraft(preset));
-    setCreating(false);
-    setAdvancedOpen(false);
-    setEditorOpen(true);
-  };
-
-  const beginCreate = () => {
-    setSelectedName('');
-    setDraft(newPresetDraft(settings));
-    setCreating(true);
-    setAdvancedOpen(false);
-    setEditorOpen(true);
-  };
-
-  const cancelEdit = () => {
-    setCreating(false);
-    setAdvancedOpen(false);
-    setEditorOpen(false);
-    setDraft(selectedPreset ? presetDraft(selectedPreset) : null);
-  };
-
-  const savePreset = async () => {
-    if (!draft || busy) return;
-    const maxTokens = parsePositiveInteger(draft.maxTokens);
-    const contextWindowTokens = parsePositiveInteger(draft.contextWindowTokens);
-    const temperature = parseTemperature(draft.temperature);
-    if (!draft.label.trim() || !draft.provider.trim() || !draft.model.trim()) {
-      setError(t('settings.models.presetFieldsRequired', { defaultValue: 'Preset name, provider, and model are required.' }));
-      return;
-    }
-    if (maxTokens === null || contextWindowTokens === null || temperature === null) {
-      setError(t('settings.models.invalidGenerationSettings', { defaultValue: 'Token values must be positive integers and temperature must be between 0 and 2.' }));
-      return;
-    }
-    if (!providerIsConfigured(settings, draft.provider, selectedPreset?.resolved_provider)) {
-      setError(t('settings.models.configureProviderBeforeSaving'));
-      return;
-    }
-    setBusy('preset');
-    setError(null);
-    try {
-      if (creating) {
-        const created = await createModelConfiguration({
-          label: draft.label.trim(),
-          provider: draft.provider,
-          model: draft.model.trim(),
-          maxTokens,
-          contextWindowTokens,
-          temperature,
-          reasoningEffort: draft.reasoningEffort.trim() || null,
-        });
-        const createdName = created.created_model_preset;
-        if (createdName && !created.model_call_order.includes(createdName)) {
-          onSettingsChange(await updateModelCallOrder([...created.model_call_order, createdName],
-          ));
-        } else {
-          onSettingsChange(created);
-        }
-      } else if (selectedPreset) {
-        onSettingsChange(await updateModelConfiguration({
-          name: selectedPreset.name,
-          label: draft.label.trim(),
-          provider: draft.provider,
-          model: draft.model.trim(),
-          maxTokens,
-          contextWindowTokens,
-          temperature,
-          reasoningEffort: draft.reasoningEffort.trim() || null,
-        }));
-      }
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t('settings.models.saveFailed', { defaultValue: 'Could not save the model preset.' }));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const confirmDelete = () => {
-    if (!selectedPreset || busy) return;
-    if (callOrder.includes(selectedPreset.name)) {
-      setError(t('settings.models.removeBeforeDelete'));
-      return;
-    }
-    Alert.alert(t('settings.models.deletePresetTitle'), t('settings.models.deletePresetHelp', { name: selectedPreset.label }), [
-      { text: t('settings.actions.cancel'), style: 'cancel' },
-      {
-        text: t('settings.actions.delete'),
-        style: 'destructive',
-        onPress: () => {
-          setBusy('delete');
-          setError(null);
-          void deleteModelConfiguration(selectedPreset.name)
-            .then(onSettingsChange)
-            .catch((caught: unknown) => setError(caught instanceof Error ? caught.message : t('settings.models.deleteFailed', { defaultValue: 'Could not delete the preset.' })))
-            .finally(() => setBusy(null));
-        },
-      },
-    ]);
-  };
-
-  const migrate = async () => {
-    if (busy) return;
-    setBusy('migrate');
-    setError(null);
-    try {
-      onSettingsChange(await migrateModelConfigurations());
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t('settings.models.convertFailed', { defaultValue: 'Could not convert the model configuration.' }));
-    } finally {
-      setBusy(null);
-    }
-  };
 
   return (
     <SettingsSection colors={colors} title={t('settings.models.presets')}>
@@ -269,13 +130,13 @@ export function PresetsSection({ colors, settings, showBrandLogos, onSettingsCha
           </View>
           <View style={styles.fieldStack}>
             <FieldLabel colors={colors}>{t('settings.models.presetName')}</FieldLabel>
-            <SettingsInput autoFocus={creating} colors={colors} onChangeText={(label) => setDraft((current) => current ? { ...current, label } : current)} placeholder={t('settings.models.presetNamePlaceholder')} value={draft.label} />
+            <SettingsInput autoFocus={creating} colors={colors} onChangeText={(label) => updateDraft({ label })} placeholder={t('settings.models.presetNamePlaceholder')} value={draft.label} />
           </View>
           <View style={styles.fieldStack}>
             <FieldLabel colors={colors}>{t('settings.providers.title')}</FieldLabel>
             <SettingsPicker
               colors={colors}
-              onChange={(provider) => setDraft((current) => current ? { ...current, provider, model: provider === current.provider ? current.model : '' } : current)}
+              onChange={(provider) => updateDraft({ provider, model: provider === draft.provider ? draft.model : '' })}
               options={providerOptions}
               title={t('settings.providers.title')}
               value={providerOptions.some((option) => option.value === draft.provider) ? draft.provider : ''}
@@ -283,7 +144,7 @@ export function PresetsSection({ colors, settings, showBrandLogos, onSettingsCha
           </View>
           <View style={styles.fieldStack}>
             <FieldLabel colors={colors}>{t('settings.models.selectModel')}</FieldLabel>
-            <ModelCatalog colors={colors} onChange={(model) => setDraft((current) => current ? { ...current, model } : current)} provider={draft.provider} settings={settings} value={draft.model} />
+            <ModelCatalog colors={colors} onChange={(model) => updateDraft({ model })} provider={draft.provider} settings={settings} value={draft.model} />
           </View>
           <Pressable onPress={() => setAdvancedOpen((value) => !value)} style={[styles.advancedHeader, { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}>
             <View style={styles.rowCopy}>
@@ -295,20 +156,20 @@ export function PresetsSection({ colors, settings, showBrandLogos, onSettingsCha
           {advancedOpen ? (
             <View style={styles.advancedBody}>
               <View style={styles.twoColumns}>
-                <View style={styles.columnField}><FieldLabel colors={colors}>{t('settings.models.maxTokens')}</FieldLabel><SettingsInput colors={colors} keyboardType="number-pad" onChangeText={(maxTokens) => setDraft((current) => current ? { ...current, maxTokens } : current)} value={draft.maxTokens} /></View>
-                <View style={styles.columnField}><FieldLabel colors={colors}>{t('settings.models.temperature')}</FieldLabel><SettingsInput colors={colors} keyboardType="decimal-pad" onChangeText={(temperature) => setDraft((current) => current ? { ...current, temperature } : current)} value={draft.temperature} /></View>
+                <View style={styles.columnField}><FieldLabel colors={colors}>{t('settings.models.maxTokens')}</FieldLabel><SettingsInput colors={colors} keyboardType="number-pad" onChangeText={(maxTokens) => updateDraft({ maxTokens })} value={draft.maxTokens} /></View>
+                <View style={styles.columnField}><FieldLabel colors={colors}>{t('settings.models.temperature')}</FieldLabel><SettingsInput colors={colors} keyboardType="decimal-pad" onChangeText={(temperature) => updateDraft({ temperature })} value={draft.temperature} /></View>
               </View>
               <View style={styles.fieldStack}>
                 <FieldLabel colors={colors}>{t('settings.models.contextWindow', { defaultValue: 'Context window' })}</FieldLabel>
                 <SettingsPicker
                   colors={colors}
-                  onChange={(contextWindowTokens) => setDraft((current) => current ? { ...current, contextWindowTokens } : current)}
+                  onChange={(contextWindowTokens) => updateDraft({ contextWindowTokens })}
                   options={Array.from(new Set([...CONTEXT_WINDOW_OPTIONS.map(String), draft.contextWindowTokens])).map((value) => ({ value, label: formatTokens(Number(value)) }))}
                   title={t('settings.models.contextWindow', { defaultValue: 'Context window' })}
                   value={draft.contextWindowTokens}
                 />
               </View>
-              <View style={styles.fieldStack}><FieldLabel colors={colors}>{t('settings.models.reasoningEffort')}</FieldLabel><SettingsInput autoCapitalize="none" autoCorrect={false} colors={colors} onChangeText={(reasoningEffort) => setDraft((current) => current ? { ...current, reasoningEffort } : current)} placeholder={t('settings.values.default')} value={draft.reasoningEffort} /></View>
+              <View style={styles.fieldStack}><FieldLabel colors={colors}>{t('settings.models.reasoningEffort')}</FieldLabel><SettingsInput autoCapitalize="none" autoCorrect={false} colors={colors} onChangeText={(reasoningEffort) => updateDraft({ reasoningEffort })} placeholder={t('settings.values.default')} value={draft.reasoningEffort} /></View>
             </View>
           ) : null}
           {error ? <SettingsNotice colors={colors} error message={error} /> : null}

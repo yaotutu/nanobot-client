@@ -13,19 +13,20 @@ import {
 import { chatIdFromKey } from '@/features/chat/model/chat-key';
 import { useChatStore } from '@/features/chat/store';
 import { useConnectionStore } from '@/features/connection/store';
-import { useSocketLifecycle } from '@/features/connection/use-socket-lifecycle';
+import { useSocketLifecycle } from '@/features/app/hooks/use-socket-lifecycle';
 import {
   useSidebarStore,
   selectSessions,
   selectSidebarState,
 } from '@/features/sidebar/store';
+import { useSkillsStore } from '@/features/skills/store';
 import { useWorkspacesStore } from '@/features/workspaces/store';
 
 import type { SessionAutomationJob } from '@/types/api/automations';
 import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 
-export function useNanobotApp() {
-  debugLog('HOOK', 'useNanobotApp enter (composed facade)');
+export function useAppController() {
+  debugLog('HOOK', 'useAppController enter (composed facade)');
   useAuthBootstrapLifecycle();
 
   const phase = useAuthStore(selectAuthPhase);
@@ -72,7 +73,7 @@ export function useNanobotApp() {
   const slashCommands = useCapabilitiesStore((state) => state.slashCommands);
   const cliApps = useCapabilitiesStore((state) => state.cliApps);
   const mcpPresets = useCapabilitiesStore((state) => state.mcpPresets);
-  const skills = useCapabilitiesStore((state) => state.skills);
+  const skills = useSkillsStore((state) => state.skills);
 
   const workspaces = useWorkspacesStore((state) => state.workspaces);
   const workspaceError = useWorkspacesStore((state) => state.error);
@@ -168,3 +169,5 @@ export function useNanobotApp() {
     },
   };
 }
+
+export type AppController = ReturnType<typeof useAppController>;

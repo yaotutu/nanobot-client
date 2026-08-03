@@ -11,7 +11,7 @@ import {
 
 import { channelCopy } from "./channels-utils";
 import type { ChannelConfigField } from '@/types/api/channels';
-import type { SettingsPalette } from "@/features/settings/types";
+import type { Palette } from '@/ui/palette';
 
 export function ChannelFields({
   colors,
@@ -23,7 +23,7 @@ export function ChannelFields({
   onChange,
   onToggleSecret,
 }: {
-  colors: SettingsPalette;
+  colors: Palette;
   fields: ChannelConfigField[];
   values: Record<string, string>;
   configuredFields: Set<string>;

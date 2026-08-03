@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 import type {
   SettingsPayload,
   UsageDayInfo,
@@ -138,7 +138,7 @@ function tokenUsageSourceBreakdown(cell: TokenUsageCell, t: Translate): string {
     .join(' · ');
 }
 
-function cellBackground(level: number, future: boolean, colors: SettingsPalette): string {
+function cellBackground(level: number, future: boolean, colors: Palette): string {
   if (future) return 'transparent';
   if (level === 4) return '#7DD3FC';
   if (level === 3) return 'rgba(14,165,233,0.82)';
@@ -168,7 +168,7 @@ export function TokenUsageHeatmap({
   usage,
   timeZone,
 }: {
-  colors: SettingsPalette;
+  colors: Palette;
   usage?: TokenUsagePayload;
   timeZone?: string;
 }) {

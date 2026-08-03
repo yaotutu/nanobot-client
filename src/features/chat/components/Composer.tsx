@@ -6,7 +6,7 @@ import type { CapabilityMentionCandidate } from '@/features/chat/capability-ment
 import type { SkillMentionCandidate } from '@/features/chat/skill-mentions';
 import { RunGoalStatus } from '@/features/chat/components/widgets/run-goal-status';
 import { WorkspaceProjectPicker } from '@/features/workspaces/components/WorkspaceControls';
-import type { VoiceRecorderController } from '@/hooks/use-voice-recorder';
+import type { VoiceRecorderController } from '@/features/chat/hooks/use-voice-recorder';
 import type { ComposerAttachment } from '@/types/api/chat';
 import type { GoalStateWsPayload } from '@/types/api/runtime';
 import type { SettingsPayload } from '@/types/api/settings';

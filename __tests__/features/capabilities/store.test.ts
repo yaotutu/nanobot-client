@@ -6,13 +6,11 @@ import {
   listSlashCommands,
 } from '@/features/capabilities/api';
 import { useCapabilitiesStore } from '@/features/capabilities/store';
-import { fetchSkills } from '@/features/skills/api';
 import type {
   CliAppInfo,
   CliAppsPayload,
   McpPresetInfo,
   McpPresetsPayload,
-  SkillSummary,
 } from '@/types/api/capabilities';
 import type { SlashCommand } from '@/types/api/chat';
 
@@ -22,9 +20,6 @@ vi.mock('@/features/capabilities/api', () => ({
   listSlashCommands: vi.fn(),
 }));
 
-vi.mock('@/features/skills/api', () => ({
-  fetchSkills: vi.fn(),
-}));
 
 const slashCommand: SlashCommand = {
   command: '/help',
@@ -34,13 +29,6 @@ const slashCommand: SlashCommand = {
   argHint: '',
   lifecycle: 'side_channel',
   acceptsArgs: false,
-};
-
-const skill: SkillSummary = {
-  name: 'writer',
-  description: 'Write documents',
-  source: 'builtin',
-  available: true,
 };
 
 function cliApp(name: string, installed: boolean): CliAppInfo {
@@ -94,7 +82,6 @@ function mockSuccessfulRefresh() {
   vi.mocked(listSlashCommands).mockResolvedValue([slashCommand]);
   vi.mocked(fetchInstalledCliApps).mockResolvedValue(cliPayload);
   vi.mocked(fetchMcpPresets).mockResolvedValue(mcpPayload);
-  vi.mocked(fetchSkills).mockResolvedValue({ skills: [skill] });
 }
 
 describe('useCapabilitiesStore', () => {
@@ -102,7 +89,6 @@ describe('useCapabilitiesStore', () => {
     vi.mocked(listSlashCommands).mockReset();
     vi.mocked(fetchInstalledCliApps).mockReset();
     vi.mocked(fetchMcpPresets).mockReset();
-    vi.mocked(fetchSkills).mockReset();
     useCapabilitiesStore.getState().resetAll();
   });
 
@@ -117,13 +103,11 @@ describe('useCapabilitiesStore', () => {
       cliAppsPayload: cliPayload,
       mcpPresets: [mcpPayload.presets[0]],
       mcpPresetsPayload: mcpPayload,
-      skills: [skill],
       loading: false,
       errors: {
         slashCommands: null,
         cliApps: null,
         mcpPresets: null,
-        skills: null,
       },
     });
   });
@@ -135,7 +119,6 @@ describe('useCapabilitiesStore', () => {
     vi.mocked(listSlashCommands).mockResolvedValue([{ ...slashCommand, command: '/new' }]);
     vi.mocked(fetchInstalledCliApps).mockRejectedValue(new Error('CLI catalog unavailable'));
     vi.mocked(fetchMcpPresets).mockResolvedValue({ presets: [], installed_count: 0 });
-    vi.mocked(fetchSkills).mockResolvedValue({ skills: [] });
 
     await useCapabilitiesStore.getState().refreshAll();
 
@@ -145,14 +128,38 @@ describe('useCapabilitiesStore', () => {
       cliAppsPayload: cliPayload,
       mcpPresets: [],
       mcpPresetsPayload: { presets: [], installed_count: 0 },
-      skills: [],
       errors: {
         slashCommands: null,
         cliApps: 'CLI catalog unavailable',
         mcpPresets: null,
-        skills: null,
       },
     });
+  });
+
+  it('deduplicates overlapping catalog refreshes', async () => {
+    let resolveSlash!: (value: SlashCommand[]) => void;
+    let resolveCli!: (value: CliAppsPayload) => void;
+    let resolveMcp!: (value: McpPresetsPayload) => void;
+    vi.mocked(listSlashCommands).mockReturnValue(new Promise((resolve) => {
+      resolveSlash = resolve;
+    }));
+    vi.mocked(fetchInstalledCliApps).mockReturnValue(new Promise((resolve) => {
+      resolveCli = resolve;
+    }));
+    vi.mocked(fetchMcpPresets).mockReturnValue(new Promise((resolve) => {
+      resolveMcp = resolve;
+    }));
+
+    const first = useCapabilitiesStore.getState().refreshAll();
+    const second = useCapabilitiesStore.getState().refreshAll();
+    resolveSlash([slashCommand]);
+    resolveCli(cliPayload);
+    resolveMcp(mcpPayload);
+    await Promise.all([first, second]);
+
+    expect(listSlashCommands).toHaveBeenCalledTimes(1);
+    expect(fetchInstalledCliApps).toHaveBeenCalledTimes(1);
+    expect(fetchMcpPresets).toHaveBeenCalledTimes(1);
   });
 
   it('updates the canonical payload and projection together after a mutation', () => {

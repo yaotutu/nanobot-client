@@ -11,13 +11,13 @@ import type {
   ChannelSetupMode,
   ChannelValidationPayload,
 } from '@/types/api/channels';
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 
 interface ChannelConfigurationSectionProps {
   advancedFields: ChannelConfigField[];
   advancedOpen: boolean;
   busy: boolean;
-  colors: SettingsPalette;
+  colors: Palette;
   configured: boolean;
   configuredFields: Set<string>;
   mode: ChannelSetupMode;

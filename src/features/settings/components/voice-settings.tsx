@@ -9,7 +9,8 @@ import type {
   TranscriptionSettingsUpdate,
 } from '@/types/api/settings';
 
-import type { SettingsPalette, SettingsSectionKey } from '@/features/settings/types';
+import type { SettingsSectionKey } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPage, SettingsPicker, SettingsRow, SettingsSection, SettingsSwitch, StatusPill } from './settings-controls';
 
 const FALLBACK: NonNullable<SettingsPayload['transcription']> = {
@@ -29,7 +30,7 @@ function fromPayload(settings: SettingsPayload): TranscriptionSettingsUpdate {
 }
 
 export function VoiceSettings({ colors, settings, onSettingsChange, onSelectSection, onRestart, runtimePolicy }: {
-  colors: SettingsPalette;
+  colors: Palette;
   settings: SettingsPayload;
   onSettingsChange: (settings: SettingsPayload) => void;
   onSelectSection: (section: SettingsSectionKey) => void;

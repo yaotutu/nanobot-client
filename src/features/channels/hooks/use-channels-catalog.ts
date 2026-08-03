@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { fetchNanobotFeatures } from '@/features/channels/api';
+import { fetchNanobotFeatures } from '@/features/runtime/api';
 import type { NanobotFeaturesPayload } from '@/types/api/channels';
 
 import { channelCopy } from '../components/channels-utils';

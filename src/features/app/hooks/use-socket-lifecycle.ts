@@ -7,8 +7,8 @@ import i18n from '@/i18n';
 import { deriveWsUrl } from '@/services/api/bootstrap';
 import { DEFAULT_SERVER_URL as SERVER_URL } from '@/services/api/config';
 
-import { createNanobotSocket, type NanobotSocket } from './socket-transport';
-import { useConnectionStore } from './store';
+import { createNanobotSocket, type NanobotSocket } from '@/features/connection/socket-transport';
+import { useConnectionStore } from '@/features/connection/store';
 
 export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
   const phase = useAuthStore(selectAuthPhase);

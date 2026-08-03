@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { formatVoiceDuration } from '@/features/chat/components/timeline';
 import { ModelPresetMenu } from '@/features/chat/components/widgets/model-preset-menu';
 import { WorkspaceAccessMenu } from '@/features/workspaces/components/WorkspaceControls';
-import type { VoiceRecorderController } from '@/hooks/use-voice-recorder';
+import type { VoiceRecorderController } from '@/features/chat/hooks/use-voice-recorder';
 import type { SettingsPayload } from '@/types/api/settings';
 import type { WorkspaceScopePayload, WorkspacesPayload } from '@/types/api/workspaces';
 import type { Palette } from '@/ui/palette';

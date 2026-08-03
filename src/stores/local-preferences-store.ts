@@ -1,7 +1,6 @@
+import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-
-import * as SecureStore from 'expo-secure-store';
 
 import { normalizeLocale, resolveDeviceLocale } from '@/i18n/config';
 import type {
@@ -43,29 +42,30 @@ export const DEFAULT_LOCAL_PREFS: LocalPreferences = {
 };
 
 function normalize(raw: unknown): LocalPreferences {
-  const v = raw && typeof raw === 'object' ? (raw as Partial<LocalPreferences>) : {};
+  const value = raw && typeof raw === 'object' ? (raw as Partial<LocalPreferences>) : {};
   return {
-    theme: v.theme === 'dark' ? 'dark' : 'light',
-    language: normalizeLocale(v.language),
-    density: v.density === 'compact' ? 'compact' : 'comfortable',
-    activityMode: v.activityMode === 'expanded' ? 'expanded' : 'auto',
-    codeWrap: v.codeWrap !== false,
-    brandLogos: v.brandLogos === true,
+    theme: value.theme === 'dark' ? 'dark' : 'light',
+    language: normalizeLocale(value.language),
+    density: value.density === 'compact' ? 'compact' : 'comfortable',
+    activityMode: value.activityMode === 'expanded' ? 'expanded' : 'auto',
+    codeWrap: value.codeWrap !== false,
+    brandLogos: value.brandLogos === true,
     fileEditDisplayMode:
-      v.fileEditDisplayMode === 'diff' || v.fileEditDisplayMode === 'collapsed_diff'
-        ? v.fileEditDisplayMode
+      value.fileEditDisplayMode === 'diff' || value.fileEditDisplayMode === 'collapsed_diff'
+        ? value.fileEditDisplayMode
         : 'summary',
   };
 }
 
-interface LocalPreferencesState {
+export interface LocalPreferencesState {
   preferences: LocalPreferences;
   hydrated: boolean;
   hydrate(): Promise<void>;
+  replace(preferences: LocalPreferences): void;
   update(patch: Partial<LocalPreferences>): void;
 }
 
-async function readFromSecureStore(): Promise<LocalPreferences> {
+async function readStorage(): Promise<LocalPreferences> {
   try {
     const raw = await SecureStore.getItemAsync(STORAGE_KEY);
     if (!raw) return DEFAULT_LOCAL_PREFS;
@@ -75,51 +75,45 @@ async function readFromSecureStore(): Promise<LocalPreferences> {
   }
 }
 
-async function writeToSecureStore(prefs: LocalPreferences): Promise<void> {
+async function writeStorage(preferences: LocalPreferences): Promise<void> {
   try {
-    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(prefs));
+    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(preferences));
   } catch {
-    // best-effort
+    // Preferences are best-effort; the in-memory state remains authoritative.
   }
 }
+
+let hydrationPromise: Promise<void> | null = null;
 
 export const useLocalPreferencesStore = create<LocalPreferencesState>()(
   subscribeWithSelector((set, get) => ({
     preferences: DEFAULT_LOCAL_PREFS,
     hydrated: false,
 
-    async hydrate() {
-      if (get().hydrated) return;
-      const preferences = await readFromSecureStore();
-      set({ preferences, hydrated: true });
+    hydrate() {
+      if (get().hydrated) return Promise.resolve();
+      if (hydrationPromise) return hydrationPromise;
+      hydrationPromise = readStorage()
+        .then((preferences) => set({ preferences, hydrated: true }))
+        .finally(() => {
+          hydrationPromise = null;
+        });
+      return hydrationPromise;
+    },
+
+    replace(preferences) {
+      const next = normalize(preferences);
+      set({ preferences: next, hydrated: true });
+      void writeStorage(next);
     },
 
     update(patch) {
-      const next = { ...get().preferences, ...patch };
-      set({ preferences: next });
-      void writeToSecureStore(next);
+      const next = normalize({ ...get().preferences, ...patch });
+      set({ preferences: next, hydrated: true });
+      void writeStorage(next);
     },
   })),
 );
 
-export const selectTheme = (s: LocalPreferencesState) => s.preferences.theme;
-export const selectLanguage = (s: LocalPreferencesState) => s.preferences.language;
-
-/** 一次性从 SecureStore 读取 local prefs；不写入 store。 */
-export async function readLocalPreferences(): Promise<LocalPreferences> {
-  try {
-    const raw = await SecureStore.getItemAsync(STORAGE_KEY);
-    if (!raw) return DEFAULT_LOCAL_PREFS;
-    return normalize(JSON.parse(raw));
-  } catch {
-    return DEFAULT_LOCAL_PREFS;
-  }
-}
-
-export async function writeLocalPreferences(preferences: LocalPreferences): Promise<void> {
-  try {
-    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(preferences));
-  } catch {
-    // best-effort
-  }
-}
+export const selectPreferences = (state: LocalPreferencesState) => state.preferences;
+export const selectPreferencesHydrated = (state: LocalPreferencesState) => state.hydrated;

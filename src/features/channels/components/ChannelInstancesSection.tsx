@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 
-import type { SettingsPalette } from "@/features/settings/types";
+import type { Palette } from '@/ui/palette';
 import type { NanobotChannelInstanceInfo } from '@/types/api/channels';
 
 import { ActionButton, Section, StatusBadge } from "./channel-controls";
@@ -24,7 +24,7 @@ import {
 interface ChannelInstancesSectionProps {
   actionKey: string | null;
   busy: boolean;
-  colors: SettingsPalette;
+  colors: Palette;
   featureName: string;
   instanceId?: string;
   instances: NanobotChannelInstanceInfo[];

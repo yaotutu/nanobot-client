@@ -7,7 +7,7 @@ import {
   Search,
   X,
 } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -21,10 +21,9 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { fetchAutomations, runAutomationAction, updateAutomation } from '@/features/automations/api';
+import { useAutomationActions } from '@/features/automations/hooks/use-automation-actions';
+import { useAutomationsCatalog } from '@/features/automations/hooks/use-automations-catalog';
 import type {
-  AutomationsPayload,
-  AutomationUpdatePayload,
   SessionAutomationJob,
 } from '@/types/api/automations';
 import type { Palette } from '@/ui/palette';
@@ -36,14 +35,12 @@ import {
   FILTERS,
   automationNeedsAttention,
   automationStatusKey,
-  errorMessage,
   matchesFilter,
   matchesSearch,
   parseSearchQuery,
   sortJobs,
 } from './automations-utils';
 import type {
-  AutomationAction,
   AutomationFilter,
   AutomationSort,
 } from './automations-utils';
@@ -56,45 +53,21 @@ interface AutomationsScreenProps {
 export function AutomationsScreen({ colors, onOpenLinkedChat }: AutomationsScreenProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage || i18n.language;
-  const [payload, setPayload] = useState<AutomationsPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    applyPayload,
+    error,
+    load,
+    loading,
+    payload,
+    refreshing,
+    setError,
+  } = useAutomationsCatalog();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<AutomationFilter>('all');
   const [sort, setSort] = useState<AutomationSort>('next');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sortOpen, setSortOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<SessionAutomationJob | null>(null);
-  const [actionKey, setActionKey] = useState<string | null>(null);
-  const delayedRefreshes = useRef<Array<ReturnType<typeof setTimeout>>>([]);
-
-  const load = useCallback(async (mode: 'initial' | 'refresh' | 'silent' = 'silent') => {
-    if (mode === 'initial') setLoading(true);
-    if (mode === 'refresh') setRefreshing(true);
-    try {
-      const next = await fetchAutomations();
-      setPayload(next);
-      setError(null);
-    } catch (caught) {
-      setError(errorMessage(caught, t('settings.automations.loadFailed', { defaultValue: 'Unable to load automations.' })));
-    } finally {
-      if (mode === 'initial') setLoading(false);
-      if (mode === 'refresh') setRefreshing(false);
-    }
-  }, [t]);
-
-  useEffect(() => {
-    const initial = setTimeout(() => void load('initial'), 0);
-    const interval = setInterval(() => void load('silent'), 5_000);
-    return () => {
-      clearTimeout(initial);
-      clearInterval(interval);
-      delayedRefreshes.current.forEach(clearTimeout);
-      delayedRefreshes.current = [];
-    };
-  }, [load]);
-
   const jobs = useMemo(() => payload?.jobs ?? [], [payload]);
   const counts = useMemo(() => ({
     all: jobs.length,
@@ -111,30 +84,16 @@ export function AutomationsScreen({ colors, onOpenLinkedChat }: AutomationsScree
   }, [filter, jobs, locale, query, sort, t]);
   const selectedJob = filtered.find((job) => job.id === selectedId) ?? filtered[0] ?? null;
 
-  const applyPayload = (next: AutomationsPayload) => {
-    setPayload(next);
-    setError(null);
-  };
-
-  const act = async (action: AutomationAction, job: SessionAutomationJob) => {
-    const key = `${action}:${job.id}`;
-    setActionKey(key);
-    try {
-      const next = await runAutomationAction(action, job.id);
-      applyPayload(next);
-      if (action === 'delete') setSelectedId(null);
-      if (action === 'run') {
-        delayedRefreshes.current.push(
-          setTimeout(() => void load('silent'), 1_200),
-          setTimeout(() => void load('silent'), 4_000),
-        );
-      }
-    } catch (caught) {
-      setError(errorMessage(caught, t('settings.automations.actionFailed', { defaultValue: 'Automation action failed.' })));
-    } finally {
-      setActionKey(null);
-    }
-  };
+  const clearSelection = useCallback(() => setSelectedId(null), []);
+  const closeEditor = useCallback(() => setEditingJob(null), []);
+  const silentRefresh = useCallback(() => { void load('silent'); }, [load]);
+  const { actionKey, act, save: saveEdit } = useAutomationActions({
+    applyPayload,
+    onDeleted: clearSelection,
+    onSaved: closeEditor,
+    refresh: silentRefresh,
+    setError,
+  });
 
   const requestDelete = (job: SessionAutomationJob) => {
     const name = job.name || job.id;
@@ -142,20 +101,6 @@ export function AutomationsScreen({ colors, onOpenLinkedChat }: AutomationsScree
       { text: t('settings.automations.cancel'), style: 'cancel' },
       { text: t('settings.automations.delete'), style: 'destructive', onPress: () => void act('delete', job) },
     ]);
-  };
-
-  const saveEdit = async (job: SessionAutomationJob, values: AutomationUpdatePayload) => {
-    const key = `update:${job.id}`;
-    setActionKey(key);
-    try {
-      const next = await updateAutomation(job.id, values);
-      applyPayload(next);
-      setEditingJob(null);
-    } catch (caught) {
-      setError(errorMessage(caught, t('settings.automations.saveFailed', { defaultValue: 'Unable to save automation.' })));
-    } finally {
-      setActionKey(null);
-    }
   };
 
   return (

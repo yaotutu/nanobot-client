@@ -6,7 +6,8 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { checkVersion } from '@/features/settings/api';
 import type { SettingsPayload } from '@/types/api/settings';
 
-import type { SettingsPalette, SettingsSectionKey } from '@/features/settings/types';
+import type { SettingsSectionKey } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 import { SettingsButton, SettingsPage, SettingsSection } from './settings-controls';
 import { TokenUsageHeatmap } from './token-usage-heatmap';
 
@@ -20,7 +21,7 @@ function shortPath(path: string, fallback: string): string {
 }
 
 export function OverviewSettings({ colors, settings, onSelectSection }: {
-  colors: SettingsPalette;
+  colors: Palette;
   settings: SettingsPayload;
   onSelectSection: (section: SettingsSectionKey) => void;
 }) {
@@ -78,7 +79,7 @@ export function OverviewSettings({ colors, settings, onSelectSection }: {
 }
 
 function OverviewRow({ colors, icon, title, value, caption, onPress, last = false }: {
-  colors: SettingsPalette;
+  colors: Palette;
   icon: React.ReactNode;
   title: string;
   value: string;
@@ -95,7 +96,7 @@ function OverviewRow({ colors, icon, title, value, caption, onPress, last = fals
   );
 }
 
-function VersionRow({ colors, currentVersion }: { colors: SettingsPalette; currentVersion?: string }) {
+function VersionRow({ colors, currentVersion }: { colors: Palette; currentVersion?: string }) {
   const { t } = useTranslation();
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<string | null>(null);

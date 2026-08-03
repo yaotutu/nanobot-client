@@ -9,191 +9,56 @@ import {
   Pencil,
   X,
 } from 'lucide-react-native';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import {
-  completeProviderOAuth,
-  createProviderSettings,
-  loginProviderOAuth,
-  logoutProviderOAuth,
-  updateProviderSettings,
-} from '@/features/settings/api';
-import type {
-  ProviderOAuthAuthorizationRequired,
-  ProviderSettingsInfo,
-  ProviderSettingsUpdate,
-} from '@/types/api/settings';
+import type { ProviderSettingsInfo } from '@/types/api/settings';
 
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsSection, StatusPill } from '../settings-controls';
 import { AdvancedProviderFields } from './ModelCatalog';
 import { ProviderCatalog } from './ProviderCatalog';
 import { FieldLabel, IconButton, ProviderMark } from './models-controls';
-import type { CustomProviderDraft, ModelsSettingsProps, ProviderForm } from './models-utils';
+import type { ModelsSettingsProps } from './models-utils';
+import { useProviderActions } from './providers/use-provider-actions';
 import {
   CUSTOM_PROVIDER_FIELDS,
   CUSTOM_PROVIDER_KEY,
-  emptyCustomProvider,
-  isAuthorizationRequired,
-  isOAuthPending,
   providerForm,
 } from './models-utils';
 
 export function ProvidersSection({ colors, settings, showBrandLogos, onSettingsChange, onRestart, runtimePolicy }: ModelsSettingsProps) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [forms, setForms] = useState<Record<string, ProviderForm>>(() => Object.fromEntries(settings.providers.map((provider) => [provider.name, providerForm(provider)])));
-  const [keyVisible, setKeyVisible] = useState<Record<string, boolean>>({});
-  const [keyEditing, setKeyEditing] = useState<Record<string, boolean>>({});
-  const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [creatingCustom, setCreatingCustom] = useState(false);
-  const [customDraft, setCustomDraft] = useState<CustomProviderDraft>(emptyCustomProvider);
-  const [customKeyVisible, setCustomKeyVisible] = useState(false);
-  const [oauthFlow, setOauthFlow] = useState<ProviderOAuthAuthorizationRequired | null>(null);
-  const [oauthCode, setOauthCode] = useState('');
-  const [oauthPending, setOauthPending] = useState(false);
+  const {
+    beginCustom,
+    busy,
+    closeOAuth,
+    completeOAuth,
+    createCustom,
+    creatingCustom,
+    customDraft,
+    customKeyVisible,
+    error,
+    expanded,
+    forms,
+    keyEditing,
+    keyVisible,
+    oauthCode,
+    oauthFlow,
+    oauthPending,
+    runOAuth,
+    saveProvider,
+    setCreatingCustom,
+    setCustomDraft,
+    setCustomKeyVisible,
+    setKeyEditing,
+    setKeyVisible,
+    setOauthCode,
+    toggle,
+    updateForm,
+  } = useProviderActions({ settings, onSettingsChange });
 
   const configured = settings.providers.filter((provider) => provider.configured);
   const unconfigured = settings.providers.filter((provider) => !provider.configured && provider.name !== 'custom');
-
-  const updateForm = (name: string, value: Partial<ProviderForm>) => {
-    setForms((current) => ({ ...current, [name]: { ...(current[name] ?? providerForm(settings.providers.find((provider) => provider.name === name)!)), ...value } }));
-  };
-
-  const toggle = (provider: ProviderSettingsInfo) => {
-    if (expanded === provider.name) {
-      setExpanded(null);
-    } else {
-      setExpanded(provider.name);
-      setForms((current) => ({ ...current, [provider.name]: providerForm(provider) }));
-      setKeyEditing((current) => ({ ...current, [provider.name]: false }));
-      setKeyVisible((current) => ({ ...current, [provider.name]: false }));
-    }
-    setCreatingCustom(false);
-    setError(null);
-  };
-
-  const saveProvider = async (provider: ProviderSettingsInfo) => {
-    if (busy) return;
-    const form = forms[provider.name] ?? providerForm(provider);
-    const oauth = provider.auth_type === 'oauth';
-    const apiKey = form.apiKey.trim();
-    if (!oauth && !provider.configured && (provider.api_key_required ?? true) && !apiKey) {
-      setError(t('settings.byok.apiKeyRequired'));
-      return;
-    }
-    const hasOptionalValue = Boolean(apiKey || form.apiBase.trim() || form.proxy.trim() || form.extraHeaders.trim() || form.extraBody.trim() || form.extraQuery.trim() || form.thinkingStyle.trim() || form.region.trim() || form.profile.trim());
-    if (!oauth && !provider.configured && provider.api_key_required === false && !hasOptionalValue) {
-      setError(t('settings.providers.configurationRequired', { defaultValue: 'Enter at least one provider setting.' }));
-      return;
-    }
-    if (provider.is_custom && !form.displayName.trim()) {
-      setError(t('settings.providers.customProviderNameRequired', { defaultValue: 'Provider name is required.' }));
-      return;
-    }
-    setBusy(provider.name);
-    setError(null);
-    try {
-      const update: ProviderSettingsUpdate = { provider: provider.name };
-      if (!oauth) {
-        update.apiKey = apiKey || undefined;
-        update.apiBase = form.apiBase.trim();
-        if (provider.is_custom) update.displayName = form.displayName.trim();
-      }
-      for (const field of provider.advanced_fields ?? []) {
-        if (field === 'api_type') update.apiType = form.apiType;
-        if (field === 'proxy') update.proxy = form.proxy.trim();
-        if (field === 'extra_headers') update.extraHeaders = form.extraHeaders.trim();
-        if (field === 'extra_body') update.extraBody = form.extraBody.trim();
-        if (field === 'extra_query') update.extraQuery = form.extraQuery.trim();
-        if (field === 'thinking_style') update.thinkingStyle = form.thinkingStyle.trim();
-        if (field === 'region') update.region = form.region.trim();
-        if (field === 'profile') update.profile = form.profile.trim();
-      }
-      onSettingsChange(await updateProviderSettings(update));
-      setForms((current) => ({ ...current, [provider.name]: { ...form, apiKey: '' } }));
-      setKeyVisible((current) => ({ ...current, [provider.name]: false }));
-      setKeyEditing((current) => ({ ...current, [provider.name]: false }));
-      if (!oauth) setExpanded(null);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t('settings.providers.saveFailed', { defaultValue: 'Could not save the provider.' }));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const runOAuth = async (provider: ProviderSettingsInfo, action: 'login' | 'logout') => {
-    if (busy) return;
-    setBusy(provider.name);
-    setError(null);
-    try {
-      const payload = action === 'login'
-        ? await loginProviderOAuth(provider.name)
-        : await logoutProviderOAuth(provider.name);
-      if (isAuthorizationRequired(payload)) {
-        setOauthFlow(payload);
-        setOauthCode('');
-        setOauthPending(false);
-        setExpanded(provider.name);
-        await Linking.openURL(payload.authorization_url);
-      } else {
-        onSettingsChange(payload);
-        setOauthFlow(null);
-      }
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t('settings.oauth.actionFailed', { defaultValue: 'OAuth action failed.' }));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const completeOAuth = async () => {
-    if (!oauthFlow || !oauthCode.trim() || busy) return;
-    setBusy(oauthFlow.provider);
-    setError(null);
-    try {
-      const payload = await completeProviderOAuth(oauthFlow.provider, oauthFlow.flow_id, oauthCode.trim());
-      if (isOAuthPending(payload)) {
-        setOauthPending(true);
-      } else {
-        onSettingsChange(payload);
-        setOauthFlow(null);
-        setOauthCode('');
-        setOauthPending(false);
-      }
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t('settings.oauth.finishFailed', { defaultValue: 'Could not finish OAuth authorization.' }));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const createCustom = async () => {
-    if (busy || !customDraft.name.trim() || !customDraft.apiBase.trim()) return;
-    setBusy(CUSTOM_PROVIDER_KEY);
-    setError(null);
-    try {
-      onSettingsChange(await createProviderSettings({
-        name: customDraft.name.trim(),
-        apiKey: customDraft.apiKey.trim() || undefined,
-        apiBase: customDraft.apiBase.trim(),
-        proxy: customDraft.proxy.trim(),
-        extraHeaders: customDraft.extraHeaders.trim(),
-        extraBody: customDraft.extraBody.trim(),
-        extraQuery: customDraft.extraQuery.trim(),
-        thinkingStyle: customDraft.thinkingStyle.trim(),
-      }));
-      setCustomDraft(emptyCustomProvider());
-      setCustomKeyVisible(false);
-      setCreatingCustom(false);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t('settings.providers.createFailed', { defaultValue: 'Could not create the custom provider.' }));
-    } finally {
-      setBusy(null);
-    }
-  };
 
   const renderProvider = (provider: ProviderSettingsInfo, rowIndex: number) => {
     const open = expanded === provider.name;
@@ -319,12 +184,12 @@ export function ProvidersSection({ colors, settings, showBrandLogos, onSettingsC
       ) : (
         <View style={[styles.sectionFooter, { borderTopColor: colors.border }]}>
           <Text style={[styles.helpText, { color: colors.subtle }]}>{t('settings.byok.configuredKeyHint')}</Text>
-          <SettingsButton colors={colors} label={t('settings.providers.customProvider')} onPress={() => { setExpanded(null); setCustomDraft(emptyCustomProvider()); setCreatingCustom(true); setError(null); }} />
+          <SettingsButton colors={colors} label={t('settings.providers.customProvider')} onPress={beginCustom} />
         </View>
       )}
 
       {oauthFlow ? (
-        <Modal animationType="slide" onRequestClose={() => setOauthFlow(null)} transparent>
+        <Modal animationType="slide" onRequestClose={closeOAuth} transparent>
           <View style={styles.modalBackdrop}>
             <View style={[styles.oauthSheet, { backgroundColor: colors.background }]}>
               <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
@@ -334,7 +199,7 @@ export function ProvidersSection({ colors, settings, showBrandLogos, onSettingsC
               {oauthPending ? <SettingsNotice colors={colors} message={t('settings.oauth.pending', { defaultValue: 'Authorization is still pending. Try again shortly.' })} /> : null}
               {error ? <SettingsNotice colors={colors} error message={error} /> : null}
               <View style={styles.editorActions}>
-                <SettingsButton colors={colors} disabled={busy !== null} label={t('settings.actions.cancel')} onPress={() => { setOauthFlow(null); setOauthCode(''); setOauthPending(false); }} />
+                <SettingsButton colors={colors} disabled={busy !== null} label={t('settings.actions.cancel')} onPress={closeOAuth} />
                 <View style={styles.actionGroup}>
                   <IconButton colors={colors} label={t('settings.actions.open')} onPress={() => void Linking.openURL(oauthFlow.authorization_url)}><LogIn color={colors.muted} size={15} /></IconButton>
                   <SettingsButton colors={colors} disabled={busy !== null || !oauthCode.trim()} label={busy ? t('settings.oauth.signingIn') : t('settings.oauth.finishSignIn')} onPress={() => void completeOAuth()} primary />

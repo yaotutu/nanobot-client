@@ -2,14 +2,14 @@ import { Check, CircleAlert, ExternalLink, X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { SettingsPalette } from "@/features/settings/types";
+import type { Palette } from '@/ui/palette';
 import type { ChannelValidationPayload } from '@/types/api/channels';
 
 import { Section } from "./channel-controls";
 import { channelCopy } from "./channels-utils";
 
 interface ChannelValidationSectionProps {
-  colors: SettingsPalette;
+  colors: Palette;
   onOpenUrl: (url: string) => Promise<void>;
   validation: ChannelValidationPayload;
 }

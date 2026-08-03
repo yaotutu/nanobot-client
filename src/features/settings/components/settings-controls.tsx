@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 
 export interface SettingsOption {
   value: string;
@@ -35,7 +35,7 @@ export function SettingsPage({ children }: { children: ReactNode }) {
 }
 
 export function SettingsSection({ colors, title, children }: {
-  colors: SettingsPalette;
+  colors: Palette;
   title: string;
   children: ReactNode;
 }) {
@@ -48,7 +48,7 @@ export function SettingsSection({ colors, title, children }: {
 }
 
 export function SettingsRow({ colors, title, description, children, last = false }: {
-  colors: SettingsPalette;
+  colors: Palette;
   title: string;
   description?: string;
   children?: ReactNode;
@@ -66,7 +66,7 @@ export function SettingsRow({ colors, title, description, children, last = false
 }
 
 export function StatusPill({ colors, label, tone = 'neutral' }: {
-  colors: SettingsPalette;
+  colors: Palette;
   label: string;
   tone?: 'neutral' | 'success' | 'warning';
 }) {
@@ -80,7 +80,7 @@ export function StatusPill({ colors, label, tone = 'neutral' }: {
 }
 
 export function SettingsSwitch({ colors, value, onValueChange, disabled = false }: {
-  colors: SettingsPalette;
+  colors: Palette;
   value: boolean;
   onValueChange: (value: boolean) => void;
   disabled?: boolean;
@@ -97,7 +97,7 @@ export function SettingsSwitch({ colors, value, onValueChange, disabled = false 
 }
 
 export function SegmentedControl({ colors, value, options, onChange }: {
-  colors: SettingsPalette;
+  colors: Palette;
   value: string;
   options: SettingsOption[];
   onChange: (value: string) => void;
@@ -128,7 +128,7 @@ export function SegmentedControl({ colors, value, options, onChange }: {
   );
 }
 
-export function SettingsInput({ colors, style, ...props }: TextInputProps & { colors: SettingsPalette }) {
+export function SettingsInput({ colors, style, ...props }: TextInputProps & { colors: Palette }) {
   return (
     <TextInput
       placeholderTextColor={colors.subtle}
@@ -143,7 +143,7 @@ export function SettingsInput({ colors, style, ...props }: TextInputProps & { co
 }
 
 export function SettingsButton({ colors, label, onPress, disabled = false, primary = false }: {
-  colors: SettingsPalette;
+  colors: Palette;
   label: string;
   onPress: () => void;
   disabled?: boolean;
@@ -169,7 +169,7 @@ export function SettingsButton({ colors, label, onPress, disabled = false, prima
 }
 
 export function SettingsNotice({ colors, message, error = false }: {
-  colors: SettingsPalette;
+  colors: Palette;
   message: string;
   error?: boolean;
 }) {
@@ -181,7 +181,7 @@ export function SettingsNotice({ colors, message, error = false }: {
 }
 
 export function SettingsPicker({ colors, label, title, value, options, onChange, disabled = false }: {
-  colors: SettingsPalette;
+  colors: Palette;
   label?: string;
   title: string;
   value: string;

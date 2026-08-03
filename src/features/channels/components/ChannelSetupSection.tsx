@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { ActionButton, Section } from '@/features/channels/components/channel-controls';
 import { channelCopy } from '@/features/channels/components/channels-utils';
 import type { ChannelSetupMode, ChannelSetupPresentation } from '@/types/api/channels';
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 
 interface ChannelSetupSectionProps {
-  colors: SettingsPalette;
+  colors: Palette;
   configured?: boolean;
   mode: ChannelSetupMode;
   notice: string | null;
@@ -116,7 +116,7 @@ export function ChannelNextStepsSection({
   colors,
   setup,
 }: {
-  colors: SettingsPalette;
+  colors: Palette;
   setup: ChannelSetupPresentation;
 }) {
   const { t } = useTranslation();

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supportedLocales, type SupportedLocale } from '@/i18n/config';
 import type { LocalPreferences } from '@/stores/local-preferences-store';
 
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 import {
   SegmentedControl,
   SettingsPage,
@@ -14,7 +14,7 @@ import {
 } from './settings-controls';
 
 export function AppearanceSettings({ colors, preferences, onChange }: {
-  colors: SettingsPalette;
+  colors: Palette;
   preferences: LocalPreferences;
   onChange: (preferences: LocalPreferences) => void;
 }) {

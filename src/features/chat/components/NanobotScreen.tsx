@@ -1,5 +1,5 @@
 import { X } from 'lucide-react-native';
-import { useCallback, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -10,6 +10,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import type { AppController } from '@/features/app/hooks/use-app-controller';
+import type { AppModelSelection } from '@/features/app/hooks/use-app-model-selection';
+import type { LocalPreferences } from '@/stores/local-preferences-store';
+import type { Palette } from '@/ui/palette';
+
 import {
   normalizeActivityTimeline,
   type TurnUnit,
@@ -19,171 +24,69 @@ import {
   currentActivityClusterIndices,
   unitIndexAfterMessageCount,
   unitKeysForDisplay,
-} from "@/features/chat/components/timeline";
-import { useChatScroll } from "@/features/chat/hooks/useChatScroll";
+} from '@/features/chat/components/timeline';
+import { useChatScroll } from '@/features/chat/hooks/useChatScroll';
 import { sessionTitle } from '@/services/text/format';
-import { Composer as ExtractedComposer } from "@/features/chat/components/Composer";
-import { ChatHeader } from "@/features/chat/components/ChatHeader";
-import { ChatModals } from "@/features/chat/components/ChatModals";
-import { LIGHT_COLORS, DARK_COLORS } from '@/ui/colors';
-import type { SessionAutomationJob } from '@/types/api/automations';
-import type {
-  CliAppInfo,
-  McpPresetInfo,
-  SkillSummary,
-} from '@/types/api/capabilities';
-import type {
-  SendAttachment,
-  SendMessageOptions,
-  SessionDeleteResult,
-  SlashCommand,
-  StreamError,
-  UIMessage,
-} from '@/types/api/chat';
-import type {
-  BootstrapResponse,
-  ConnectionStatus,
-  GoalStateWsPayload,
-} from '@/types/api/runtime';
-import type {
-  ChatSummary,
-  SidebarStatePayload,
-} from '@/types/api/sidebar';
-import type {
-  WorkspaceScopePayload,
-  WorkspacesPayload,
-} from '@/types/api/workspaces';
-
+import { Composer as ExtractedComposer } from '@/features/chat/components/Composer';
+import { ChatHeader } from '@/features/chat/components/ChatHeader';
+import { ChatModals } from '@/features/chat/components/ChatModals';
 import { StreamErrorNotice } from '@/features/chat/components/widgets/stream-error-notice';
 import { ChatSurface } from '@/features/chat/components/ChatSurface';
-import { UtilityViewRouter } from '@/features/chat/components/UtilityViewRouter';
-import { useModelSelection } from '@/features/chat/hooks/use-model-selection';
 import { useComposerController } from '@/features/chat/hooks/use-composer-controller';
 import { useFilePreviewAvailability } from '@/features/chat/hooks/use-file-preview-availability';
-import { useChatScreenState } from '@/features/chat/hooks/use-chat-screen-state';
-import { useChatPreferences } from '@/features/chat/hooks/use-chat-preferences';
+import { useChatLocalState } from '@/features/chat/hooks/use-chat-local-state';
 
 interface NanobotScreenProps {
-  bootstrap: BootstrapResponse;
-  connectionStatus: ConnectionStatus;
-  cliApps: CliAppInfo[];
-  sessions: ChatSummary[];
-  sidebarState: SidebarStatePayload;
-  sessionsLoading: boolean;
-  activeKey: string | null;
-  activeSession: ChatSummary | null;
-  messages: UIMessage[];
-  mcpPresets: McpPresetInfo[];
-  skills: SkillSummary[];
-  threadLoading: boolean;
-  loadingOlder: boolean;
-  hasMoreBefore: boolean;
-  userMessageOffset: number;
-  forkBoundaryMessageCount: number | null;
-  turnActive: boolean;
-  runStartedAt: number | null;
-  goalState?: GoalStateWsPayload;
-  runtimeModelName: string | null;
-  turnModelName: string | null;
-  modelSettingsRevision: number;
-  slashCommands: SlashCommand[];
-  error: string | null;
-  streamError: StreamError | null;
-  workspaces: WorkspacesPayload | null;
-  activeWorkspaceScope: WorkspaceScopePayload | null;
-  workspaceError: string | null;
-  onClearError: () => void;
-  onDismissStreamError: () => void;
-  onWorkspaceScopeChange: (scope: WorkspaceScopePayload) => void;
-  onSelectSession: (key: string | null) => void;
-  onStartNewChat: () => void;
-  onStartNewChatInProject: (projectPath: string, projectName: string) => void;
-  onLoadOlder: () => Promise<void>;
-  onModelPresetChange: (name: string) => Promise<void>;
-  onForkFromMessage: (beforeUserIndex: number) => Promise<string>;
-  onRetryFromMessage: (messageId: string) => Promise<void> | void;
-  onTogglePinned: (key: string) => Promise<void>;
-  onToggleArchived: (key: string) => Promise<void>;
-  onToggleSidebarGroup: (groupId: string) => Promise<void>;
-  onRenameSession: (key: string, title: string) => Promise<void>;
-  onRenameProject: (projectKey: string, title: string) => Promise<void>;
-  onSetShowArchived: (show: boolean) => Promise<void>;
-  onDeleteSession: (
-    key: string,
-    options?: { deleteAutomations?: boolean },
-  ) => Promise<SessionDeleteResult>;
-  onGetSessionAutomations: (key: string) => Promise<SessionAutomationJob[]>;
-  onSendMessage: (
-    content: string,
-    attachments?: SendAttachment[],
-    options?: SendMessageOptions,
-  ) => Promise<void>;
-  onTranscribeAudio: (
-    dataUrl: string,
-    options?: { durationMs?: number },
-  ) => Promise<string>;
-  onStopTurn: () => void;
-  onRestart: () => void;
-  onLogout: () => void;
+  app: AppController;
+  colors: Palette;
+  dark: boolean;
+  preferences: LocalPreferences;
+  model: AppModelSelection;
+  utilityView: string;
+  utilityContent: ReactNode;
+  navigationRevision: number;
+  onChangePreferences: (next: LocalPreferences) => void;
+  onOpenDrawer: () => void;
+  onOpenSettings: () => void;
 }
 
-
-export function NanobotScreen(props: NanobotScreenProps) {
-  const { hasMoreBefore, loadingOlder, onLoadOlder } = props;
+export function NanobotScreen({ app: props, ...shell }: NanobotScreenProps) {
+  const { hasMoreBefore, loadingOlder, loadOlder } = props;
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const {
-    drawerOpen,
-    sessionSearchOpen,
-    utilityView,
     assistantQuoteSource,
     promptNavigatorOpen,
     sessionInfoOpen,
     filePreviewPath,
-    setDrawerOpen,
-    setSessionSearchOpen,
-    setUtilityView,
     setAssistantQuoteSource,
     setPromptNavigatorOpen,
     setSessionInfoOpen,
     setFilePreviewPath,
     resetForSessionChange,
-    openUtility,
-    openSearch,
-  } = useChatScreenState();
-  const { preferences, changePreferences } = useChatPreferences();
-  const [forkingMessageId, setForkingMessageId] = useState<string | null>(null);
-  const dark = preferences.theme === 'dark';
-  const colors = dark ? DARK_COLORS : LIGHT_COLORS;
+  } = useChatLocalState();
+  const { colors, dark, preferences } = shell;
   const {
     activeModelPreset,
     changeModelPreset,
     modelDisplayLabel,
     orderedModelPresets,
-    runtimePolicy,
     settings,
-    setSettings,
-  } = useModelSelection({
-    activeSession: props.activeSession,
-    bootstrap: props.bootstrap,
-    modelSettingsRevision: props.modelSettingsRevision,
-    onModelPresetChange: props.onModelPresetChange,
-    runtimeModelName: props.runtimeModelName,
-    turnModelName: props.turnModelName,
-  });
+  } = shell.model;
+  const [forkingMessageId, setForkingMessageId] = useState<string | null>(null);
   const composerController = useComposerController({
     cliApps: props.cliApps,
-    limits: props.bootstrap.limits,
+    limits: props.bootstrap!.limits,
     mcpPresets: props.mcpPresets,
-    onSendMessage: props.onSendMessage,
-    onStopTurn: props.onStopTurn,
-    onTranscribeAudio: props.onTranscribeAudio,
+    onSendMessage: props.sendMessage,
+    onStopTurn: props.stopTurn,
+    onTranscribeAudio: props.transcribeAudio,
     settings,
     skills: props.skills,
     slashCommands: props.slashCommands,
     turnActive: props.turnActive,
   });
-  const { setQuotedContext } = composerController;
+  const { reset: resetComposer, setQuotedContext } = composerController;
 
   const hasMessages = props.messages.length > 0;
   const hasUserPrompts = props.messages.some((message) => message.role === 'user');
@@ -200,7 +103,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
     if (props.turnActive || retryingMessageId) return;
     setRetryingMessageId(messageId);
     try {
-      await props.onRetryFromMessage(messageId);
+      await props.retryFromMessage(messageId);
     } finally {
       setRetryingMessageId(null);
     }
@@ -244,7 +147,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
   );
   const resolveFilePreviewAvailability = useFilePreviewAvailability({
     activeKey: props.activeKey,
-    apiToken: props.bootstrap.api_token,
+    apiToken: props.bootstrap!.api_token,
     revision: props.messages.length,
   });
 
@@ -259,6 +162,11 @@ export function NanobotScreen(props: NanobotScreenProps) {
     resetForSessionChange();
     setQuotedContext(null);
   }, [resetForSessionChange, setQuotedContext]);
+
+  useEffect(() => {
+    resetForSessionChange();
+    resetComposer();
+  }, [resetComposer, resetForSessionChange, shell.navigationRevision]);
 
   const {
     listRef,
@@ -279,35 +187,15 @@ export function NanobotScreen(props: NanobotScreenProps) {
     units,
     loadingOlder,
     hasMoreBefore,
-    onLoadOlder,
+    onLoadOlder: loadOlder,
     onSessionReset: handleSessionReset,
   });
-  const resetSessionUi = () => {
-    resetForSessionChange();
-    composerController.reset();
-  };
-
-  const selectSession = (key: string | null) => {
-    resetSessionUi();
-    props.onSelectSession(key);
-  };
-
-  const startNewChat = () => {
-    resetSessionUi();
-    props.onStartNewChat();
-  };
-
-  const startNewChatInProject = (projectPath: string, projectName: string) => {
-    resetSessionUi();
-    props.onStartNewChatInProject(projectPath, projectName);
-  };
-
   const forkFromMessage = async (messageId: string, beforeUserIndex: number) => {
     if (forkingMessageId) return;
     composerController.clearQueue();
     setForkingMessageId(messageId);
     try {
-      await props.onForkFromMessage(beforeUserIndex);
+      await props.forkFromMessage(beforeUserIndex);
     } catch {
       // The app hook exposes the server error in the persistent banner.
     } finally {
@@ -321,7 +209,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
         <StreamErrorNotice
           colors={colors}
           error={props.streamError}
-          onDismiss={props.onDismissStreamError}
+          onDismiss={props.dismissStreamError}
         />
       ) : null}
       <ExtractedComposer
@@ -346,7 +234,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
         workspaceControls={props.workspaces?.controls ?? null}
         workspaceError={props.workspaceError}
         workspaceScopeDisabled={props.turnActive}
-        onWorkspaceScopeChange={props.onWorkspaceScopeChange}
+        onWorkspaceScopeChange={props.updateWorkspaceScope}
         onAddAttachment={composerController.openAttachmentMenu}
         onChangeText={composerController.onChangeText}
         onClearQuote={() => composerController.setQuotedContext(null)}
@@ -354,7 +242,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
         onMentionCandidateSelect={composerController.selectMentionCandidate}
         onSkillCandidateSelect={composerController.selectSkillCandidate}
         onModelPresetChange={changeModelPreset}
-        onOpenModelSettings={() => setUtilityView('settings')}
+        onOpenModelSettings={shell.onOpenSettings}
         onRemoveQueuedPrompt={composerController.removeQueuedPrompt}
         onRemoveAttachment={composerController.attachments.remove}
         onSelectSlashCommand={composerController.selectSlashCommand}
@@ -383,25 +271,25 @@ export function NanobotScreen(props: NanobotScreenProps) {
         colors={colors}
         dark={dark}
         preferences={preferences}
-        utilityView={utilityView}
+        utilityView={shell.utilityView}
         chatTitle={chatTitle}
         hasUserPrompts={hasUserPrompts}
-        onOpenDrawer={() => setDrawerOpen(true)}
+        onOpenDrawer={shell.onOpenDrawer}
         onOpenPromptNavigator={() => setPromptNavigatorOpen(true)}
         onOpenSessionInfo={() => setSessionInfoOpen(true)}
-        onChangePreferences={changePreferences}
+        onChangePreferences={shell.onChangePreferences}
       />
 
       {props.error ? (
         <View style={[styles.errorBanner, { backgroundColor: colors.errorBackground }]}>
           <Text numberOfLines={2} style={[styles.errorText, { color: colors.errorText }]}>{props.error}</Text>
-          <Pressable accessibilityLabel={t('common.dismiss')} hitSlop={8} onPress={props.onClearError}>
+          <Pressable accessibilityLabel={t('common.dismiss')} hitSlop={8} onPress={props.clearError}>
             <X color={colors.errorText} size={16} />
           </Pressable>
         </View>
       ) : null}
 
-      {utilityView === 'chat' ? (
+      {shell.utilityView === 'chat' ? (
         <ChatSurface
           colors={colors}
           composer={composer}
@@ -442,21 +330,7 @@ export function NanobotScreen(props: NanobotScreenProps) {
           }}
         />
       ) : (
-        <UtilityViewRouter
-          bootstrap={props.bootstrap}
-          colors={colors}
-          onBackToChat={() => setUtilityView('chat')}
-          onChangePreferences={changePreferences}
-          onOpenLinkedChat={(sessionKey) => {
-            setUtilityView('chat');
-            props.onSelectSession(sessionKey);
-          }}
-          onRestart={props.onRestart}
-          onSettingsChange={setSettings}
-          preferences={preferences}
-          runtimePolicy={runtimePolicy}
-          view={utilityView}
-        />
+        shell.utilityContent
       )}
       <View style={{ height: Math.max(insets.bottom, 7), backgroundColor: colors.background }} />
 
@@ -466,45 +340,18 @@ export function NanobotScreen(props: NanobotScreenProps) {
         dark={dark}
         chatTitle={chatTitle}
         messages={props.messages}
-        sessions={props.sessions}
-        sidebarState={props.sidebarState}
-        sessionsLoading={props.sessionsLoading}
-        connectionStatus={props.connectionStatus}
-        defaultWorkspacePath={props.workspaces?.default_scope.project_path ?? null}
-        utilityView={utilityView}
-        drawerOpen={drawerOpen}
-        sessionSearchOpen={sessionSearchOpen}
         promptNavigatorOpen={promptNavigatorOpen}
         sessionInfoOpen={sessionInfoOpen}
         assistantQuoteSource={assistantQuoteSource}
         filePreviewPath={filePreviewPath}
-        token={props.bootstrap.api_token}
-        composerInputRef={composerController.inputRef}
-        onCloseDrawer={() => setDrawerOpen(false)}
-        onCloseSessionSearch={() => setSessionSearchOpen(false)}
+        token={props.bootstrap!.api_token}
         onClosePromptNavigator={() => setPromptNavigatorOpen(false)}
         onCloseSessionInfo={() => setSessionInfoOpen(false)}
         onCloseAssistantQuote={() => setAssistantQuoteSource(null)}
         onCloseFilePreview={() => setFilePreviewPath(null)}
         onConfirmAssistantQuote={composerController.confirmQuote}
         onJumpToPrompt={jumpToPrompt}
-        onSelectSession={selectSession}
-        onStartNewChat={startNewChat}
-        onStartNewChatInProject={startNewChatInProject}
-        onOpenSearch={openSearch}
-        onOpenApps={() => openUtility('apps')}
-        onOpenSkills={() => openUtility('skills')}
-        onOpenAutomations={() => openUtility('automations')}
-        onOpenSettings={() => openUtility('settings')}
-        onLogout={props.onLogout}
-        onDeleteSession={props.onDeleteSession}
-        onGetSessionAutomations={props.onGetSessionAutomations}
-        onRenameSession={props.onRenameSession}
-        onRenameProject={props.onRenameProject}
-        onSetShowArchived={props.onSetShowArchived}
-        onToggleArchived={props.onToggleArchived}
-        onToggleGroup={props.onToggleSidebarGroup}
-        onTogglePinned={props.onTogglePinned}
+        onGetSessionAutomations={props.getSessionAutomations}
       />
     </KeyboardAvoidingView>
   );

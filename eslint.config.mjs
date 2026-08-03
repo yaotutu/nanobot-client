@@ -70,6 +70,24 @@ export default tseslint.config(
     ]),
   },
   {
+    files: ['src/features/**/*.{ts,tsx}'],
+    ignores: ['src/features/app/**/*.{ts,tsx}'],
+    rules: restrictedLayerImports([
+      { group: ['@/app', '@/app/*'], message: 'Features cannot depend on Expo Router.' },
+      { group: ['@/components', '@/components/*'], message: 'Features cannot depend on application shell components.' },
+      {
+        group: [
+          '@/features/settings/components/SettingsScreen',
+          '@/features/capabilities/components/AppsScreen',
+          '@/features/skills/components/SkillsScreen',
+          '@/features/automations/components/AutomationsScreen',
+          '@/features/sidebar/components/SidebarDrawer',
+        ],
+        message: 'Top-level feature screens must be composed by features/app.',
+      },
+    ]),
+  },
+  {
     files: ['__tests__/**/*.{ts,tsx}'],
     languageOptions: {
       globals: globals.node,

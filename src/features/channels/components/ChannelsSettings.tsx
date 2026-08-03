@@ -18,12 +18,12 @@ import {
   View,
 } from "react-native";
 
-import { setNanobotFeatureEnabled } from "@/features/channels/api";
+import { setNanobotFeatureEnabled } from "@/features/runtime/api";
 import { useChannelsCatalog } from "@/features/channels/hooks/use-channels-catalog";
 import { channelPresentation } from "@/features/channels/channel-presentation";
 import { currentLocale } from "@/i18n";
 import type { NanobotFeatureInfo } from "@/types/api/channels";
-import type { SettingsPalette } from "@/features/settings/types";
+import type { Palette } from '@/ui/palette';
 
 import {
   type ChannelFilter,
@@ -40,7 +40,7 @@ export function ChannelsSettings({
   colors,
   showBrandLogos,
 }: {
-  colors: SettingsPalette;
+  colors: Palette;
   showBrandLogos: boolean;
 }) {
   const { t } = useTranslation();

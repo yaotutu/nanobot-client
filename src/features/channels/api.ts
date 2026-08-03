@@ -3,24 +3,7 @@ import type {
   ChannelConfigurePayload,
   ChannelConnectPayload,
   ChannelValidationPayload,
-  NanobotFeaturesPayload,
-  PairingPayload,
 } from '@/types/api/channels';
-
-export async function fetchNanobotFeatures(): Promise<NanobotFeaturesPayload> {
-  return apiClient.get<NanobotFeaturesPayload>('/api/settings/nanobot-features');
-}
-
-export async function setNanobotFeatureEnabled(
-  action: 'enable' | 'disable',
-  name: string,
-  instanceId?: string,
-): Promise<NanobotFeaturesPayload> {
-  return apiClient.request<NanobotFeaturesPayload>(
-    `/api/settings/nanobot-features/${action}`,
-    { method: 'GET', query: { name, ...(instanceId ? { instance_id: instanceId } : {}) } },
-  );
-}
 
 export async function configureChannel(
   name: string,
@@ -87,15 +70,4 @@ export async function cancelChannelConnect(
     `/api/settings/channels/${encodeURIComponent(channel)}/connect/cancel`,
     { session_id: sessionId },
   );
-}
-
-export async function fetchPairingRequests(): Promise<PairingPayload> {
-  return apiClient.get<PairingPayload>('/api/settings/pairing');
-}
-
-export async function runPairingAction(
-  action: 'approve' | 'deny',
-  code: string,
-): Promise<PairingPayload> {
-  return apiClient.get<PairingPayload>(`/api/settings/pairing/${action}`, { code });
 }

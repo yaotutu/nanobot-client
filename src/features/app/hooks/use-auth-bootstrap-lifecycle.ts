@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useAuthStore, selectAuthPhase, selectBootstrap } from '@/features/auth/store';
 import { useCapabilitiesStore } from '@/features/capabilities/store';
 import { useSidebarStore } from '@/features/sidebar/store';
+import { useSkillsStore } from '@/features/skills/store';
 import { useWorkspacesStore } from '@/features/workspaces/store';
 
 export function useAuthBootstrapLifecycle(): void {
@@ -12,6 +13,7 @@ export function useAuthBootstrapLifecycle(): void {
   const refreshSessions = useSidebarStore((state) => state.refresh);
   const refreshSidebarState = useSidebarStore((state) => state.refreshSidebarState);
   const refreshCapabilities = useCapabilitiesStore((state) => state.refreshAll);
+  const refreshSkills = useSkillsStore((state) => state.refresh);
   const refreshWorkspaces = useWorkspacesStore((state) => state.refresh);
 
   useEffect(() => {
@@ -23,12 +25,14 @@ export function useAuthBootstrapLifecycle(): void {
     void refreshSessions();
     void refreshSidebarState();
     void refreshCapabilities();
+    void refreshSkills();
     void refreshWorkspaces();
   }, [
     bootstrap,
     phase,
     refreshCapabilities,
     refreshSessions,
+    refreshSkills,
     refreshSidebarState,
     refreshWorkspaces,
   ]);

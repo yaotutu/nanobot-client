@@ -8,10 +8,10 @@ import type {
   SettingsPayload,
 } from '@/types/api/settings';
 
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 
 export interface ModelsSettingsProps {
-  colors: SettingsPalette;
+  colors: Palette;
   settings: SettingsPayload;
   showBrandLogos: boolean;
   onSettingsChange: (settings: SettingsPayload) => void;

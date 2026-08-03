@@ -20,14 +20,15 @@ import {
   slashCommandLifecycle,
   slashQuery,
 } from '@/features/chat/slash-command';
-import { useAttachments } from '@/hooks/use-attachments';
+import { useAttachments } from '@/features/chat/hooks/use-attachments';
 import {
   type VoiceRecorderError,
   useVoiceRecorder,
-} from '@/hooks/use-voice-recorder';
+} from '@/features/chat/hooks/use-voice-recorder';
 import {
-  readComposerRecents,
-  writeComposerRecents,
+  selectComposerRecents,
+  selectComposerRecentsHydrated,
+  useComposerRecentsStore,
 } from '@/stores/composer-recents-store';
 import {
   formatQuotedUserMessage,
@@ -92,7 +93,10 @@ export function useComposerController(options: UseComposerControllerOptions) {
   const [slashMenuDismissed, setSlashMenuDismissed] = useState(false);
   const [mentionMenuDismissed, setMentionMenuDismissed] = useState(false);
   const [cursor, setCursor] = useState(0);
-  const [recentCommands, setRecentCommands] = useState<string[]>([]);
+  const recentCommands = useComposerRecentsStore(selectComposerRecents);
+  const recentsHydrated = useComposerRecentsStore(selectComposerRecentsHydrated);
+  const hydrateRecents = useComposerRecentsStore((state) => state.hydrate);
+  const recordRecentCommand = useComposerRecentsStore((state) => state.record);
   const [sending, setSending] = useState(false);
   const [queuedPrompts, setQueuedPrompts] = useState<QueuedPrompt[]>([]);
   const [voiceError, setVoiceError] = useState<VoiceRecorderError | null>(null);
@@ -129,12 +133,8 @@ export function useComposerController(options: UseComposerControllerOptions) {
   });
 
   useEffect(() => {
-    let cancelled = false;
-    void readComposerRecents().then((stored) => {
-      if (!cancelled) setRecentCommands(stored);
-    });
-    return () => { cancelled = true; };
-  }, []);
+    if (!recentsHydrated) void hydrateRecents();
+  }, [hydrateRecents, recentsHydrated]);
 
   const currentSlashQuery = slashMenuDismissed ? null : slashQuery(text);
   const visibleSlashCommands = useMemo(() => {
@@ -223,12 +223,8 @@ export function useComposerController(options: UseComposerControllerOptions) {
   }, [onSendMessage, queuedPrompts, turnActive]);
 
   const recordRecent = useCallback((command: string) => {
-    setRecentCommands((current) => {
-      const next = [command, ...current.filter((item) => item !== command)].slice(0, 5);
-      void writeComposerRecents(next);
-      return next;
-    });
-  }, []);
+    recordRecentCommand(command);
+  }, [recordRecentCommand]);
 
   const selectSlashCommand = useCallback((command: ComposerSlashCommand) => {
     if (command.command === '/stop' && turnActive) {

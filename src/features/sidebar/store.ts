@@ -18,7 +18,7 @@ import {
 /**
  * Sidebar store —— 会话列表 + sidebar 状态（pinned / archived / title overrides / 折叠组）。
  *
- * 旧 use-nanobot-app.ts 中散落在多个 ref / state 里的 sidebar 行为在此收敛：
+ * 旧应用控制器 中散落在多个 ref / state 里的 sidebar 行为在此收敛：
  *   - sidebarStateRef
  *   - sidebarMutationVersionRef
  *   - updateSidebar / togglePinned / toggleArchived / renameSession / renameProject /

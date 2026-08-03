@@ -9,7 +9,7 @@ import { RootErrorBoundary } from '@/components/overlays/error-boundary';
 import { DebugOverlay } from '@/components/overlays/debug-overlay';
 import { debugLog } from '@/services/runtime/debug-log';
 import { ensureI18n, setAppLanguage } from '@/i18n';
-import { readLocalPreferences } from '@/stores/local-preferences-store';
+import { useLocalPreferencesStore } from '@/stores/local-preferences-store';
 
 // Prevent auto-hide so we can explicitly hide once the first screen renders.
 void SplashScreen.preventAutoHideAsync();
@@ -43,7 +43,10 @@ function LocalizationGate({ children }: { children: ReactNode }) {
     }, 2500);
 
     void ensureI18n()
-      .then(() => readLocalPreferences())
+      .then(async () => {
+        await useLocalPreferencesStore.getState().hydrate();
+        return useLocalPreferencesStore.getState().preferences;
+      })
       .then((preferences) => {
         if (cancelled) return;
         debugLog('GATE', `prefs read lang=${preferences.language}`);

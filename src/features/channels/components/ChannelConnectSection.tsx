@@ -10,7 +10,7 @@ import {
 } from '@/features/channels/components/channels-utils';
 import type { ChannelConnectPayload } from '@/types/api/channels';
 import type { ChannelConnectMode } from '@/features/channels/hooks/use-channel-connect';
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 
 interface ChannelConnectSectionProps {
   busy: boolean;
@@ -22,7 +22,7 @@ interface ChannelConnectSectionProps {
   onBegin: (mode?: ChannelConnectMode) => Promise<void>;
   onCancel: () => Promise<void>;
   supportsConnect: boolean;
-  colors: SettingsPalette;
+  colors: Palette;
 }
 
 export function ChannelConnectSection(props: ChannelConnectSectionProps) {

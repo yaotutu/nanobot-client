@@ -10,14 +10,14 @@ import type {
   SettingsPayload,
 } from '@/types/api/settings';
 
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 import { SegmentedControl, SettingsInput, SettingsPicker } from '../settings-controls';
 import { FieldLabel, IconButton } from './models-controls';
 import type { ProviderApiType, ProviderForm } from './models-utils';
 import { providerIsConfigured } from './models-utils';
 
 export function ModelCatalog({ colors, settings, provider, value, onChange }: {
-  colors: SettingsPalette;
+  colors: Palette;
   settings: SettingsPayload;
   provider: string;
   value: string;
@@ -88,7 +88,7 @@ export function ModelCatalog({ colors, settings, provider, value, onChange }: {
 }
 
 export function AdvancedProviderFields({ colors, fields, form, onChange }: {
-  colors: SettingsPalette;
+  colors: Palette;
   fields: ProviderAdvancedField[];
   form: ProviderForm;
   onChange: (value: Partial<ProviderForm>) => void;

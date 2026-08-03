@@ -5,6 +5,7 @@ import { useCapabilitiesStore } from '@/features/capabilities/store';
 import { useChatStore } from '@/features/chat/store';
 import type { NanobotSocket } from '@/features/connection/socket-transport';
 import { useSidebarStore } from '@/features/sidebar/store';
+import { useSkillsStore } from '@/features/skills/store';
 import { useWorkspacesStore } from '@/features/workspaces/store';
 import i18n from '@/i18n';
 import {
@@ -118,6 +119,7 @@ export function useSessionCommands({
     socketRef.current?.close();
     useChatStore.getState().resetAll();
     useCapabilitiesStore.getState().resetAll();
+    useSkillsStore.getState().resetAll();
     void useSidebarStore.getState().resetAll();
     void useWorkspacesStore.getState().resetAll();
     await useAuthStore.getState().logout();

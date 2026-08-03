@@ -24,7 +24,7 @@ import type {
   NanobotFeatureInfo,
   NanobotFeaturesPayload,
 } from '@/types/api/channels';
-import type { SettingsPalette } from "@/features/settings/types";
+import type { Palette } from '@/ui/palette';
 
 import {
   channelCopy,
@@ -55,7 +55,7 @@ export function ChannelDetail({
   onError,
   showBrandLogos,
 }: {
-  colors: SettingsPalette;
+  colors: Palette;
   feature: NanobotFeatureInfo;
   actionKey: string | null;
   onBack: () => void;

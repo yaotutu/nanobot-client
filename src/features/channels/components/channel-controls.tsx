@@ -1,13 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { SettingsPalette } from "@/features/settings/types";
+import type { Palette } from '@/ui/palette';
 
 export function Section({
   colors,
   title,
   children,
 }: {
-  colors: SettingsPalette;
+  colors: Palette;
   title: string;
   children: React.ReactNode;
 }) {
@@ -30,7 +30,7 @@ export function ActionButton({
   disabled = false,
   primary = false,
 }: {
-  colors: SettingsPalette;
+  colors: Palette;
   label: string;
   onPress: () => void;
   disabled?: boolean;
@@ -67,7 +67,7 @@ export function StatusBadge({
   failed,
   text,
 }: {
-  colors: SettingsPalette;
+  colors: Palette;
   running: boolean;
   failed: boolean;
   text: string;

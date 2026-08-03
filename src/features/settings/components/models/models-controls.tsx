@@ -1,10 +1,10 @@
 import { Bot } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 
 export function ProviderMark({ colors, label, showBrandLogos }: {
-  colors: SettingsPalette;
+  colors: Palette;
   label: string;
   showBrandLogos: boolean;
 }) {
@@ -20,7 +20,7 @@ export function ProviderMark({ colors, label, showBrandLogos }: {
 }
 
 export function IconButton({ colors, label, disabled = false, onPress, children }: {
-  colors: SettingsPalette;
+  colors: Palette;
   label: string;
   disabled?: boolean;
   onPress: () => void;
@@ -43,7 +43,7 @@ export function IconButton({ colors, label, disabled = false, onPress, children 
   );
 }
 
-export function FieldLabel({ colors, children }: { colors: SettingsPalette; children: React.ReactNode }) {
+export function FieldLabel({ colors, children }: { colors: Palette; children: React.ReactNode }) {
   return <Text style={[styles.fieldLabel, { color: colors.muted }]}>{children}</Text>;
 }
 

@@ -8,11 +8,11 @@ import type {
   ProviderSettingsInfo,
 } from '@/types/api/settings';
 
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 import { SettingsButton } from '../settings-controls';
 
 export function ProviderCatalog({ colors, provider }: {
-  colors: SettingsPalette;
+  colors: Palette;
   provider: ProviderSettingsInfo;
 }) {
   const { t } = useTranslation();

@@ -12,7 +12,7 @@ import type {
   WebSearchSettingsUpdate,
 } from '@/types/api/settings';
 
-import type { SettingsPalette } from '@/features/settings/types';
+import type { Palette } from '@/ui/palette';
 import { SettingsButton, SettingsInput, SettingsNotice, SettingsPage, SettingsPicker, SettingsRow, SettingsSection, SettingsSwitch, StatusPill } from './settings-controls';
 
 function fromPayload(settings: SettingsPayload): WebSearchSettingsUpdate {
@@ -30,7 +30,7 @@ function acceptsKey(provider?: WebSearchProviderInfo): boolean {
 }
 
 export function WebSettings({ colors, settings, onSettingsChange, onRestart, runtimePolicy }: {
-  colors: SettingsPalette;
+  colors: Palette;
   settings: SettingsPayload;
   onSettingsChange: (settings: SettingsPayload) => void;
   onRestart: () => void;

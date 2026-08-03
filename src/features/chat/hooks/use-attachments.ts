@@ -4,6 +4,19 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useRef, useState } from 'react';
 
+import {
+  attachmentPayloadBudget,
+  ingressLimits,
+  type AttachmentLimits,
+} from '@/features/chat/attachments/attachment-limits';
+import { decodedBase64Bytes, projectedDataUrlBytes } from '@/features/chat/attachments/attachment-encoder';
+import {
+  canonicalDocumentMime,
+  IMAGE_MIMES,
+  PICKER_DOCUMENT_MIMES,
+  sniffImageMime,
+} from '@/features/chat/attachments/attachment-mime';
+
 import i18n from '@/i18n';
 import type {
   ComposerAttachment,
@@ -12,50 +25,7 @@ import type {
 } from '@/types/api/chat';
 import type { WebUIIngressLimits } from '@/types/api/runtime';
 
-const DEFAULT_MAX_COUNT = 4;
-const DEFAULT_MAX_FILE_BYTES = 6 * 1024 * 1024;
-const DEFAULT_MAX_TOTAL_BYTES = 24 * 1024 * 1024;
-const DEFAULT_MAX_FRAME_BYTES = 36 * 1024 * 1024;
-const DEFAULT_ENVELOPE_RESERVE_BYTES = 64 * 1024;
-const DEFAULT_MAX_TEXT_BYTES = 64 * 1024;
 const NORMALIZE_MAX_EDGE = 2048;
-
-const IMAGE_MIMES = new Set([
-  'image/png',
-  'image/jpeg',
-  'image/webp',
-  'image/gif',
-]);
-
-const DOCUMENT_MIME_BY_EXTENSION = new Map([
-  ['.pdf', 'application/pdf'],
-  ['.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-  ['.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-  ['.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
-  ['.txt', 'text/plain'],
-  ['.md', 'text/markdown'],
-  ['.csv', 'text/csv'],
-  ['.json', 'application/json'],
-  ['.xml', 'application/xml'],
-  ['.html', 'text/html'],
-  ['.htm', 'text/html'],
-  ['.log', 'text/plain'],
-  ['.yaml', 'application/yaml'],
-  ['.yml', 'application/yaml'],
-  ['.toml', 'application/toml'],
-  ['.ini', 'text/plain'],
-  ['.cfg', 'text/plain'],
-]);
-
-const DOCUMENT_MIMES = new Set([
-  ...DOCUMENT_MIME_BY_EXTENSION.values(),
-  'application/x-yaml',
-  'application/xhtml+xml',
-  'text/xml',
-  'text/yaml',
-]);
-
-const PICKER_DOCUMENT_MIMES = [...new Set(DOCUMENT_MIME_BY_EXTENSION.values())];
 
 interface PickedAsset {
   uri: string;
@@ -72,62 +42,13 @@ function attachmentId(): string {
   return `attachment-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function positiveLimit(value: number | null | undefined, fallback: number): number {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0
-    ? Math.floor(value)
-    : fallback;
-}
-
-function extensionOf(name: string): string {
-  const dot = name.lastIndexOf('.');
-  return dot < 0 ? '' : name.slice(dot).toLowerCase();
-}
-
-function canonicalDocumentMime(name: string, declared?: string | null): string | null {
-  const byExtension = DOCUMENT_MIME_BY_EXTENSION.get(extensionOf(name));
-  if (byExtension) return byExtension;
-  const normalized = declared?.split(';', 1)[0]?.trim().toLowerCase();
-  return normalized && DOCUMENT_MIMES.has(normalized) ? normalized : null;
-}
-
-function sniffImageMime(bytes: Uint8Array): string | null {
-  if (
-    bytes.length >= 8 &&
-    bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 &&
-    bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a
-  ) return 'image/png';
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-    return 'image/jpeg';
-  }
-  if (
-    bytes.length >= 6 &&
-    bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38 &&
-    (bytes[4] === 0x37 || bytes[4] === 0x39) && bytes[5] === 0x61
-  ) return 'image/gif';
-  if (
-    bytes.length >= 12 &&
-    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
-    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
-  ) return 'image/webp';
-  return null;
-}
-
-function decodedBase64Bytes(base64: string): number {
-  const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
-  return Math.max(0, Math.floor((base64.length * 3) / 4) - padding);
-}
-
-function projectedDataUrlBytes(mime: string, decodedBytes: number): number {
-  return `data:${mime};base64,`.length + 4 * Math.ceil(decodedBytes / 3);
-}
-
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function errorMessage(code: string, limits: RequiredLimits): string {
+function errorMessage(code: string, limits: AttachmentLimits): string {
   switch (code) {
     case 'unsupported_type':
       return i18n.t('thread.composer.imageRejected.unsupported_type');
@@ -156,36 +77,13 @@ function errorMessage(code: string, limits: RequiredLimits): string {
   }
 }
 
-interface RequiredLimits {
-  maxCount: number;
-  maxFileBytes: number;
-  maxTotalBytes: number;
-  maxFrameBytes: number;
-  envelopeReserveBytes: number;
-  maxTextBytes: number;
-}
-
-function ingressLimits(limits?: WebUIIngressLimits): RequiredLimits {
-  return {
-    maxCount: positiveLimit(limits?.attachments.max_count, DEFAULT_MAX_COUNT),
-    maxFileBytes: positiveLimit(limits?.attachments.max_file_bytes, DEFAULT_MAX_FILE_BYTES),
-    maxTotalBytes: positiveLimit(limits?.attachments.max_total_bytes, DEFAULT_MAX_TOTAL_BYTES),
-    maxFrameBytes: positiveLimit(limits?.transport.max_frame_bytes, DEFAULT_MAX_FRAME_BYTES),
-    envelopeReserveBytes: positiveLimit(
-      limits?.transport.envelope_reserve_bytes,
-      DEFAULT_ENVELOPE_RESERVE_BYTES,
-    ),
-    maxTextBytes: positiveLimit(limits?.message.max_text_bytes, DEFAULT_MAX_TEXT_BYTES),
-  };
-}
-
 async function encodeNativeFile(uri: string, mime: string): Promise<{ dataUrl: string; bytes: number }> {
   const file = new File(uri);
   const base64 = await file.base64();
   return { dataUrl: `data:${mime};base64,${base64}`, bytes: file.size || decodedBase64Bytes(base64) };
 }
 
-async function encodeImage(asset: PickedAsset, limits: RequiredLimits): Promise<{
+async function encodeImage(asset: PickedAsset, limits: AttachmentLimits): Promise<{
   dataUrl: string;
   bytes: number;
   mime: string;
@@ -271,7 +169,7 @@ export function useAttachments(limits?: WebUIIngressLimits) {
       const mime = asset.kind === 'image'
         ? asset.mime?.split(';', 1)[0]?.trim().toLowerCase() || 'image/jpeg'
         : canonicalDocumentMime(asset.name, asset.mime);
-      if (!mime || (asset.kind === 'file' && !DOCUMENT_MIMES.has(mime))) {
+      if (!mime) {
         setError(errorMessage('unsupported_type', resolvedLimits));
         continue;
       }
@@ -294,10 +192,7 @@ export function useAttachments(limits?: WebUIIngressLimits) {
         (sum, item) => sum + (item.dataUrl?.length ?? projectedDataUrlBytes(item.mime, item.size)),
         0,
       ) + projectedDataUrlBytes(mime, Math.min(knownSize, resolvedLimits.maxFileBytes));
-      const payloadBudget = Math.max(
-        0,
-        resolvedLimits.maxFrameBytes - resolvedLimits.envelopeReserveBytes - resolvedLimits.maxTextBytes,
-      );
+      const payloadBudget = attachmentPayloadBudget(resolvedLimits);
       if (projectedWire > payloadBudget) {
         setError(errorMessage('transport_too_large', resolvedLimits));
         continue;
