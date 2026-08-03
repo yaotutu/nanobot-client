@@ -187,11 +187,14 @@ export function useComposerController(options: UseComposerControllerOptions) {
     ]);
   }, [attachments, t]);
 
+  const clearAttachments = attachments.clear;
+  const clearDraft = draft.clear;
+  const clearQueue = queue.clear;
   const reset = useCallback(() => {
-    draft.clear();
-    queue.clear();
-    attachments.clear();
-  }, [attachments, draft, queue]);
+    clearDraft();
+    clearQueue();
+    clearAttachments();
+  }, [clearAttachments, clearDraft, clearQueue]);
 
   return {
     attachments,
