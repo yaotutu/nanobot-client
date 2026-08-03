@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 // Static Metro asset; require is the React Native asset loader.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const nanobotIcon = require('../../../assets/images/nanobot-icon.png');
+const nanobotIcon = require('../../../../assets/images/nanobot-icon.png');
 
 interface AuthScreenProps {
   failed: boolean;
