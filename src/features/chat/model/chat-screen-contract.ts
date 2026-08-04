@@ -8,10 +8,10 @@ import type {
   SendAttachment,
   SendMessageOptions,
   SlashCommand,
-  StreamError,
-  UIMessage,
-} from '@/types/api/chat';
-import type { BootstrapResponse, GoalStateWsPayload } from '@/types/api/runtime';
+} from '@/types/api/chat/commands';
+import type { StreamError } from '@/types/api/chat/errors';
+import type { UIMessage } from '@/types/api/chat/messages';
+import type { BootstrapResponse, ConnectionStatus, GoalStateWsPayload } from '@/types/api/runtime';
 import type { ModelPresetInfo, SettingsPayload } from '@/types/api/settings';
 import type { ChatSummary, SidebarStatePayload } from '@/types/api/sidebar';
 import type {
@@ -44,6 +44,10 @@ export interface ChatScreenController {
     forkFromMessage: (beforeUserIndex: number) => Promise<string | undefined>;
   };
   runtime: {
+    connectionStatus: ConnectionStatus;
+    connectionSyncing: boolean;
+    networkAvailable: boolean;
+    reconnect: () => Promise<void>;
     turnActive: boolean;
     runStartedAt: number | null;
     goalState: GoalStateWsPayload | undefined;

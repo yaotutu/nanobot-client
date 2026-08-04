@@ -1,16 +1,25 @@
-import type { ComponentProps, ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { ChatThread } from '@/features/chat/components/ChatThread';
+import type { ChatThreadProps } from '@/features/chat/components/ChatThread';
+import { createDeferredComponent } from '@/hooks/use-deferred-component';
 import type { Palette } from '@/ui/palette';
+
+/**
+ * 空会话不需要消息 Markdown、代码高亮、工具活动等渲染模块。ChatThread 仅在存在消息时加载。
+ * 使用显式 state 更新挂载组件，避免 React.lazy/Suspense 在 Fabric 提交阶段触发原生崩溃。
+ */
+const DeferredChatThread = createDeferredComponent(() => import(
+  '@/features/chat/components/ChatThread'
+).then(({ ChatThread }) => ChatThread));
 
 interface ChatSurfaceProps {
   colors: Palette;
   composer: ReactNode;
   hasMessages: boolean;
   threadLoading: boolean;
-  threadProps: ComponentProps<typeof ChatThread>;
+  threadProps: ChatThreadProps;
 }
 
 export function ChatSurface(props: ChatSurfaceProps) {
@@ -20,14 +29,7 @@ export function ChatSurface(props: ChatSurfaceProps) {
     if (props.threadLoading) {
       return (
         <>
-          <View style={styles.loadingThreadArea}>
-            <View style={styles.loadingConversation}>
-              <ActivityIndicator color={props.colors.muted} />
-              <Text style={[styles.loadingText, { color: props.colors.muted }]}>
-                {t('thread.loadingConversation')}
-              </Text>
-            </View>
-          </View>
+          <ThreadLoading colors={props.colors} label={t('thread.loadingConversation')} />
           <View style={[styles.threadComposer, { backgroundColor: props.colors.background }]}>
             {props.composer}
           </View>
@@ -52,11 +54,26 @@ export function ChatSurface(props: ChatSurfaceProps) {
 
   return (
     <>
-      <ChatThread {...props.threadProps} />
+      <DeferredChatThread
+        componentProps={props.threadProps}
+        enabled={props.hasMessages}
+        fallback={<ThreadLoading colors={props.colors} label={t('thread.loadingConversation')} />}
+      />
       <View style={[styles.threadComposer, { backgroundColor: props.colors.background }]}>
         {props.composer}
       </View>
     </>
+  );
+}
+
+function ThreadLoading({ colors, label }: { colors: Palette; label: string }) {
+  return (
+    <View style={styles.loadingThreadArea}>
+      <View style={styles.loadingConversation}>
+        <ActivityIndicator color={colors.muted} />
+        <Text style={[styles.loadingText, { color: colors.muted }]}>{label}</Text>
+      </View>
+    </View>
   );
 }
 

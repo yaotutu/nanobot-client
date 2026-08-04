@@ -1,6 +1,9 @@
 import type { GenericToolStatus } from '@/features/chat/tool-model/generic-tool-model';
 import type { RenderableFileDiffHunk } from '@/services/text/file-diff';
-import type { ToolProgressEvent, UIFileEdit } from '@/types/api/chat';
+import type {
+  ToolProgressEvent,
+  UIFileEdit,
+} from '@/types/api/chat/messages';
 
 export type ToolStatus = 'running' | 'done' | 'error';
 

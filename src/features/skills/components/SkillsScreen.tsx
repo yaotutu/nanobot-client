@@ -1,4 +1,7 @@
-import { Brain, Check, CircleAlert, RefreshCw } from 'lucide-react-native';
+import Brain from 'lucide-react-native/icons/brain';
+import Check from 'lucide-react-native/icons/check';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

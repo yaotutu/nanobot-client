@@ -1,14 +1,12 @@
 import * as Linking from 'expo-linking';
-import {
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  EyeOff,
-  KeyRound,
-  LogIn,
-  Pencil,
-  X,
-} from 'lucide-react-native';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
+import Eye from 'lucide-react-native/icons/eye';
+import EyeOff from 'lucide-react-native/icons/eye-off';
+import KeyRound from 'lucide-react-native/icons/key-round';
+import LogIn from 'lucide-react-native/icons/log-in';
+import Pencil from 'lucide-react-native/icons/pencil';
+import X from 'lucide-react-native/icons/x';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 

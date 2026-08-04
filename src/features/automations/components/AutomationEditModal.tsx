@@ -1,5 +1,5 @@
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { X } from 'lucide-react-native';
+import X from 'lucide-react-native/icons/x';
 import { useState } from 'react';
 import {
   ActivityIndicator,

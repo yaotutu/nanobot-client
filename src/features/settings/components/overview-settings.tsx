@@ -1,4 +1,10 @@
-import { ArrowUpCircle, Bot, HardDrive, Image, Mic, Server, Search } from 'lucide-react-native';
+import ArrowUpCircle from 'lucide-react-native/icons/circle-arrow-up';
+import Bot from 'lucide-react-native/icons/bot';
+import HardDrive from 'lucide-react-native/icons/hard-drive';
+import Image from 'lucide-react-native/icons/image';
+import Mic from 'lucide-react-native/icons/mic';
+import Server from 'lucide-react-native/icons/server';
+import Search from 'lucide-react-native/icons/search';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';

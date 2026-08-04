@@ -1,5 +1,5 @@
 import i18n from '@/i18n';
-import type { ComposerAttachment } from '@/types/api/chat';
+import type { ComposerAttachment } from '@/types/api/chat/attachments';
 
 import { projectedDataUrlBytes } from './attachment-encoder';
 import {

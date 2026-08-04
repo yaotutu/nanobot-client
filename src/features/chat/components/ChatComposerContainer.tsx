@@ -70,7 +70,10 @@ export function ChatComposerContainer({
           onOpenSettings,
         }}
         runtime={{
-          disabled: composer.sending,
+          disabled: composer.sending
+            || controller.runtime.connectionSyncing
+            || !controller.runtime.networkAvailable
+            || controller.runtime.connectionStatus !== 'open',
           goalState: controller.runtime.goalState,
           queuedPrompts: composer.queuedPrompts,
           runStartedAt: controller.runtime.runStartedAt,

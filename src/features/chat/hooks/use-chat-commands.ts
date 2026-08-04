@@ -1,9 +1,11 @@
 import { useCallback, type RefObject } from 'react';
 
 import { useChatStore } from '@/features/chat/store';
-import type {
-  MessageSendResult,
-  NanobotSocket,
+import {
+  isSocketDeliveryUnknownError,
+  useConnectionStore,
+  type MessageSendResult,
+  type NanobotSocket,
 } from '@/features/connection';
 import i18n from '@/i18n';
 import { resolveRuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
@@ -12,8 +14,8 @@ import { formatQuotedUserMessage, normalizeQuotedContext } from '@/services/text
 import type {
   SendAttachment,
   SendMessageOptions,
-  UIMessage,
-} from '@/types/api/chat';
+} from '@/types/api/chat/commands';
+import type { UIMessage } from '@/types/api/chat/messages';
 import type { BootstrapResponse } from '@/types/api/runtime';
 import type { ChatSummary } from '@/types/api/sidebar';
 import type { WorkspaceScopePayload } from '@/types/api/workspaces';
@@ -22,6 +24,17 @@ import { chatIdFromKey } from '../model/chat-key';
 
 function utf8Bytes(value: string): number {
   return new TextEncoder().encode(value).byteLength;
+}
+
+function sendErrorMessage(caught: unknown): string {
+  if (isSocketDeliveryUnknownError(caught)) return i18n.t('connection.deliveryUnknown');
+  if (caught instanceof Error) {
+    if (caught.message === 'network_unavailable') return i18n.t('connection.offline');
+    if (caught.message === 'message_accept_timeout') return i18n.t('connection.deliveryUnknown');
+    if (caught.message === 'connection_closed') return i18n.t('connection.closed');
+    return caught.message;
+  }
+  return i18n.t('thread.sendFailed');
 }
 
 function validateOutboundMessage(
@@ -159,6 +172,10 @@ export function useChatCommands({
       try {
         await send.accepted;
       } catch (caught) {
+        if (caught instanceof Error && caught.message === 'message_accept_timeout') {
+          useConnectionStore.getState().setReconnectReason('accept-timeout');
+          void socket.reconnectNow();
+        }
         useChatStore.setState((state) => ({
           messages: state.messages.filter((message) => message.turnId !== send.turnId),
         }));
@@ -166,7 +183,7 @@ export function useChatCommands({
           useChatStore.getState().setTurnActive(false);
           useChatStore.getState().setRunStartedAt(null);
         }
-        const message = caught instanceof Error ? caught.message : i18n.t('thread.sendFailed');
+        const message = sendErrorMessage(caught);
         useChatStore.getState().setError(message);
         throw caught;
       }

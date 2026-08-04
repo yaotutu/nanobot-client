@@ -1,4 +1,6 @@
-import { Menu, Moon, Sun } from 'lucide-react-native';
+import Menu from 'lucide-react-native/icons/menu';
+import Moon from 'lucide-react-native/icons/moon';
+import Sun from 'lucide-react-native/icons/sun';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

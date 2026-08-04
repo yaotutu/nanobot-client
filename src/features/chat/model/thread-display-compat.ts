@@ -1,6 +1,6 @@
 import { isModelCommandResponseText, isModelCommandText } from '@/services/text/format';
 import { isSystemCommandTurnId } from '@/features/connection';
-import type { UIMessage } from '@/types/api/chat';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 /** Match websocket/session scrub: keep header + Result body only; trim model tail. */
 const SUBAGENT_UI_RESULT_MAX_CHARS = 800;

@@ -1,7 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { ListTodo, ListTree, Menu, Moon, Sun } from 'lucide-react-native';
+import ListTodo from 'lucide-react-native/icons/list-todo';
+import ListTree from 'lucide-react-native/icons/list-tree';
+import Menu from 'lucide-react-native/icons/menu';
+import Moon from 'lucide-react-native/icons/moon';
+import Sun from 'lucide-react-native/icons/sun';
 
 import type { LocalPreferences } from '@/stores/local-preferences-store';
 import type { Palette } from '@/ui/palette';

@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 
 import type { TurnUnit } from '@/features/chat/activity/model/activity-timeline';
-import type { UIMessage } from '@/types/api/chat';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 const BOTTOM_THRESHOLD_PX = 72;
 

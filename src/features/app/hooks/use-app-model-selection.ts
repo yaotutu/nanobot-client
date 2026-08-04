@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { fetchSettings } from '@/features/settings/api';
+import { fetchSettings } from '@/features/settings/api/catalog';
 import { resolveRuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type { BootstrapResponse } from '@/types/api/runtime';
 import type { ChatSummary } from '@/types/api/sidebar';

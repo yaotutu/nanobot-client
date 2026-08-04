@@ -1,9 +1,9 @@
 import { apiClient, ApiError } from '@/services/api/api';
 import type {
   FetchThreadOptions,
-  FilePreviewPayload,
   WebuiThreadPersistedPayload,
-} from '@/types/api/chat';
+} from '@/types/api/chat/thread';
+import type { FilePreviewPayload } from '@/types/api/chat/file-preview';
 
 export interface FetchThreadRequestOptions extends FetchThreadOptions {
   signal?: AbortSignal;

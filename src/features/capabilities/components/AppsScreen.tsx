@@ -1,4 +1,6 @@
-import { RefreshCw, Search, X } from 'lucide-react-native';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import Search from 'lucide-react-native/icons/search';
+import X from 'lucide-react-native/icons/x';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,

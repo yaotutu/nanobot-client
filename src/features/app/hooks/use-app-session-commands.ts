@@ -3,7 +3,7 @@ import { useCallback, type RefObject } from 'react';
 import { useAuthStore } from '@/features/auth/store';
 import { useCapabilitiesStore } from '@/features/capabilities/store';
 import { useChatStore } from '@/features/chat/store';
-import type { NanobotSocket } from '@/features/connection';
+import type { NanobotSocket } from '@/features/connection/socket-transport';
 import { useSidebarStore } from '@/features/sidebar/store';
 import { useSkillsStore } from '@/features/skills/store';
 import { useWorkspacesStore } from '@/features/workspaces/store';
@@ -13,7 +13,7 @@ import {
   projectNameFromPath,
 } from '@/services/runtime/workspace-paths';
 import { sessionTitle } from '@/services/text/format';
-import type { SessionDeleteResult } from '@/types/api/chat';
+import type { SessionDeleteResult } from '@/types/api/chat/thread';
 import type { ChatSummary } from '@/types/api/sidebar';
 import type {
   WorkspaceScopePayload,

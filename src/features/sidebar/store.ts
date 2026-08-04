@@ -28,6 +28,7 @@ interface SidebarState {
   sessions: ChatSummary[];
   sidebarState: SidebarStatePayload;
   loading: boolean;
+  error: string | null;
   /** 等待中的 mutations（用于 UI 禁用按钮） */
   pending: Set<string>;
 }
@@ -94,7 +95,7 @@ export const useSidebarStore = create<SidebarStore>()(
         const message = caught instanceof Error
           ? caught.message
           : i18n.t('sidebar.saveStateFailed', { defaultValue: 'Could not save sidebar state' });
-        set({ error: message } as Partial<SidebarState>);
+        set({ error: message });
         // 不抛 —— sidebar state 失败不应阻塞聊天
       }
     }
@@ -103,13 +104,14 @@ export const useSidebarStore = create<SidebarStore>()(
       sessions: [],
       sidebarState: DEFAULT_SIDEBAR_STATE,
       loading: false,
+      error: null,
       pending: new Set<string>(),
 
       async refresh() {
         set({ loading: true });
         try {
           const sessions = await apiListSessions();
-          set({ sessions, loading: false });
+          set({ sessions, loading: false, error: null });
         } catch {
           set({ loading: false });
         }
@@ -248,6 +250,7 @@ export const useSidebarStore = create<SidebarStore>()(
           sessions: [],
           sidebarState: DEFAULT_SIDEBAR_STATE,
           loading: false,
+          error: null,
           pending: new Set<string>(),
         });
       },

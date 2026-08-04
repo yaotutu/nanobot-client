@@ -1,6 +1,6 @@
 import { redactActivityText } from '@/services/text/log-redaction';
 import type { Palette } from '@/ui/palette';
-import type { UIMessage } from '@/types/api/chat';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 export function compactReasoningPreview(value: string): string {
   return redactActivityText(value)

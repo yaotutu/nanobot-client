@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { SendAttachment, SendMessageOptions } from '@/types/api/chat';
+import type {
+  SendAttachment,
+  SendMessageOptions,
+} from '@/types/api/chat/commands';
 
 import { createQueuedPrompt, removeQueuedPrompt } from '../model/queue';
 import type { QueuedPrompt } from '../model/types';

@@ -1,4 +1,6 @@
-import type { InboundEvent, StreamError, UIMessage } from '@/types/api/chat';
+import type { InboundEvent } from '@/types/api/chat/events';
+import type { StreamError } from '@/types/api/chat/errors';
+import type { UIMessage } from '@/types/api/chat/messages';
 import type { GoalStateWsPayload } from '@/types/api/runtime';
 import type { ChatSummary } from '@/types/api/sidebar';
 import type { WorkspaceScopePayload } from '@/types/api/workspaces';

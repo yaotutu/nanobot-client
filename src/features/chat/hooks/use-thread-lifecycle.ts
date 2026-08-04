@@ -3,8 +3,7 @@ import { useCallback, useEffect, useRef, type RefObject } from 'react';
 import { fetchThread } from '@/features/chat/api';
 import { hasPendingAgentActivity } from '@/features/chat/activity/model/activity-timeline';
 import { useChatStore } from '@/features/chat/store';
-import { useConnectionStore } from '@/features/connection';
-import type { NanobotSocket } from '@/features/connection';
+import { useConnectionStore, type NanobotSocket } from '@/features/connection';
 import i18n from '@/i18n';
 
 import { chatIdFromKey } from '../model/chat-key';
@@ -23,7 +22,11 @@ export function useCanonicalRefresh(activeKey: string | null, enabled: boolean):
   useEffect(() => () => controllerRef.current?.abort(), []);
 
   return useCallback(async () => {
-    if (!activeKey || !enabled) return;
+    if (!enabled) return;
+    if (!activeKey) {
+      useConnectionStore.getState().clearReconnectNeeded();
+      return;
+    }
     controllerRef.current?.abort();
     const controller = new AbortController();
     controllerRef.current = controller;
@@ -43,6 +46,7 @@ export function useCanonicalRefresh(activeKey: string | null, enabled: boolean):
       );
       if (hasPending) {
         useChatStore.getState().setTurnActive(true);
+        useConnectionStore.getState().clearReconnectNeeded();
         return;
       }
       useChatStore.getState().applyCanonicalHistory(thread.messages, {

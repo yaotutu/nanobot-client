@@ -1,12 +1,10 @@
-import {
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
-  PauseCircle,
-  Pencil,
-  PlayCircle,
-  Trash2,
-} from 'lucide-react-native';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
+import ExternalLink from 'lucide-react-native/icons/external-link';
+import PauseCircle from 'lucide-react-native/icons/circle-pause';
+import Pencil from 'lucide-react-native/icons/pencil';
+import PlayCircle from 'lucide-react-native/icons/circle-play';
+import Trash2 from 'lucide-react-native/icons/trash-2';
 import { useState } from 'react';
 import {
   ActivityIndicator,

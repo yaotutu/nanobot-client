@@ -1,10 +1,8 @@
-import {
-  ChevronRight,
-  CircleAlert,
-  RefreshCw,
-  Search,
-  X,
-} from "lucide-react-native";
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import Search from 'lucide-react-native/icons/search';
+import X from 'lucide-react-native/icons/x';
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,

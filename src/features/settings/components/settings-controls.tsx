@@ -1,4 +1,5 @@
-import { Check, ChevronDown } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

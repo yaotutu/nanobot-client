@@ -1,4 +1,5 @@
-import { Quote, X } from 'lucide-react-native';
+import Quote from 'lucide-react-native/icons/quote';
+import X from 'lucide-react-native/icons/x';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

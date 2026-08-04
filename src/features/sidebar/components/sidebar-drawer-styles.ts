@@ -94,6 +94,7 @@ export const sidebarStyles = StyleSheet.create({
   statusButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#C5A24A' },
   statusOpen: { backgroundColor: '#4FA86C' },
+  statusOffline: { backgroundColor: '#C85B52' },
   logoutTarget: { alignItems: 'center', paddingBottom: 2 },
   logoutHint: { color: '#ABA9A4', fontSize: 9 },
   actionOverlay: { position: 'absolute', inset: 0, justifyContent: 'flex-end' },

@@ -1,9 +1,7 @@
-import {
-  Eye,
-  EyeOff,
-  Play,
-  Square,
-} from 'lucide-react-native';
+import Eye from 'lucide-react-native/icons/eye';
+import EyeOff from 'lucide-react-native/icons/eye-off';
+import Play from 'lucide-react-native/icons/play';
+import Square from 'lucide-react-native/icons/square';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

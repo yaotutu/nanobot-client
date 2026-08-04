@@ -153,7 +153,27 @@ export default tseslint.config(
   },
   {
     files: ['src/features/app/**/*.{ts,tsx}'],
-    rules: restrictedLayerImports(featureLayerPatterns),
+    rules: restrictedLayerImports([
+      ...featureLayerPatterns,
+      ...featureNames.map((feature) => ({
+        group: [
+          `@/features/${feature}/*`,
+          // 大型首屏组件拥有独立的公开入口，避免 barrel 把无关 store、API 和弹窗带入启动依赖图。
+          ...(feature === 'auth' ? ['!@/features/auth/screen'] : []),
+          ...(feature === 'chat' ? ['!@/features/chat/screen'] : []),
+        ],
+        message: `Application composition must import ${feature} through its public feature entrypoint.`,
+      })),
+    ]),
+  },
+  {
+    files: ['src/app/**/*.{ts,tsx}'],
+    rules: restrictedLayerImports([
+      {
+        group: ['@/features/*', '!@/features/app'],
+        message: 'Expo Router routes must compose the application through @/features/app.',
+      },
+    ]),
   },
   {
     files: ['src/features/**/*.{ts,tsx}'],

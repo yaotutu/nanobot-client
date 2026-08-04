@@ -6,12 +6,12 @@ import {
   normalizeToolProgressEvents,
   toolTraceLinesFromEvents,
 } from '@/features/chat/tool-model/tool-traces';
+import type { InboundEvent } from '@/types/api/chat/events';
 import type {
-  InboundEvent,
   ToolProgressEvent,
   UIFileEdit,
   UIMessage,
-} from '@/types/api/chat';
+} from '@/types/api/chat/messages';
 
 import {
   closeActiveAssistantStream,

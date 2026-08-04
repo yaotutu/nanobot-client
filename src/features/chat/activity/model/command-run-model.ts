@@ -2,7 +2,7 @@ import {
   canonicalToolTrace,
   formatToolCallTrace,
 } from '@/features/chat/tool-model/tool-traces';
-import type { ToolProgressEvent } from '@/types/api/chat';
+import type { ToolProgressEvent } from '@/types/api/chat/messages';
 
 import {
   parseToolEventArguments,

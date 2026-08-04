@@ -4,6 +4,7 @@
   "version": "1.0.6",
   "dependencies": {
     "@react-native-community/datetimepicker": "9.1.0",
+    "@react-native-community/netinfo": "12.0.1",
     "expo": "~57.0.9",
     "expo-asset": "~57.0.8",
     "expo-audio": "~57.0.3",
@@ -40,17 +41,19 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@testing-library/react-native": "^14.0.1",
     "@types/react": "~19.2.18",
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^10.8.0",
     "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.8.0",
+    "jest-expo": "~57.0.3",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.65.0",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.1.10",
-    "eslint-plugin-import-x": "^4.17.1"
+    "vitest": "^4.1.10"
   },
   "scripts": {
     "start": "expo start --dev-client",
@@ -59,9 +62,12 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "check": "npm run lint && npm run typecheck && npm test",
+    "check": "npm run lint && npm run typecheck && npm test && npm run test:native && npm run bundle:android:smoke",
     "test": "vitest run",
-    "release": "bash scripts/release.sh"
+    "release": "bash scripts/release.sh",
+    "test:native": "jest --config jest.config.cjs --runInBand",
+    "bundle:android:smoke": "rm -rf .local/metro-smoke && expo export --platform android --output-dir .local/metro-smoke --clear",
+    "verify:android:recovery": "bash scripts/verify-android-recovery.sh"
   },
   "overrides": {
     "xcode": {

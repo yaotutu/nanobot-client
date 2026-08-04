@@ -5,7 +5,7 @@ import {
 import type { GenericToolStatus } from '@/features/chat/tool-model/generic-tool-model';
 import i18n from '@/i18n';
 import { safeActivityDetail } from '@/services/text/log-redaction';
-import type { ToolProgressEvent } from '@/types/api/chat';
+import type { ToolProgressEvent } from '@/types/api/chat/messages';
 
 import type { ToolEventState, ToolStatus } from './tool-types';
 

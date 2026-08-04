@@ -1,4 +1,6 @@
-import { Eye, EyeOff, Pencil } from 'lucide-react-native';
+import Eye from 'lucide-react-native/icons/eye';
+import EyeOff from 'lucide-react-native/icons/eye-off';
+import Pencil from 'lucide-react-native/icons/pencil';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

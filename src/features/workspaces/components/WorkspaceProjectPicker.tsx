@@ -1,4 +1,7 @@
-import { Check, ChevronDown, Folder, X } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import Folder from 'lucide-react-native/icons/folder';
+import X from 'lucide-react-native/icons/x';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

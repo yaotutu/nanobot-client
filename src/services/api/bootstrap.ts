@@ -1,7 +1,7 @@
-import i18n from '@/i18n';
 import type { BootstrapResponse } from '@/types/api/runtime';
 export type { BootstrapResponse };
 
+/** 网关明确拒绝凭据，或成功响应缺失建立会话所需的关键字段。 */
 export class BootstrapAuthRequiredError extends Error {
   constructor(message = 'bootstrap authentication required') {
     super(message);
@@ -9,13 +9,39 @@ export class BootstrapAuthRequiredError extends Error {
   }
 }
 
+export type BootstrapResponseErrorCode = 'gateway_html_response' | 'non_json_response';
+
+/**
+ * bootstrap 返回了可响应但不可解析的内容。
+ *
+ * service 层只暴露稳定错误码，不依赖 i18n；由 auth feature 在用户界面边界翻译文案。
+ */
+export class BootstrapResponseError extends Error {
+  constructor(public readonly code: BootstrapResponseErrorCode) {
+    super(code);
+    this.name = 'BootstrapResponseError';
+  }
+}
+
+export interface FetchBootstrapOptions {
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}
+
+/**
+ * 获取一次 bootstrap 凭据，并把调用方取消信号与本地超时合并到同一个 AbortController。
+ * finally 中必须同时清理计时器和外部 signal 监听，避免多次静默续期后累积监听器。
+ */
 export async function fetchBootstrap(
   baseUrl: string,
   secret: string,
-  timeoutMs = 20_000,
+  options: FetchBootstrapOptions = {},
 ): Promise<BootstrapResponse> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const abortFromCaller = () => controller.abort();
+  options.signal?.addEventListener('abort', abortFromCaller, { once: true });
+  if (options.signal?.aborted) controller.abort();
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 20_000);
   try {
     const response = await fetch(`${baseUrl}/webui/bootstrap`, {
       method: 'GET',
@@ -34,13 +60,9 @@ export async function fetchBootstrap(
       const text = typeof response.text === 'function' ? await response.text() : '';
       const isHtml = text.trimStart().toLowerCase().startsWith('<!doctype')
         || text.trimStart().toLowerCase().startsWith('<html');
-      throw new Error(isHtml
-        ? i18n.t('app.error.gatewayHtmlResponse', {
-            defaultValue: 'Gateway returned WebUI HTML instead of JSON. Restart nanobot gateway and try again.',
-          })
-        : i18n.t('app.error.nonJsonResponse', {
-            defaultValue: 'Gateway returned a non-JSON response.',
-          }));
+      throw new BootstrapResponseError(
+        isHtml ? 'gateway_html_response' : 'non_json_response',
+      );
     }
     const body = (await response.json()) as BootstrapResponse;
     if (!body.token || !body.ws_path || !body.api_token) {
@@ -49,9 +71,11 @@ export async function fetchBootstrap(
     return body;
   } finally {
     clearTimeout(timer);
+    options.signal?.removeEventListener('abort', abortFromCaller);
   }
 }
 
+/** 将 bootstrap 的相对 ws_path 或绝对 ws_url 归一化为带一次性 token 的连接地址。 */
 export function deriveWsUrl(
   baseUrl: string,
   wsPath: string,

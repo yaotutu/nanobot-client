@@ -1,15 +1,13 @@
-import {
-  Bot,
-  Globe2,
-  Image as ImageIcon,
-  LayoutDashboard,
-  MessageCircle,
-  Mic,
-  Palette as PaletteIcon,
-  RefreshCw,
-  Server,
-  ShieldCheck,
-} from 'lucide-react-native';
+import Bot from 'lucide-react-native/icons/bot';
+import Globe2 from 'lucide-react-native/icons/earth';
+import ImageIcon from 'lucide-react-native/icons/image';
+import LayoutDashboard from 'lucide-react-native/icons/layout-dashboard';
+import MessageCircle from 'lucide-react-native/icons/message-circle';
+import Mic from 'lucide-react-native/icons/mic';
+import PaletteIcon from 'lucide-react-native/icons/palette';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import Server from 'lucide-react-native/icons/server';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,

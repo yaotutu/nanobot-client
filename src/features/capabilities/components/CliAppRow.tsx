@@ -1,4 +1,6 @@
-import { Check, Plus, Trash2 } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import Plus from 'lucide-react-native/icons/plus';
+import Trash2 from 'lucide-react-native/icons/trash-2';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,

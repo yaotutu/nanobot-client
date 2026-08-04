@@ -1,4 +1,5 @@
-import { Check, ClipboardCopy } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import ClipboardCopy from 'lucide-react-native/icons/clipboard-copy';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 

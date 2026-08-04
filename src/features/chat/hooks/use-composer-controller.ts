@@ -24,7 +24,7 @@ import type {
   SendAttachment,
   SendMessageOptions,
   SlashCommand,
-} from '@/types/api/chat';
+} from '@/types/api/chat/commands';
 import type { WebUIIngressLimits } from '@/types/api/runtime';
 import type { SettingsPayload } from '@/types/api/settings';
 

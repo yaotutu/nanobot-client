@@ -1,7 +1,7 @@
 import type { StoreApi } from 'zustand';
 
 import i18n from '@/i18n';
-import type { InboundEvent } from '@/types/api/chat';
+import type { InboundEvent } from '@/types/api/chat/events';
 
 import { projectWebuiThreadMessages } from '../model/thread-display-compat';
 import { finalizeStreamedTurn } from '../stream-fold';

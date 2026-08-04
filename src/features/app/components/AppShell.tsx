@@ -1,194 +1,90 @@
-import { useCallback } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppModals } from '@/features/app/components/AppModals';
-import { AppUtilityRouter } from '@/features/app/components/AppUtilityRouter';
-import { AppUtilityWorkspace } from '@/features/app/components/AppUtilityWorkspace';
-import { useAppController, type AppController } from '@/features/app/hooks/use-app-controller';
-import { useAppModelSelection } from '@/features/app/hooks/use-app-model-selection';
-import { useAppNavigation } from '@/features/app/hooks/use-app-navigation';
-import { useAppPreferences } from '@/features/app/hooks/use-app-preferences';
-import { AuthScreen } from '@/features/auth/components/AuthScreen';
-import { NanobotScreen } from '@/features/chat/components/NanobotScreen';
-import type { ChatScreenController } from '@/features/chat/model/chat-screen-contract';
-import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
+import { useAppBootstrapController } from '@/features/app/hooks/use-app-bootstrap-controller';
+import { AuthScreen } from '@/features/auth/screen';
+import { createDeferredComponent } from '@/hooks/use-deferred-component';
+import { markStartup, measureStartup } from '@/services/runtime/startup-performance';
+
+type ReadyAppShellProps = Record<string, never>;
+
+/**
+ * 完整工作区只在鉴权成功后挂载。这里刻意不用 React.lazy/Suspense：Pixel XL（Android 10）
+ * 在 Fabric 提交 Suspense 懒加载树时曾进入 MountingCoordinator 原生 SIGSEGV。
+ * 普通 effect/state 包装器既能拆分启动依赖，又避免重新引入该原生崩溃路径。
+ */
+const DeferredReadyAppShell = createDeferredComponent<ReadyAppShellProps>(() => {
+  markStartup('ready_import_start');
+  return import('./ReadyAppShell').then(({ ReadyAppShell }) => {
+    markStartup('ready_import_end');
+    measureStartup('ready_import', 'ready_import_start', 'ready_import_end');
+    return ReadyAppShell;
+  });
+});
 
 export function AppShell() {
-  const app = useAppController();
+  const auth = useAppBootstrapController();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  if (app.phase === 'authentication') {
-    return <AuthScreen failed={app.authenticationFailed} onSubmit={app.authenticate} />;
+  useEffect(() => {
+    markStartup('app_shell_mounted');
+  }, []);
+
+  useEffect(() => {
+    if (auth.phase !== 'booting') return;
+
+    // 给鉴权状态 200ms 的快速决策窗口：无凭证用户可直接进入登录页；返回用户则并行预热工作区。
+    const timer = setTimeout(() => {
+      void DeferredReadyAppShell.preload().catch(() => {
+        // 预加载失败不应形成未处理 Promise；真正进入 Ready 时包装器会自动重试并交由 ErrorBoundary。
+      });
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [auth.phase]);
+
+  if (auth.phase === 'authentication') {
+    return <AuthScreen failed={auth.authenticationFailed} onSubmit={auth.authenticate} />;
   }
 
-  if (app.phase === 'unreachable') {
+  if (auth.phase === 'unreachable') {
     return (
       <View style={[styles.centered, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <Text style={styles.errorTitle}>{t('app.error.title')}</Text>
-        <Text style={styles.errorMessage}>{app.error ?? t('app.error.gatewayHint')}</Text>
-        <Pressable onPress={app.retryConnection} style={styles.retryButton}>
+        <Text style={styles.errorTitle}>{t('app.auth.error.title')}</Text>
+        <Text style={styles.errorMessage}>{auth.error ?? t('app.auth.error.gatewayHint')}</Text>
+        <Pressable onPress={auth.retryConnection} style={styles.retryButton}>
           <Text style={styles.retryText}>{t('settings.channels.reconnect')}</Text>
         </Pressable>
       </View>
     );
   }
 
-  if (app.phase === 'booting' || !app.bootstrap) {
-    return (
-      <View style={[styles.centered, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <ActivityIndicator color="#6F6E69" />
-        <Text style={styles.loadingText}>{t('app.loading.connecting')}</Text>
-      </View>
-    );
+  if (auth.phase === 'booting' || !auth.bootstrap) {
+    return <AppLoadingState bottomInset={insets.bottom} topInset={insets.top} />;
   }
 
-  return <ReadyAppShell app={app} />;
+  return (
+    <DeferredReadyAppShell
+      componentProps={{}}
+      enabled
+      fallback={<AppLoadingState bottomInset={insets.bottom} topInset={insets.top} />}
+    />
+  );
 }
 
-function ReadyAppShell({ app }: { app: AppController }) {
-  const navigation = useAppNavigation();
-  const { preferences, changePreferences } = useAppPreferences();
-  const dark = preferences.theme === 'dark';
-  const colors = dark ? DARK_COLORS : LIGHT_COLORS;
-  const bootstrap = app.bootstrap!;
-  const model = useAppModelSelection({
-    activeSession: app.activeSession,
-    bootstrap,
-    modelSettingsRevision: app.modelSettingsRevision,
-    onModelPresetChange: app.changeModelPreset,
-    runtimeModelName: app.runtimeModelName,
-    turnModelName: app.turnModelName,
-  });
-
-  const chatController: ChatScreenController = {
-    session: {
-      activeKey: app.activeKey,
-      activeSession: app.activeSession,
-      sidebarState: app.sidebarState,
-    },
-    capabilities: {
-      bootstrap,
-      cliApps: app.cliApps,
-      mcpPresets: app.mcpPresets,
-      skills: app.skills,
-      slashCommands: app.slashCommands,
-    },
-    thread: {
-      messages: app.messages,
-      loading: app.threadLoading,
-      loadingOlder: app.loadingOlder,
-      hasMoreBefore: app.hasMoreBefore,
-      userMessageOffset: app.userMessageOffset,
-      forkBoundaryMessageCount: app.forkBoundaryMessageCount,
-      loadOlder: app.loadOlder,
-      retryFromMessage: app.retryFromMessage,
-      forkFromMessage: app.forkFromMessage,
-    },
-    runtime: {
-      turnActive: app.turnActive,
-      runStartedAt: app.runStartedAt,
-      goalState: app.goalState,
-      sendMessage: app.sendMessage,
-      stopTurn: app.stopTurn,
-      transcribeAudio: app.transcribeAudio,
-    },
-    workspace: {
-      activeScope: app.activeWorkspaceScope,
-      catalog: app.workspaces,
-      error: app.workspaceError,
-      updateScope: app.updateWorkspaceScope,
-    },
-    errors: {
-      current: app.error,
-      stream: app.streamError,
-      clear: app.clearError,
-      dismissStream: app.dismissStreamError,
-    },
-    automations: {
-      getForSession: app.getSessionAutomations,
-    },
-  };
-
-  const selectSession = useCallback((key: string | null) => {
-    navigation.resetChat();
-    app.selectSession(key);
-  }, [app, navigation]);
-
-  const startNewChat = useCallback(() => {
-    navigation.resetChat();
-    app.startNewChat();
-  }, [app, navigation]);
-
-  const startNewChatInProject = useCallback((projectPath: string, projectName: string) => {
-    navigation.resetChat();
-    app.startNewChatInProject(projectPath, projectName);
-  }, [app, navigation]);
-
-  const openLinkedChat = useCallback((sessionKey: string) => {
-    navigation.resetChat();
-    app.selectSession(sessionKey);
-  }, [app, navigation]);
-
+function AppLoadingState({ bottomInset, topInset }: { bottomInset: number; topInset: number }) {
+  const { t } = useTranslation();
   return (
-    <View style={styles.root}>
-      {navigation.utilityView === 'chat' ? (
-        <NanobotScreen
-          colors={colors}
-          controller={chatController}
-          dark={dark}
-          model={model}
-          navigationRevision={navigation.chatResetRevision}
-          onChangePreferences={changePreferences}
-          onOpenDrawer={() => navigation.setDrawerOpen(true)}
-          onOpenSettings={() => navigation.openUtility('settings')}
-          preferences={preferences}
-        />
-      ) : (
-        <AppUtilityWorkspace
-          colors={colors}
-          dark={dark}
-          onChangePreferences={changePreferences}
-          onOpenDrawer={() => navigation.setDrawerOpen(true)}
-          preferences={preferences}
-          view={navigation.utilityView}
-        >
-          <AppUtilityRouter
-            bootstrap={bootstrap}
-            colors={colors}
-            onBackToChat={navigation.returnToChat}
-            onChangePreferences={changePreferences}
-            onOpenLinkedChat={openLinkedChat}
-            onRestart={app.restartServer}
-            onSettingsChange={model.setSettings}
-            preferences={preferences}
-            runtimePolicy={model.runtimePolicy}
-            view={navigation.utilityView}
-          />
-        </AppUtilityWorkspace>
-      )}
-      <AppModals
-        app={app}
-        colors={colors}
-        drawerOpen={navigation.drawerOpen}
-        onCloseDrawer={() => navigation.setDrawerOpen(false)}
-        onCloseSessionSearch={() => navigation.setSessionSearchOpen(false)}
-        onOpenSearch={navigation.openSearch}
-        onOpenUtility={navigation.openUtility}
-        onSelectSession={selectSession}
-        onStartNewChat={startNewChat}
-        onStartNewChatInProject={startNewChatInProject}
-        sessionSearchOpen={navigation.sessionSearchOpen}
-        utilityView={navigation.utilityView}
-      />
+    <View style={[styles.centered, { paddingTop: topInset, paddingBottom: bottomInset }]}>
+      <ActivityIndicator color="#6F6E69" />
+      <Text style={styles.loadingText}>{t('app.loading.connecting')}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
   centered: {
     flex: 1,
     alignItems: 'center',

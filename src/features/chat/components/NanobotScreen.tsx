@@ -1,4 +1,4 @@
-import { X } from 'lucide-react-native';
+import X from 'lucide-react-native/icons/x';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -159,6 +159,25 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
         onChangePreferences={shell.onChangePreferences}
       />
 
+      {!runtime.networkAvailable || runtime.connectionStatus !== 'open' || runtime.connectionSyncing ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void runtime.reconnect()}
+          style={[styles.connectionBanner, { backgroundColor: colors.errorBackground }]}
+        >
+          <Text style={[styles.connectionText, { color: colors.errorText }]}>
+            {t(!runtime.networkAvailable
+              ? 'connection.offline'
+              : runtime.connectionSyncing
+                ? 'connection.syncing'
+                : `connection.${runtime.connectionStatus}`)}
+          </Text>
+          <Text style={[styles.connectionAction, { color: colors.errorText }]}>
+            {t('settings.channels.reconnect')}
+          </Text>
+        </Pressable>
+      ) : null}
+
       {errors.current ? (
         <View style={[styles.errorBanner, { backgroundColor: colors.errorBackground }]}>
           <Text numberOfLines={2} style={[styles.errorText, { color: colors.errorText }]}>
@@ -245,6 +264,18 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  connectionBanner: {
+    marginHorizontal: 13,
+    marginTop: 3,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  connectionText: { flex: 1, fontSize: 12, lineHeight: 17 },
+  connectionAction: { fontSize: 12, fontWeight: '600' },
   errorBanner: {
     marginHorizontal: 13,
     marginTop: 3,

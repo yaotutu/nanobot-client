@@ -1,12 +1,10 @@
 import type { TFunction } from 'i18next';
-import {
-  CalendarClock,
-  CircleAlert,
-  ChevronDown,
-  RefreshCw,
-  Search,
-  X,
-} from 'lucide-react-native';
+import CalendarClock from 'lucide-react-native/icons/calendar-clock';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import Search from 'lucide-react-native/icons/search';
+import X from 'lucide-react-native/icons/x';
 import {
   ActivityIndicator,
   Pressable,

@@ -22,7 +22,8 @@ import {
   type StreamFoldState,
   type StreamTurnFields,
 } from '@/features/chat/stream-fold/state';
-import type { InboundEvent, UIMessage } from '@/types/api/chat';
+import type { InboundEvent } from '@/types/api/chat/events';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 export const STREAM_END_IDLE_DELAY_MS = 1_000;
 

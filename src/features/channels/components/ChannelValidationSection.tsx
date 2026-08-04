@@ -1,4 +1,7 @@
-import { Check, CircleAlert, ExternalLink, X } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import ExternalLink from 'lucide-react-native/icons/external-link';
+import X from 'lucide-react-native/icons/x';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 

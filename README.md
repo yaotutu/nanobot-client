@@ -114,73 +114,49 @@ npm audit --audit-level=low
 
 ```text
 src/
-  app/                          # Expo Router 入口
-    _layout.tsx                 # Splash / i18n / StoreHydration
-    index.tsx                   # 渲染 <AppShell/>
-  features/                     # 按业务领域切片
-    auth/                       # AuthScreen + bootstrap
-    connection/                 # WebSocket 状态 + socket-transport
-    chat/                       # 聊天主屏（活动会话状态）
-    sidebar/                    # 侧边栏会话列表 + 分组
-    settings/                   # 设置子屏
-    apps/                       # CLI / MCP 应用
-    skills/                     # Skills 浏览
-    automations/                # 自动化任务
-    channels/                   # 渠道运行时
-  services/                     # 跨业务基础服务
-    api/                        # 网关 / API 层
-      api-client.ts             # 统一 API 客户端（fetch + 鉴权 + 超时）
-      api.ts                    # apiClient 单例
-      config.ts                 # DEFAULT_SERVER_URL 派生
-      bootstrap.ts              # fetchBootstrap / deriveWsUrl
-    credentials/                # 凭据与开发引导
-      auth-credentials.ts       # SecureStore bootstrap secret
-      local-dev-bootstrap.ts    # 本地开发引导装配
-    text/                       # 文本 / 展示格式化
-      format.ts                 # 时间 / 标题 / 预览
-      file-diff.ts              # unified diff 解析
-      log-redaction.ts          # 脱敏
-      markdown-to-text.ts       # markdown → 可选文本
-      user-quote-format.ts      # 引用块格式化
-    links/                      # 外部链接 / 媒体
-      web-url.ts                # Web URL 解析
-      provider-brand.ts         # 提供商标识
-      media.ts                  # 媒体附件类型归一化
-    runtime/                    # 平台基础设施
-      debug-log.ts              # 调试日志（DebugOverlay）
-      runtime-capabilities.ts   # host / native 能力策略
-      workspace-paths.ts        # 路径归一化
-  stores/                       # Zustand 全局 store
-    local-preferences-store.ts  # 主题 / 语言 / 密度 / 活动模式
-    composer-recents-store.ts   # Composer 历史命令
-    theme.ts                    # 主题 → Palette 派生 hook
-  ui/                           # 共享 UI 抽象
-    palette.ts                  # 唯一 Palette 类型
-    colors.ts                   # LIGHT / DARK 颜色取值
-  i18n/                         # i18next + react-i18next
-    config.ts                   # supportedLocales / normalize
-    index.ts                    # ensureI18n() 显式初始化
-    locales/                    # 10 种语言 common.json
-  hooks/                        # 跨特性 hook
-    use-nanobot-app.ts          # 顶层 store-backed 编排 hook
-  types/
-    api.ts                      # wire-format 类型（InboundEvent / OutboundFrame / BootstrapResponse）
-    domain.ts                   # UI 派生类型（Palette / AppTheme）
-  components/                   # 屏幕级组件
-    auth-screen.tsx
-    sidebar-drawer.tsx
-    nanobot-screen.tsx
-    settings/                   # 9 个 settings 子屏
+├── app/           Expo Router 路由与根布局
+├── components/    根错误边界、DebugOverlay 等应用外壳组件
+├── features/      按业务域切片（app、auth、chat、connection、settings 等）
+├── hooks/         少量真正跨 feature 的通用 hook
+├── i18n/          i18next 配置与 10 种语言资源
+├── services/      跨业务基础服务（api、credentials、links、runtime、text）
+├── stores/        跨业务本地偏好和 composer 历史 store
+├── types/         公共 API / wire-format 类型
+└── ui/            Palette、颜色和低业务耦合 UI 原语
+
+assets/            图标、启动图等静态资源
+plugins/           Expo config plugin
+scripts/           发布、bundle smoke 和真机恢复验证脚本
+docs/              架构、发布和验证文档
 ```
+
+业务依赖方向为：
+
+```text
+src/app -> src/features/app -> src/features/<feature>/index.ts
+        -> src/services + src/types + src/ui
+```
+
+详细的模块边界、认证代次、连接恢复和 WebSocket 拆分说明见
+[`docs/architecture.md`](docs/architecture.md)。
 
 ## 架构关键决策
 
-- **Zustand 切片 store**：跨组件状态分布在 `auth` / `connection` / `chat` / `sidebar` / `capabilities` / `settings` / `workspaces` / `local-preferences` / `composer-recents` 9 个独立 store 中，按域切片，单一来源。
-- **apiClient 单例**：`@/services/api/api-client.ts` 提供统一的 fetch + 鉴权 + 超时 + JSON 错误翻译；所有 endpoint 通过 `apiClient.get/post/request` 调用，不再传递 `baseUrl`/`token`。
-- **Socket 收敛为 transport**：`@/features/connection/socket-transport.ts` 只负责 WebSocket 协议 + 帧队列 + 入站分发；run generation / canonical reconciliation 等业务语义迁移到 `chat/store.ts`。
-- **唯一 Palette**：`@/ui/palette.ts` 合并了原本散落在 7 个文件中的重复类型。
-- **i18n 显式初始化**：`@/i18n/index.ts` 顶层不再有副作用，调用方需 `await ensureI18n()`。
-- **Vitest 单测**：覆盖所有纯模块基线（api-client / chat-groups / stream-fold / format / log-redaction / file-diff / user-quote-format / workspace-paths），共 47 个测试。
+- **Feature 公共入口**：跨 feature 只能通过 `src/features/<feature>/index.ts` 导入，ESLint 会阻止深层跨域依赖。
+- **应用编排层**：业务路由只渲染 `@/features/app`；`features/app` 负责组合各业务域和应用级生命周期。
+- **独立 Zustand store**：auth、connection、chat、sidebar、capabilities、settings、workspaces 等按域维护单一状态来源。
+- **认证双代次**：`sessionEpoch` 表示身份会话变化，`tokenGeneration` 表示 token 签发变化，静默续期不会触发全部业务状态重置。
+- **连接恢复分层**：NetInfo/AppState 恢复原因由应用层记录；transport 只负责刷新一次性凭据、替换 socket、队列和 pending request 生命周期。
+- **Socket 职责拆分**：protocol、commands、inbound router、listeners、pending registry、outbound queue 和 reconnect policy 均为独立模块。
+- **API 类型窄入口**：chat/settings 新代码从领域文件导入，同时保留聚合文件作为兼容入口。
+- **纯模型优先测试**：stream-fold、媒体去重、文件路径压缩和工具展示等纯逻辑从组件中提取后由 Vitest 覆盖。
+
+`npm run check` 会执行 lint、typecheck、Vitest、Native Jest 和 Android Metro bundle smoke。
+涉及锁屏、前后台或断网恢复时，还应连接真机运行：
+
+```bash
+npm run verify:android:recovery
+```
 
 不要为了预设目录而创建空文件，目录应随业务代码一起增加。
 

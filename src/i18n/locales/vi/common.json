@@ -890,7 +890,10 @@
     "open": "Đã kết nối",
     "reconnecting": "Đang kết nối lại…",
     "closed": "Đã ngắt kết nối",
-    "error": "Lỗi kết nối"
+    "error": "Lỗi kết nối",
+    "syncing": "Đang đồng bộ cuộc trò chuyện…",
+    "offline": "Ngoại tuyến",
+    "deliveryUnknown": "Không thể xác nhận việc gửi. Cuộc trò chuyện đang được đồng bộ trước khi bạn thử lại."
   },
   "thread": {
     "loadingConversation": "Đang tải cuộc trò chuyện…",

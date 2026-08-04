@@ -4,7 +4,7 @@ import {
   eventTurnId,
   isSystemCommandTurnId,
 } from '@/features/connection/socket-protocol';
-import type { InboundEvent } from '@/types/api/chat';
+import type { InboundEvent } from '@/types/api/chat/events';
 
 interface SocketInboundContext {
   listeners: SocketListeners;

@@ -1,33 +1,29 @@
-import { debugLog } from '@/services/runtime/debug-log';
-import { normalizeWorkspaceScope } from '@/services/runtime/workspace-paths';
+import { useCallback } from 'react';
 
-import { useAuthBootstrapLifecycle } from '@/features/app/hooks/use-auth-bootstrap-lifecycle';
-import { useAuthStore, selectAuthPhase, selectBootstrap } from '@/features/auth/store';
+import { useReadyDataLifecycle } from '@/features/app/hooks/use-ready-data-lifecycle';
+import { useAppSessionCommands } from '@/features/app/hooks/use-app-session-commands';
+import { useConnectionRecoveryLifecycle } from '@/features/app/hooks/use-connection-recovery-lifecycle';
+import { useSocketLifecycle } from '@/features/app/hooks/use-socket-lifecycle';
+import { selectAuthPhase, selectBootstrap, useAuthStore } from '@/features/auth/store';
 import { useCapabilitiesStore } from '@/features/capabilities/store';
 import { useChatCommands } from '@/features/chat/hooks/use-chat-commands';
-import { useAppSessionCommands } from '@/features/app/hooks/use-app-session-commands';
 import {
   useCanonicalRefresh,
   useThreadLifecycle,
 } from '@/features/chat/hooks/use-thread-lifecycle';
 import { chatIdFromKey } from '@/features/chat/model/chat-key';
+import type { ChatScreenController } from '@/features/chat/model/chat-screen-contract';
 import { useChatStore } from '@/features/chat/store';
-import { useConnectionStore } from '@/features/connection';
-import { useSocketLifecycle } from '@/features/app/hooks/use-socket-lifecycle';
-import {
-  useSidebarStore,
-  selectSessions,
-  selectSidebarState,
-} from '@/features/sidebar/store';
+import { useConnectionStore } from '@/features/connection/store';
+import { selectSessions, selectSidebarState, useSidebarStore } from '@/features/sidebar/store';
 import { useSkillsStore } from '@/features/skills/store';
 import { useWorkspacesStore } from '@/features/workspaces/store';
-
+import { normalizeWorkspaceScope } from '@/services/runtime/workspace-paths';
 import type { SessionAutomationJob } from '@/types/api/automations';
 import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 
 export function useAppController() {
-  debugLog('HOOK', 'useAppController enter (composed facade)');
-  useAuthBootstrapLifecycle();
+  useReadyDataLifecycle();
 
   const phase = useAuthStore(selectAuthPhase);
   const bootstrap = useAuthStore(selectBootstrap);
@@ -39,7 +35,6 @@ export function useAppController() {
   const sessions = useSidebarStore(selectSessions);
   const sidebarState = useSidebarStore(selectSidebarState);
   const sessionsLoading = useSidebarStore((state) => state.loading);
-  const refreshSessions = useSidebarStore((state) => state.refresh);
   const togglePinned = useSidebarStore((state) => state.togglePinned);
   const toggleArchived = useSidebarStore((state) => state.toggleArchived);
   const toggleSidebarGroup = useSidebarStore((state) => state.toggleGroup);
@@ -69,12 +64,14 @@ export function useAppController() {
   const setStreamError = useChatStore((state) => state.setStreamError);
 
   const connectionStatus = useConnectionStore((state) => state.status);
+  const networkAvailable = useConnectionStore((state) => state.networkAvailable);
+  const connectionSyncing = useConnectionStore((state) => state.needsCanonicalReconnect);
+  const setReconnectReason = useConnectionStore((state) => state.setReconnectReason);
 
   const slashCommands = useCapabilitiesStore((state) => state.slashCommands);
   const cliApps = useCapabilitiesStore((state) => state.cliApps);
   const mcpPresets = useCapabilitiesStore((state) => state.mcpPresets);
   const skills = useSkillsStore((state) => state.skills);
-
   const workspaces = useWorkspacesStore((state) => state.workspaces);
   const workspaceError = useWorkspacesStore((state) => state.error);
 
@@ -90,6 +87,7 @@ export function useAppController() {
 
   const refreshCanonical = useCanonicalRefresh(activeKey, Boolean(bootstrap));
   const socketRef = useSocketLifecycle(refreshCanonical);
+  useConnectionRecoveryLifecycle(socketRef, Boolean(bootstrap) && phase === 'ready');
   const { loadOlder } = useThreadLifecycle({
     activeKey,
     enabled: Boolean(bootstrap),
@@ -116,57 +114,107 @@ export function useAppController() {
     socketRef,
   });
 
-  return {
-    phase,
-    bootstrap,
-    authenticationFailed,
-    error: authError ?? chatError,
-    streamError,
-    clearError: clearChatError,
-    dismissStreamError: () => setStreamError(null),
-    connectionStatus,
-    sessions,
-    sidebarState,
-    sessionsLoading,
-    activeKey,
-    activeSession,
-    activeWorkspaceScope,
-    workspaces,
-    workspaceError,
-    messages,
-    threadLoading,
-    loadingOlder,
-    hasMoreBefore,
-    userMessageOffset,
-    forkBoundaryMessageCount,
-    turnActive,
-    runStartedAt,
-    goalState,
-    runtimeModelName,
-    turnModelName,
-    modelSettingsRevision,
-    slashCommands,
-    cliApps,
-    mcpPresets,
-    skills,
-    authenticate,
-    retryConnection,
-    refreshSessions,
-    selectSession: (key: string | null) => {
-      useChatStore.getState().selectSession(key, useSidebarStore.getState().sessions);
+  const reconnectSocket = useCallback(async (): Promise<void> => {
+    setReconnectReason('manual');
+    await socketRef.current?.reconnectNow();
+  }, [setReconnectReason, socketRef]);
+  const selectSession = useCallback((key: string | null) => {
+    useChatStore.getState().selectSession(key, useSidebarStore.getState().sessions);
+  }, []);
+  const dismissStreamError = useCallback(() => setStreamError(null), [setStreamError]);
+  const getSessionAutomationsTyped = useCallback(async (
+    key: string,
+  ): Promise<SessionAutomationJob[]> => {
+    const result = await getSessionAutomations(key);
+    return result as SessionAutomationJob[];
+  }, [getSessionAutomations]);
+
+  const currentError = authError ?? chatError;
+  const chat: ChatScreenController | null = bootstrap ? {
+    session: { activeKey, activeSession, sidebarState },
+    capabilities: { bootstrap, cliApps, mcpPresets, skills, slashCommands },
+    thread: {
+      messages,
+      loading: threadLoading,
+      loadingOlder,
+      hasMoreBefore,
+      userMessageOffset,
+      forkBoundaryMessageCount,
+      loadOlder,
+      retryFromMessage: chatCommands.retryFromMessage,
+      forkFromMessage: sessionCommands.forkFromMessage,
     },
-    loadOlder,
-    ...chatCommands,
-    ...sessionCommands,
-    togglePinned: (key: string) => togglePinned(key),
-    toggleArchived: (key: string) => toggleArchived(key),
-    toggleSidebarGroup: (groupId: string) => toggleSidebarGroup(groupId),
-    renameSession: (key: string, title: string) => renameSession(key, title),
-    renameProject: (projectKey: string, title: string) => renameProject(projectKey, title),
-    setShowArchived: (show: boolean) => setShowArchived(show),
-    getSessionAutomations: async (key: string): Promise<SessionAutomationJob[]> => {
-      const result = await getSessionAutomations(key);
-      return result as SessionAutomationJob[];
+    runtime: {
+      connectionStatus,
+      connectionSyncing,
+      networkAvailable,
+      reconnect: reconnectSocket,
+      turnActive,
+      runStartedAt,
+      goalState,
+      sendMessage: chatCommands.sendMessage,
+      stopTurn: chatCommands.stopTurn,
+      transcribeAudio: chatCommands.transcribeAudio,
+    },
+    workspace: {
+      activeScope: activeWorkspaceScope,
+      catalog: workspaces,
+      error: workspaceError,
+      updateScope: sessionCommands.updateWorkspaceScope,
+    },
+    errors: {
+      current: currentError,
+      stream: streamError,
+      clear: clearChatError,
+      dismissStream: dismissStreamError,
+    },
+    automations: { getForSession: getSessionAutomationsTyped },
+  } : null;
+
+  return {
+    auth: {
+      phase,
+      bootstrap,
+      authenticationFailed,
+      error: currentError,
+      authenticate,
+      retryConnection,
+    },
+    chat,
+    model: {
+      activeSession,
+      runtimeModelName,
+      turnModelName,
+      modelSettingsRevision,
+      changeModelPreset: chatCommands.changeModelPreset,
+    },
+    connection: {
+      status: connectionStatus,
+      networkAvailable,
+      reconnect: reconnectSocket,
+    },
+    sidebar: {
+      sessions,
+      state: sidebarState,
+      loading: sessionsLoading,
+      selectSession,
+      togglePinned,
+      toggleArchived,
+      toggleGroup: toggleSidebarGroup,
+      renameSession,
+      renameProject,
+      setShowArchived,
+      getSessionAutomations: getSessionAutomationsTyped,
+      removeSession: sessionCommands.removeSession,
+    },
+    workspace: {
+      catalog: workspaces,
+      startNewChat: sessionCommands.startNewChat,
+      startNewChatInProject: sessionCommands.startNewChatInProject,
+    },
+    runtime: {
+      logout: sessionCommands.logout,
+      restartServer: chatCommands.restartServer,
     },
   };
 }

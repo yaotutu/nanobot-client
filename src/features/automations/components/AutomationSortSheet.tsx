@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';

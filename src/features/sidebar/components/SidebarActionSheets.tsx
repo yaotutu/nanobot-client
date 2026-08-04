@@ -1,4 +1,10 @@
-import { Archive, ArchiveRestore, Pencil, Pin, PinOff, Search, Trash2 } from 'lucide-react-native';
+import Archive from 'lucide-react-native/icons/archive';
+import ArchiveRestore from 'lucide-react-native/icons/archive-restore';
+import Pencil from 'lucide-react-native/icons/pencil';
+import Pin from 'lucide-react-native/icons/pin';
+import PinOff from 'lucide-react-native/icons/pin-off';
+import Search from 'lucide-react-native/icons/search';
+import Trash2 from 'lucide-react-native/icons/trash-2';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, TextInput, View } from 'react-native';
 

@@ -1,4 +1,6 @@
-import { CalendarClock, CircleAlert, RefreshCcw } from 'lucide-react-native';
+import CalendarClock from 'lucide-react-native/icons/calendar-clock';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import RefreshCcw from 'lucide-react-native/icons/refresh-ccw';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,

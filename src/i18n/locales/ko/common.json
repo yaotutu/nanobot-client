@@ -890,7 +890,10 @@
     "open": "연결됨",
     "reconnecting": "재연결 중…",
     "closed": "연결 끊김",
-    "error": "연결 오류"
+    "error": "연결 오류",
+    "syncing": "대화 동기화 중…",
+    "offline": "오프라인",
+    "deliveryUnknown": "전송 여부를 확인할 수 없습니다. 다시 시도하기 전에 대화를 동기화하고 있습니다."
   },
   "thread": {
     "loadingConversation": "대화 불러오는 중…",

@@ -6,7 +6,7 @@ import type {
 import type {
   SlashCommand,
   SlashCommandLifecycle,
-} from '@/types/api/chat';
+} from '@/types/api/chat/commands';
 
 const SLASH_COMMAND_LIFECYCLES = new Set<SlashCommandLifecycle>([
   'side_channel',

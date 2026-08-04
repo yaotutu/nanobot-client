@@ -10,7 +10,7 @@ import {
   unitIndexAfterMessageCount,
   unitKeysForDisplay,
 } from '@/features/chat/model/timeline';
-import type { UIMessage } from '@/types/api/chat';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 interface UseChatThreadModelOptions {
   forkBoundaryMessageCount: number | null;

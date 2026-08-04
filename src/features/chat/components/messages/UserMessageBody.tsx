@@ -5,10 +5,8 @@ import type {
   CliAppInfo,
   McpPresetInfo,
 } from '@/types/api/capabilities';
-import type {
-  SlashCommand,
-  UIMessage,
-} from '@/types/api/chat';
+import type { SlashCommand } from '@/types/api/chat/commands';
+import type { UIMessage } from '@/types/api/chat/messages';
 import type { Palette } from '@/ui/palette';
 
 interface UserMessageBodyProps {

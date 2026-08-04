@@ -1,4 +1,4 @@
-import { ArrowDown } from 'lucide-react-native';
+import ArrowDown from 'lucide-react-native/icons/arrow-down';
 import {
   ActivityIndicator,
   FlatList,
@@ -20,7 +20,7 @@ import type {
   CliAppInfo,
   McpPresetInfo,
 } from '@/types/api/capabilities';
-import type { SlashCommand } from '@/types/api/chat';
+import type { SlashCommand } from '@/types/api/chat/commands';
 import type { LocalPreferences } from '@/stores/local-preferences-store';
 
 

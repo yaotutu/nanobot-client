@@ -1,5 +1,7 @@
 import type { TFunction } from 'i18next';
-import { Check, ChevronDown, Search } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import Search from 'lucide-react-native/icons/search';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

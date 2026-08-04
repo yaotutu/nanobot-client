@@ -20,7 +20,7 @@ import {
   safeActivityDetail,
 } from '@/services/text/log-redaction';
 import type { CliAppInfo, McpPresetInfo } from '@/types/api/capabilities';
-import type { UIMessage } from '@/types/api/chat';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 import { traceLines } from './activity-format';
 import {

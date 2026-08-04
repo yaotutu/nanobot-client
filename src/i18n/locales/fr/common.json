@@ -890,7 +890,10 @@
     "open": "Connecté",
     "reconnecting": "Reconnexion…",
     "closed": "Déconnecté",
-    "error": "Erreur de connexion"
+    "error": "Erreur de connexion",
+    "syncing": "Synchronisation de la conversation…",
+    "offline": "Hors ligne",
+    "deliveryUnknown": "La remise n’a pas pu être confirmée. La conversation est en cours de synchronisation avant une nouvelle tentative."
   },
   "thread": {
     "loadingConversation": "Chargement de la conversation…",

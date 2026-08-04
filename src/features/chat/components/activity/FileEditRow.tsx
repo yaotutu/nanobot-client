@@ -1,12 +1,10 @@
-import {
-  AlertCircle,
-  ChevronDown,
-  ChevronRight,
-  ChevronUp,
-  CircleDashed,
-  ExternalLink,
-  FilePenLine,
-} from 'lucide-react-native';
+import AlertCircle from 'lucide-react-native/icons/circle-alert';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
+import CircleDashed from 'lucide-react-native/icons/circle-dashed';
+import ExternalLink from 'lucide-react-native/icons/external-link';
+import FilePenLine from 'lucide-react-native/icons/file-pen-line';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';

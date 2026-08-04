@@ -1,16 +1,21 @@
 /**
- * Transport-only WebSocket facade. Protocol helpers, listener fan-out, and
- * pending request lifecycle live in focused modules; this class coordinates
- * socket lifecycle and preserves the public NanobotSocket API.
+ * WebSocket 传输层门面。
+ *
+ * 本类只持有连接状态并协调建连、重连、队列 flush 与入站路由。协议帧构造、监听器分发、
+ * pending request 生命周期和恢复策略都位于独立模块，避免 transport 再次膨胀为业务总入口。
  */
 import { routeSocketInboundEvent } from '@/features/connection/socket-inbound-router';
+import {
+  createSocketCommands,
+  type SocketCommands,
+  type SocketSendMessageOptions,
+} from '@/features/connection/socket-commands';
 import { SocketListeners } from '@/features/connection/socket-listeners';
+import { SocketOutboundQueue } from '@/features/connection/socket-outbound-queue';
 import { SocketPendingRegistry } from '@/features/connection/socket-pending-registry';
 import { reconnectDelayMs } from '@/features/connection/socket-reconnect-policy';
 import {
-  SYSTEM_COMMAND_TURN_PREFIX,
-  createTurnId,
-  frameFitsTransport,
+  isSystemCommandTurnId,
   normalizeMaxFrameBytes,
   parseInboundEvent,
   type EventListener,
@@ -21,12 +26,9 @@ import {
   type StatusListener,
   type TransportErrorListener,
 } from '@/features/connection/socket-protocol';
-import type {
-  InboundEvent,
-  OutboundMedia,
-  UICliAppAttachment,
-  UIMcpPresetAttachment,
-} from '@/types/api/chat';
+import type { InboundEvent } from '@/types/api/chat/events';
+import type { OutboundMedia } from '@/types/api/chat/media';
+import type { ConnectionStatus } from '@/types/api/runtime';
 import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 
 export type {
@@ -39,21 +41,34 @@ export type {
   StatusListener,
   TransportErrorListener,
 } from '@/features/connection/socket-protocol';
+export { isSocketDeliveryUnknownError } from '@/features/connection/socket-errors';
 export { isSystemCommandTurnId } from '@/features/connection/socket-protocol';
 
 export class NanobotSocket {
   private socket: WebSocket | null = null;
   private readonly listeners = new SocketListeners();
   private readonly pending = new SocketPendingRegistry();
+  private readonly outbound = new SocketOutboundQueue();
+  private readonly commands: SocketCommands;
   private knownChats = new Set<string>();
-  private sendQueue: OutboundFrame[] = [];
   private reconnectAttempt = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private reconnectPromise: Promise<void> | null = null;
   private intentionallyClosed = false;
+  private networkAvailable = true;
   private maxFrameBytes: number | undefined;
 
   constructor(private options: NanobotSocketOptions) {
     this.maxFrameBytes = normalizeMaxFrameBytes(options.maxFrameBytes);
+    this.commands = createSocketCommands({
+      pending: this.pending,
+      outbound: this.outbound,
+      knownChats: this.knownChats,
+      isNetworkAvailable: () => this.networkAvailable,
+      maxFrameBytes: () => this.maxFrameBytes,
+      queueSend: (queueId, frame) => this.queueSend(queueId, frame),
+      sendIfOpen: (frame) => this.rawSend(frame),
+    });
   }
 
   onStatus(listener: StatusListener): () => void {
@@ -72,6 +87,10 @@ export class NanobotSocket {
     return this.listeners.onTransportError(listener);
   }
 
+  getStatus(): ConnectionStatus {
+    return this.listeners.getStatus();
+  }
+
   updateUrl(url: string): void {
     this.options = { ...this.options, url };
   }
@@ -81,13 +100,14 @@ export class NanobotSocket {
   }
 
   connect(): void {
+    if (this.intentionallyClosed || !this.networkAvailable) return;
     if (this.socket && this.socket.readyState < WebSocket.CLOSING) return;
-    this.intentionallyClosed = false;
     this.listeners.setStatus('connecting');
     const socket = new WebSocket(this.options.url);
     this.socket = socket;
     socket.onopen = () => this.handleOpen(socket);
     socket.onmessage = (message) => {
+      if (this.socket !== socket) return;
       const event = parseInboundEvent(message.data);
       if (event) this.handleInboundEvent(event);
     };
@@ -99,114 +119,106 @@ export class NanobotSocket {
 
   close(): void {
     this.intentionallyClosed = true;
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
+    this.clearReconnectTimer();
+    this.invalidateCurrentSocket(new Error('connection_closed'));
+    this.outbound.clear();
+    this.listeners.setStatus('closed');
+  }
+
+  setNetworkAvailable(available: boolean): void {
+    if (this.networkAvailable === available) return;
+    this.networkAvailable = available;
+    if (available) return;
+    this.clearReconnectTimer();
+    this.invalidateCurrentSocket(new Error('network_unavailable'));
+    this.listeners.setStatus('closed');
+  }
+
+  reconnectNow(): Promise<void> {
+    if (this.intentionallyClosed || !this.networkAvailable) return Promise.resolve();
+    if (this.reconnectPromise) return this.reconnectPromise;
+
+    this.clearReconnectTimer();
+    this.listeners.setStatus('reconnecting');
+
+    const task = this.refreshConnectionUrl().then((refreshedUrl) => {
+      if (this.intentionallyClosed || !this.networkAvailable) return;
+      if (!refreshedUrl) {
+        this.scheduleReconnect();
+        return;
+      }
+
+      // Gateway WebSocket credentials are one-time tokens. Keep the existing
+      // socket alive while minting the replacement token, then swap sockets.
+      this.updateUrl(refreshedUrl);
+      this.invalidateCurrentSocket(new Error('connection_closed'));
+      this.connect();
+    });
+    this.reconnectPromise = task.finally(() => {
+      this.reconnectPromise = null;
+    });
+    return this.reconnectPromise;
+  }
+
+  private async refreshConnectionUrl(): Promise<string | null> {
+    try {
+      return await this.options.reauthenticate();
+    } catch {
+      return null;
     }
-    this.socket?.close();
   }
 
   attach(chatId: string): void {
-    this.knownChats.add(chatId);
-    this.queueSend({ type: 'attach', chat_id: chatId });
+    this.commands.attach(chatId);
   }
 
   newChat(timeoutMs = 5_000, workspaceScope?: WorkspaceScopePayload | null): Promise<string> {
-    const request = this.pending.createNewChat(timeoutMs, 'newChat timeout');
-    if (!this.pending.hasNewChat()) return request;
-    this.queueSend({
-      type: 'new_chat',
-      ...(workspaceScope ? { workspace_scope: workspaceScope } : {}),
-    });
-    return request;
+    return this.commands.newChat(timeoutMs, workspaceScope);
   }
 
-  forkChat(sourceChatId: string, beforeUserIndex: number, title?: string, timeoutMs = 5_000): Promise<string> {
-    if (this.pending.hasNewChat()) return Promise.reject(new Error('newChat already in flight'));
-    if (!sourceChatId.trim() || !Number.isInteger(beforeUserIndex) || beforeUserIndex < 0) {
-      return Promise.reject(new Error('invalid fork position'));
-    }
-    const request = this.pending.createNewChat(timeoutMs, 'fork timeout');
-    this.queueSend({
-      type: 'fork_chat',
-      source_chat_id: sourceChatId,
-      before_user_index: beforeUserIndex,
-      ...(title?.trim() ? { title: title.trim() } : {}),
-    });
-    return request;
+  forkChat(
+    sourceChatId: string,
+    beforeUserIndex: number,
+    title?: string,
+    timeoutMs = 5_000,
+  ): Promise<string> {
+    return this.commands.forkChat(sourceChatId, beforeUserIndex, title, timeoutMs);
   }
 
   sendMessage(
     chatId: string,
     content: string,
     media?: OutboundMedia[],
-    options: {
-      cliApps?: UICliAppAttachment[];
-      mcpPresets?: UIMcpPresetAttachment[];
-      quotedContext?: string;
-      workspaceScope?: WorkspaceScopePayload | null;
-      startsNewRun?: boolean;
-    } = {},
+    options: SocketSendMessageOptions = {},
   ): MessageSendResult {
-    const turnId = createTurnId();
-    const startsNewRun = options.startsNewRun !== false;
-    this.knownChats.add(chatId);
-    const result = this.pending.createMessageSend(chatId, turnId, startsNewRun);
-    const frame: OutboundFrame = {
-      type: 'message',
-      chat_id: chatId,
-      content,
-      ...(media?.length ? { media } : {}),
-      ...(options.cliApps?.length ? { cli_apps: options.cliApps } : {}),
-      ...(options.mcpPresets?.length ? { mcp_presets: options.mcpPresets } : {}),
-      ...(options.quotedContext?.trim() ? { quoted_context: options.quotedContext.trim() } : {}),
-      ...(options.workspaceScope ? { workspace_scope: options.workspaceScope } : {}),
-      turn_id: turnId,
-      webui: true,
-    };
-    if (!frameFitsTransport(frame, this.maxFrameBytes)) {
-      this.pending.rejectMessage(chatId, turnId, new Error('transport_too_large'));
-      return result;
-    }
-    this.queueSend(frame);
-    return result;
+    return this.commands.sendMessage(chatId, content, media, options);
   }
 
   sendSystemCommand(chatId: string, command: string, timeoutMs = 5_000): Promise<void> {
-    const turnId = `${SYSTEM_COMMAND_TURN_PREFIX}${createTurnId()}`;
-    this.knownChats.add(chatId);
-    const request = this.pending.createSystemCommand(turnId, timeoutMs);
-    this.queueSend({ type: 'message', chat_id: chatId, content: command.trim(), turn_id: turnId, webui: true });
-    return request;
+    return this.commands.sendSystemCommand(chatId, command, timeoutMs);
   }
 
-  transcribeAudio(dataUrl: string, options?: { durationMs?: number; timeoutMs?: number }): Promise<string> {
-    const requestId = createTurnId();
-    const request = this.pending.createTranscription(requestId, options?.timeoutMs ?? 120_000);
-    this.queueSend({
-      type: 'transcribe_audio',
-      request_id: requestId,
-      data_url: dataUrl,
-      ...(options?.durationMs !== undefined ? { duration_ms: options.durationMs } : {}),
-    });
-    return request;
+  transcribeAudio(
+    dataUrl: string,
+    options?: { durationMs?: number; timeoutMs?: number },
+  ): Promise<string> {
+    return this.commands.transcribeAudio(dataUrl, options);
   }
 
   setWorkspaceScope(chatId: string, scope: WorkspaceScopePayload): void {
-    this.knownChats.add(chatId);
-    this.queueSend({ type: 'set_workspace_scope', chat_id: chatId, workspace_scope: scope });
+    this.commands.setWorkspaceScope(chatId, scope);
   }
 
   stopTurn(chatId: string): void {
-    this.sendSystemCommand(chatId, '/stop', 5_000).catch(() => undefined);
+    this.commands.stopTurn(chatId);
   }
 
   private handleOpen(socket: WebSocket): void {
     if (this.socket !== socket) return;
     this.reconnectAttempt = 0;
     this.listeners.setStatus('open');
-    for (const chatId of this.knownChats) this.queueSend({ type: 'attach', chat_id: chatId });
-    for (const frame of this.sendQueue.splice(0)) this.rawSend(frame);
+    for (const chatId of this.knownChats) this.rawSend({ type: 'attach', chat_id: chatId });
+    this.outbound.flush((frame) => this.rawSend(frame));
   }
 
   private handleInboundEvent(event: InboundEvent): void {
@@ -217,46 +229,74 @@ export class NanobotSocket {
     });
   }
 
-  private rawSend(frame: OutboundFrame): void {
-    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+  private rawSend(frame: OutboundFrame): boolean {
+    const socket = this.socket;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return false;
     try {
-      this.socket.send(JSON.stringify(frame));
+      socket.send(JSON.stringify(frame));
+      if (frame.type === 'message' && !isSystemCommandTurnId(frame.turn_id)) {
+        this.pending.markMessageSent(frame.chat_id, frame.turn_id);
+      }
+      return true;
     } catch {
-      // A later close event owns recovery.
+      this.scheduleReconnect();
+      return false;
     }
   }
 
-  private queueSend(frame: OutboundFrame): void {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) this.rawSend(frame);
-    else this.sendQueue.push(frame);
+  private queueSend(queueId: string, frame: OutboundFrame): void {
+    if (this.rawSend(frame)) return;
+    this.outbound.enqueue(queueId, frame);
   }
 
   private handleClose(socket: WebSocket, code?: number): void {
     if (this.socket !== socket) return;
     this.socket = null;
-    this.pending.rejectNewChat(new Error('connection closed before chat created'));
-    this.pending.rejectMessagesOnClose(new Error(code === 1009 ? 'message_too_big' : 'connection_closed'));
-    if (this.intentionallyClosed) {
+    const error = new Error(code === 1009 ? 'message_too_big' : 'connection_closed');
+    this.rejectPendingOnDisconnect(error);
+    if (this.intentionallyClosed || !this.networkAvailable) {
       this.listeners.setStatus('closed');
       return;
     }
     this.scheduleReconnect();
   }
 
+  private invalidateCurrentSocket(error: Error): void {
+    const socket = this.socket;
+    this.socket = null;
+    this.rejectPendingOnDisconnect(error);
+    if (socket && socket.readyState < WebSocket.CLOSING) {
+      try {
+        socket.close();
+      } catch {
+        // The socket has already become unusable.
+      }
+    }
+  }
+
+  private rejectPendingOnDisconnect(error: Error): void {
+    this.pending.rejectNewChat(error);
+    this.pending.rejectMessagesOnClose(
+      error,
+      error.message === 'message_too_big' ? error : undefined,
+    );
+    this.pending.rejectTransientRequests(error);
+  }
+
+  private clearReconnectTimer(): void {
+    if (!this.reconnectTimer) return;
+    clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
+  }
+
   private scheduleReconnect(): void {
-    if (this.reconnectTimer) return;
+    if (this.reconnectTimer || !this.networkAvailable || this.intentionallyClosed) return;
     this.listeners.setStatus('reconnecting');
     const delay = reconnectDelayMs(this.reconnectAttempt);
     this.reconnectAttempt += 1;
-    this.reconnectTimer = setTimeout(async () => {
+    this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
-      try {
-        const refreshedUrl = await this.options.reauthenticate();
-        if (refreshedUrl) this.updateUrl(refreshedUrl);
-      } catch {
-        // Reconnect with the current URL when token refresh fails.
-      }
-      this.connect();
+      void this.reconnectNow();
     }, delay);
   }
 }

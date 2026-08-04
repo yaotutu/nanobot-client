@@ -1,48 +1,24 @@
 import { useEffect } from 'react';
 
-import { useAuthStore, selectAuthPhase, selectBootstrap } from '@/features/auth/store';
-import { useCapabilitiesStore } from '@/features/capabilities/store';
-import { useSidebarStore } from '@/features/sidebar/store';
-import { useSkillsStore } from '@/features/skills/store';
-import { useWorkspacesStore } from '@/features/workspaces/store';
+import { useAuthStore } from '@/features/auth/store';
+import { markStartup, measureStartup } from '@/services/runtime/startup-performance';
 
+/**
+ * 启动阶段只负责从安全存储恢复鉴权信息。
+ * 目录刷新、令牌续期等 Ready 阶段任务位于 useReadyDataLifecycle，避免它们进入轻量启动壳依赖图。
+ */
 export function useAuthBootstrapLifecycle(): void {
-  const phase = useAuthStore(selectAuthPhase);
-  const bootstrap = useAuthStore(selectBootstrap);
-  const refreshAuth = useAuthStore((state) => state.refreshBootstrap);
-  const refreshSessions = useSidebarStore((state) => state.refresh);
-  const refreshSidebarState = useSidebarStore((state) => state.refreshSidebarState);
-  const refreshCapabilities = useCapabilitiesStore((state) => state.refreshAll);
-  const refreshSkills = useSkillsStore((state) => state.refresh);
-  const refreshWorkspaces = useWorkspacesStore((state) => state.refresh);
-
   useEffect(() => {
-    void useAuthStore.getState().bootstrapFromStorage();
+    let active = true;
+    markStartup('auth_bootstrap_start');
+    void useAuthStore.getState().bootstrapFromStorage().finally(() => {
+      if (!active) return;
+      markStartup('auth_bootstrap_end');
+      measureStartup('auth_bootstrap', 'auth_bootstrap_start', 'auth_bootstrap_end');
+    });
+
+    return () => {
+      active = false;
+    };
   }, []);
-
-  useEffect(() => {
-    if (phase !== 'ready' || !bootstrap) return;
-    void refreshSessions();
-    void refreshSidebarState();
-    void refreshCapabilities();
-    void refreshSkills();
-    void refreshWorkspaces();
-  }, [
-    bootstrap,
-    phase,
-    refreshCapabilities,
-    refreshSessions,
-    refreshSkills,
-    refreshSidebarState,
-    refreshWorkspaces,
-  ]);
-
-  useEffect(() => {
-    if (!bootstrap || phase !== 'ready') return;
-    const refreshAfterMs = Math.max(30_000, bootstrap.expires_in * 1_000 - 60_000);
-    const timer = setTimeout(() => {
-      void refreshAuth().catch(() => undefined);
-    }, refreshAfterMs);
-    return () => clearTimeout(timer);
-  }, [bootstrap, phase, refreshAuth]);
 }

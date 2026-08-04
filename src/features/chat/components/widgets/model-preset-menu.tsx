@@ -1,4 +1,6 @@
-import { Check, ChevronDown, X } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import X from 'lucide-react-native/icons/x';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

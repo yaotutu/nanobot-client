@@ -890,7 +890,10 @@
     "open": "Terhubung",
     "reconnecting": "Menyambung ulang…",
     "closed": "Terputus",
-    "error": "Kesalahan koneksi"
+    "error": "Kesalahan koneksi",
+    "syncing": "Menyinkronkan percakapan…",
+    "offline": "Offline",
+    "deliveryUnknown": "Pengiriman tidak dapat dikonfirmasi. Percakapan sedang disinkronkan sebelum Anda mencoba lagi."
   },
   "thread": {
     "loadingConversation": "Memuat percakapan…",

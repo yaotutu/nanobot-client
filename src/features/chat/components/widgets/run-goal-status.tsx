@@ -1,4 +1,6 @@
-import { ChevronUp, CircleDotDashed, X } from 'lucide-react-native';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
+import CircleDotDashed from 'lucide-react-native/icons/circle-dot-dashed';
+import X from 'lucide-react-native/icons/x';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

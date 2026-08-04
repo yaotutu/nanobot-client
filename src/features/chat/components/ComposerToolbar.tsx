@@ -1,4 +1,7 @@
-import { ArrowUp, Mic, Paperclip, Square } from 'lucide-react-native';
+import ArrowUp from 'lucide-react-native/icons/arrow-up';
+import Mic from 'lucide-react-native/icons/mic';
+import Paperclip from 'lucide-react-native/icons/paperclip';
+import Square from 'lucide-react-native/icons/square';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 

@@ -1,4 +1,7 @@
-import { Check, ChevronDown, Database, Server } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import Database from 'lucide-react-native/icons/database';
+import Server from 'lucide-react-native/icons/server';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

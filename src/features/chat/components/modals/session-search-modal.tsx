@@ -1,4 +1,5 @@
-import { Search, X } from 'lucide-react-native';
+import Search from 'lucide-react-native/icons/search';
+import X from 'lucide-react-native/icons/x';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

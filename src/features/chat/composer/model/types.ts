@@ -1,4 +1,8 @@
-import type { SendAttachment, SendMessageOptions, SlashCommand } from '@/types/api/chat';
+import type {
+  SendAttachment,
+  SendMessageOptions,
+  SlashCommand,
+} from '@/types/api/chat/commands';
 
 export interface QueuedPrompt {
   id: string;

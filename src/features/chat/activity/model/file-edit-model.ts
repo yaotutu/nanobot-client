@@ -3,7 +3,10 @@ import {
   type RenderableFileDiff,
   type RenderableFileDiffHunk,
 } from '@/services/text/file-diff';
-import type { UIFileEdit, UIMessage } from '@/types/api/chat';
+import type {
+  UIFileEdit,
+  UIMessage,
+} from '@/types/api/chat/messages';
 
 import { traceLines } from './activity-format';
 import type { FileEditSummary, VisibleDiffHunk } from './tool-types';

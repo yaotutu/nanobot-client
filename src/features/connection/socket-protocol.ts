@@ -1,10 +1,10 @@
+import type { InboundEvent } from '@/types/api/chat/events';
 import type {
-  InboundEvent,
   OutboundMedia,
-  StreamError,
   UICliAppAttachment,
   UIMcpPresetAttachment,
-} from '@/types/api/chat';
+} from '@/types/api/chat/media';
+import type { StreamError } from '@/types/api/chat/errors';
 import type { ConnectionStatus } from '@/types/api/runtime';
 import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 

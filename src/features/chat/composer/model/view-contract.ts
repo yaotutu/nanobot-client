@@ -5,7 +5,7 @@ import type { CapabilityMentionCandidate } from '@/features/chat/composer/model/
 import type { ComposerSlashCommand, QueuedPrompt } from '@/features/chat/hooks/use-composer-controller';
 import type { SkillMentionCandidate } from '@/features/chat/composer/model/skill-mentions';
 import type { VoiceRecorderController } from '@/features/chat/hooks/use-voice-recorder';
-import type { ComposerAttachment } from '@/types/api/chat';
+import type { ComposerAttachment } from '@/types/api/chat/attachments';
 import type { GoalStateWsPayload } from '@/types/api/runtime';
 import type { SettingsPayload } from '@/types/api/settings';
 import type {

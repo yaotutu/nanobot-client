@@ -1,6 +1,6 @@
 import { apiClient } from '@/services/api/api';
 import type { AutomationsPayload } from '@/types/api/automations';
-import type { SessionDeleteResult } from '@/types/api/chat';
+import type { SessionDeleteResult } from '@/types/api/chat/thread';
 import type {
   ChatSummary,
   SidebarStatePayload,

@@ -1,5 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
-import { Check, Copy } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import Copy from 'lucide-react-native/icons/copy';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';

@@ -1,4 +1,5 @@
-import { FileCode2, FileText } from 'lucide-react-native';
+import FileCode2 from 'lucide-react-native/icons/file-code-corner';
+import FileText from 'lucide-react-native/icons/file-text';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 

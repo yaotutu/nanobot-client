@@ -6,7 +6,7 @@ import type { SessionGroup } from '@/features/sidebar/chat-groups';
 import { automationDeleteSummary } from '@/features/sidebar/sidebar-list-model';
 import { sessionTitle } from '@/services/text/format';
 import type { SessionAutomationJob } from '@/types/api/automations';
-import type { SessionDeleteResult } from '@/types/api/chat';
+import type { SessionDeleteResult } from '@/types/api/chat/thread';
 import type { ChatSummary, SidebarStatePayload } from '@/types/api/sidebar';
 
 export type RenameTarget =

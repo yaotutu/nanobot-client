@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react-native';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   type NativeScrollEvent,
@@ -29,7 +29,7 @@ import type {
   CliAppInfo,
   McpPresetInfo,
 } from '@/types/api/capabilities';
-import type { UIMessage } from '@/types/api/chat';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 interface AgentActivityClusterProps {
   cliApps?: CliAppInfo[];

@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react-native';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,

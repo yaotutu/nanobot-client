@@ -1,5 +1,12 @@
 import { Image } from 'expo-image';
-import { Archive, ArchiveRestore, Blocks, Brain, CalendarClock, Search, Settings, SquarePen } from 'lucide-react-native';
+import Archive from 'lucide-react-native/icons/archive';
+import ArchiveRestore from 'lucide-react-native/icons/archive-restore';
+import Blocks from 'lucide-react-native/icons/blocks';
+import Brain from 'lucide-react-native/icons/brain';
+import CalendarClock from 'lucide-react-native/icons/calendar-clock';
+import Search from 'lucide-react-native/icons/search';
+import Settings from 'lucide-react-native/icons/settings';
+import SquarePen from 'lucide-react-native/icons/square-pen';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Modal, Pressable, Text, View, useWindowDimensions } from 'react-native';
@@ -9,7 +16,7 @@ import type { ChatGroupLabels } from '@/features/sidebar/chat-groups';
 import { useSidebarActions } from '@/features/sidebar/hooks/use-sidebar-actions';
 import { useSidebarListModel } from '@/features/sidebar/hooks/use-sidebar-list-model';
 import type { SessionAutomationJob } from '@/types/api/automations';
-import type { SessionDeleteResult } from '@/types/api/chat';
+import type { SessionDeleteResult } from '@/types/api/chat/thread';
 import type { ConnectionStatus } from '@/types/api/runtime';
 import type { ChatSummary, SidebarStatePayload } from '@/types/api/sidebar';
 import { SidebarActionSheets } from './SidebarActionSheets';
@@ -27,6 +34,7 @@ interface SidebarDrawerProps {
   activeKey: string | null;
   loading: boolean;
   connectionStatus: ConnectionStatus;
+  networkAvailable: boolean;
   defaultWorkspacePath?: string | null;
   activeUtility: 'apps' | 'skills' | 'automations' | 'settings' | null;
   onClose: () => void;
@@ -36,6 +44,7 @@ interface SidebarDrawerProps {
   onOpenAutomations: () => void;
   onOpenSettings: () => void;
   onNewChat: () => void;
+  onReconnect: () => Promise<void>;
   onNewChatInProject: (projectPath: string, projectName: string) => void;
   onSelect: (key: string) => void;
   onTogglePinned: (key: string) => Promise<void>;
@@ -57,6 +66,7 @@ export function SidebarDrawer(props: SidebarDrawerProps) {
     activeKey,
     loading,
     connectionStatus,
+    networkAvailable,
     defaultWorkspacePath,
     activeUtility,
     onClose,
@@ -66,6 +76,7 @@ export function SidebarDrawer(props: SidebarDrawerProps) {
     onOpenAutomations,
     onOpenSettings,
     onNewChat,
+    onReconnect,
     onNewChatInProject,
     onSelect,
     onTogglePinned,
@@ -173,8 +184,18 @@ export function SidebarDrawer(props: SidebarDrawerProps) {
 
           <View style={styles.footer}>
             <SidebarAction active={activeUtility === 'settings'} icon={Settings} label={t('sidebar.settings')} onPress={onOpenSettings} />
-            <Pressable accessibilityLabel={t(`connection.${connectionStatus}`)} style={styles.statusButton}>
-              <View style={[styles.statusDot, connectionStatus === 'open' && styles.statusOpen]} />
+            <Pressable
+              accessibilityLabel={t(networkAvailable ? `connection.${connectionStatus}` : 'connection.offline')}
+              onPress={() => void onReconnect()}
+              style={styles.statusButton}
+            >
+              <View
+                style={[
+                  styles.statusDot,
+                  connectionStatus === 'open' && networkAvailable && styles.statusOpen,
+                  !networkAvailable && styles.statusOffline,
+                ]}
+              />
             </Pressable>
           </View>
           <Pressable accessibilityLabel={t('app.account.logoutHint')} onLongPress={onLogout} style={styles.logoutTarget}>

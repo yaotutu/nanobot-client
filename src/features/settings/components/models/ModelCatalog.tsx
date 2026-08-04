@@ -1,4 +1,6 @@
-import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react-native';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';

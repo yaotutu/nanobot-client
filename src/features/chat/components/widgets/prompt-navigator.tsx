@@ -1,4 +1,5 @@
-import { Search, X } from 'lucide-react-native';
+import Search from 'lucide-react-native/icons/search';
+import X from 'lucide-react-native/icons/x';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatDateTime } from '@/services/text/format';
 import { userPromptAnchors } from '@/features/chat/model/prompt-navigation';
-import type { UIMessage } from '@/types/api/chat';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 interface PromptNavigatorColors {
   background: string;

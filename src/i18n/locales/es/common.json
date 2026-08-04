@@ -890,7 +890,10 @@
     "open": "Conectado",
     "reconnecting": "Reconectando…",
     "closed": "Desconectado",
-    "error": "Error de conexión"
+    "error": "Error de conexión",
+    "syncing": "Sincronizando conversación…",
+    "offline": "Sin conexión",
+    "deliveryUnknown": "No se pudo confirmar la entrega. La conversación se está sincronizando antes de que vuelvas a intentarlo."
   },
   "thread": {
     "loadingConversation": "Cargando conversación…",

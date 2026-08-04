@@ -1,4 +1,8 @@
-import { Check, Plus, SlidersHorizontal, Trash2, X } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import Plus from 'lucide-react-native/icons/plus';
+import SlidersHorizontal from 'lucide-react-native/icons/sliders-horizontal';
+import Trash2 from 'lucide-react-native/icons/trash-2';
+import X from 'lucide-react-native/icons/x';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

@@ -1,4 +1,7 @@
-import { AlertTriangle, Check, ChevronDown, Hand } from 'lucide-react-native';
+import AlertTriangle from 'lucide-react-native/icons/triangle-alert';
+import Check from 'lucide-react-native/icons/check';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import Hand from 'lucide-react-native/icons/hand';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, Text, View } from 'react-native';

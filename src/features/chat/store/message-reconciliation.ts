@@ -1,4 +1,4 @@
-import type { UIMessage } from '@/types/api/chat';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 export function sameSemanticMessage(left: UIMessage, right: UIMessage): boolean {
   if (left.id && right.id && left.id === right.id) return true;

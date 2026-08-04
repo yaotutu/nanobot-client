@@ -1,7 +1,7 @@
 import type {
   SlashCommand,
   SlashCommandLifecycle,
-} from '@/types/api/chat';
+} from '@/types/api/chat/commands';
 
 export type ResolvedSlashCommandLifecycle = Exclude<
   SlashCommandLifecycle,

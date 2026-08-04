@@ -1,10 +1,12 @@
 import { Image as ExpoImage } from 'expo-image';
-import { FileText, Quote, X } from 'lucide-react-native';
+import FileText from 'lucide-react-native/icons/file-text';
+import Quote from 'lucide-react-native/icons/quote';
+import X from 'lucide-react-native/icons/x';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { formatAttachmentBytes, queuedPromptPreview } from '@/features/chat/composer/model/presentation';
-import type { ComposerAttachment } from '@/types/api/chat';
+import type { ComposerAttachment } from '@/types/api/chat/attachments';
 import type { Palette } from '@/ui/palette';
 import type { QueuedPrompt } from '@/features/chat/hooks/use-composer-controller';
 import { composerStyles as styles } from './composer-styles';

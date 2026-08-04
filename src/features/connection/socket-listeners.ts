@@ -1,4 +1,5 @@
-import type { InboundEvent, StreamError } from '@/types/api/chat';
+import type { InboundEvent } from '@/types/api/chat/events';
+import type { StreamError } from '@/types/api/chat/errors';
 import type { ConnectionStatus } from '@/types/api/runtime';
 import type {
   EventListener,
@@ -35,6 +36,10 @@ export class SocketListeners {
   onTransportError(listener: TransportErrorListener): () => void {
     this.transportErrorListeners.add(listener);
     return () => this.transportErrorListeners.delete(listener);
+  }
+
+  getStatus(): ConnectionStatus {
+    return this.status;
   }
 
   setStatus(status: ConnectionStatus): void {

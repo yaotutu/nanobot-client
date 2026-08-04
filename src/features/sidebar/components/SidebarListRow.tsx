@@ -1,4 +1,8 @@
-import { ChevronRight, Folder, MoreHorizontal, Pin, Plus } from 'lucide-react-native';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import Folder from 'lucide-react-native/icons/folder';
+import MoreHorizontal from 'lucide-react-native/icons/ellipsis';
+import Pin from 'lucide-react-native/icons/pin';
+import Plus from 'lucide-react-native/icons/plus';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 

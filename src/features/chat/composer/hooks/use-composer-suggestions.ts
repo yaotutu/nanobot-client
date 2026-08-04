@@ -19,7 +19,7 @@ import {
   useComposerRecentsStore,
 } from '@/stores/composer-recents-store';
 import type { CliAppInfo, McpPresetInfo, SkillSummary } from '@/types/api/capabilities';
-import type { SlashCommand } from '@/types/api/chat';
+import type { SlashCommand } from '@/types/api/chat/commands';
 
 import type { ComposerSlashCommand } from '../model/types';
 

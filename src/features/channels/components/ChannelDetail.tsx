@@ -1,8 +1,6 @@
-import {
-  ArrowLeft,
-  CircleAlert,
-  Plus,
-} from "lucide-react-native";
+import ArrowLeft from 'lucide-react-native/icons/arrow-left';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import Plus from 'lucide-react-native/icons/plus';
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,

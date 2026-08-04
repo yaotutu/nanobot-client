@@ -890,7 +890,10 @@
     "open": "接続済み",
     "reconnecting": "再接続中…",
     "closed": "切断済み",
-    "error": "接続エラー"
+    "error": "接続エラー",
+    "syncing": "会話を同期中…",
+    "offline": "オフライン",
+    "deliveryUnknown": "送信を確認できませんでした。再試行する前に会話を同期しています。"
   },
   "thread": {
     "loadingConversation": "会話を読み込み中…",

@@ -1,11 +1,9 @@
-import {
-  Brain,
-  ChevronDown,
-  ChevronUp,
-  KeyRound,
-  Terminal,
-  X,
-} from 'lucide-react-native';
+import Brain from 'lucide-react-native/icons/brain';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
+import KeyRound from 'lucide-react-native/icons/key-round';
+import Terminal from 'lucide-react-native/icons/terminal';
+import X from 'lucide-react-native/icons/x';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

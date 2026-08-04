@@ -5,7 +5,7 @@ import type {
 import type {
   UICliAppAttachment,
   UIMcpPresetAttachment,
-} from '@/types/api/chat';
+} from '@/types/api/chat/media';
 
 export interface CapabilityMentionQuery {
   query: string;

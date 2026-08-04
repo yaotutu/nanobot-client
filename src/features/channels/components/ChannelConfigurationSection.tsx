@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react-native';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 

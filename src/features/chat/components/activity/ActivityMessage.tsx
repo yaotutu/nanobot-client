@@ -1,18 +1,16 @@
-import {
-  AlertCircle,
-  Check,
-  Clock3,
-  FileSearch,
-  FolderOpen,
-  Globe2,
-  ListTree,
-  MemoryStick,
-  Play,
-  Search,
-  Server,
-  Terminal,
-  Wrench,
-} from 'lucide-react-native';
+import AlertCircle from 'lucide-react-native/icons/circle-alert';
+import Check from 'lucide-react-native/icons/check';
+import Clock3 from 'lucide-react-native/icons/clock-3';
+import FileSearch from 'lucide-react-native/icons/file-search';
+import FolderOpen from 'lucide-react-native/icons/folder-open';
+import Globe2 from 'lucide-react-native/icons/earth';
+import ListTree from 'lucide-react-native/icons/list-tree';
+import MemoryStick from 'lucide-react-native/icons/memory-stick';
+import Play from 'lucide-react-native/icons/play';
+import Search from 'lucide-react-native/icons/search';
+import Server from 'lucide-react-native/icons/server';
+import Terminal from 'lucide-react-native/icons/terminal';
+import Wrench from 'lucide-react-native/icons/wrench';
 import { Image as ExpoImage } from 'expo-image';
 import { useMemo } from 'react';
 import {
@@ -33,7 +31,7 @@ import type {
   CliAppInfo,
   McpPresetInfo,
 } from '@/types/api/capabilities';
-import type { UIMessage } from '@/types/api/chat';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 import {
   type CapabilityBrand,

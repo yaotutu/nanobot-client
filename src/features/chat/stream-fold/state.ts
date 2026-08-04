@@ -1,4 +1,5 @@
-import type { InboundEvent, UIMessage } from '@/types/api/chat';
+import type { InboundEvent } from '@/types/api/chat/events';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 export type StreamTurnFields = Pick<UIMessage, 'turnId' | 'turnPhase' | 'turnSeq'>;
 

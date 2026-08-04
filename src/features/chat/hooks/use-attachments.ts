@@ -1,6 +1,3 @@
-import * as DocumentPicker from 'expo-document-picker';
-import { File } from 'expo-file-system';
-import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useRef, useState } from 'react';
 
 import {
@@ -14,16 +11,31 @@ import {
   resolvedAttachmentMime,
   validateAttachmentCandidate,
 } from '@/features/chat/attachments/attachment-validation';
-import { encodeImage } from '@/features/chat/attachments/image-encoder';
-import { encodeNativeFile } from '@/features/chat/attachments/native-file-encoder';
 import type { PickedAsset } from '@/features/chat/attachments/types';
 import i18n from '@/i18n';
-import type {
-  ComposerAttachment,
-  OutboundMedia,
-  SendAttachment,
-} from '@/types/api/chat';
+import type { ComposerAttachment } from '@/types/api/chat/attachments';
+import type { OutboundMedia } from '@/types/api/chat/media';
+import type { SendAttachment } from '@/types/api/chat/commands';
 import type { WebUIIngressLimits } from '@/types/api/runtime';
+
+/**
+ * Picker 和编码器只在用户主动添加附件后加载，避免它们进入聊天首页的模块执行关键路径。
+ * 文件大小通常由 picker 直接返回；只有缺失时才按需加载 expo-file-system 查询。
+ */
+async function resolveAssetSize(asset: PickedAsset): Promise<number> {
+  if (typeof asset.size === 'number') return asset.size;
+  const { File } = await import('expo-file-system');
+  return new File(asset.uri).size;
+}
+
+async function encodePickedAsset(asset: PickedAsset, limits: AttachmentLimits, mime: string) {
+  if (asset.kind === 'image') {
+    const { encodeImage } = await import('@/features/chat/attachments/image-encoder');
+    return encodeImage(asset, limits);
+  }
+  const { encodeNativeFile } = await import('@/features/chat/attachments/native-file-encoder');
+  return { ...(await encodeNativeFile(asset.uri, mime)), mime, uri: asset.uri };
+}
 
 function useAttachmentCollection(limits: AttachmentLimits) {
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
@@ -57,7 +69,7 @@ function useAttachmentCollection(limits: AttachmentLimits) {
     }
 
     for (const asset of accepted) {
-      const knownSize = asset.size ?? new File(asset.uri).size;
+      const knownSize = await resolveAssetSize(asset);
       const mime = resolvedAttachmentMime(asset);
       const validationError = validateAttachmentCandidate({
         asset,
@@ -86,9 +98,7 @@ function useAttachmentCollection(limits: AttachmentLimits) {
       setAttachments(current);
 
       try {
-        const encoded = asset.kind === 'image'
-          ? await encodeImage(asset, limits)
-          : { ...(await encodeNativeFile(asset.uri, mime)), mime, uri: asset.uri };
+        const encoded = await encodePickedAsset(asset, limits, mime);
         const otherDecoded = attachmentsRef.current
           .filter((item) => item.id !== id)
           .reduce((sum, item) => sum + (item.encodedBytes ?? item.size), 0);
@@ -163,6 +173,7 @@ export function useAttachments(limits?: WebUIIngressLimits) {
     if (remaining === null) return;
     setError(null);
     try {
+      const ImagePicker = await import('expo-image-picker');
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsMultipleSelection: true,
@@ -191,6 +202,7 @@ export function useAttachments(limits?: WebUIIngressLimits) {
     if (ensurePickerCapacity() === null) return;
     setError(null);
     try {
+      const DocumentPicker = await import('expo-document-picker');
       const result = await DocumentPicker.getDocumentAsync({
         copyToCacheDirectory: true,
         multiple: true,

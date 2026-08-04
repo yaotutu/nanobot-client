@@ -1,5 +1,5 @@
 import { Image as ExpoImage } from 'expo-image';
-import { Brain } from 'lucide-react-native';
+import Brain from 'lucide-react-native/icons/brain';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';

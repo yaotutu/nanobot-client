@@ -1,4 +1,4 @@
-import type { UIMessage } from '@/types/api/chat';
+import type { UIMessage } from '@/types/api/chat/messages';
 
 export type TurnUnit =
   | {

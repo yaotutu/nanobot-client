@@ -1,5 +1,5 @@
 import { DEFAULT_SERVER_URL } from '@/services/api/config';
-import type { UIMediaAttachment } from '@/types/api/chat';
+import type { UIMediaAttachment } from '@/types/api/chat/media';
 
 const IMAGE_EXTENSIONS = new Set([
   '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico', '.svg', '.tif', '.tiff',

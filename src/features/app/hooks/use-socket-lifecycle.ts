@@ -7,8 +7,8 @@ import i18n from '@/i18n';
 import { deriveWsUrl } from '@/services/api/bootstrap';
 import { DEFAULT_SERVER_URL as SERVER_URL } from '@/services/api/config';
 
-import { createNanobotSocket, type NanobotSocket } from '@/features/connection';
-import { useConnectionStore } from '@/features/connection';
+import { createNanobotSocket, type NanobotSocket } from '@/features/connection/socket-transport';
+import { useConnectionStore } from '@/features/connection/store';
 
 export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
   const phase = useAuthStore(selectAuthPhase);
@@ -21,6 +21,7 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
   const setRuntimeModelName = useChatStore((state) => state.setRuntimeModelName);
   const setStreamError = useChatStore((state) => state.setStreamError);
 
+  const markActivity = useConnectionStore((state) => state.markActivity);
   const markOpened = useConnectionStore((state) => state.markOpened);
   const markReconnectNeeded = useConnectionStore((state) => state.markReconnectNeeded);
   const setConnectionStatus = useConnectionStore((state) => state.setStatus);
@@ -35,19 +36,20 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
   }, [refreshCanonical]);
 
   useEffect(() => {
-    if (!bootstrap || phase !== 'ready') return;
+    if (phase !== 'ready') return;
+    const currentBootstrap = useAuthStore.getState().bootstrap;
+    if (!currentBootstrap) return;
 
     const socket = createNanobotSocket({
       url: deriveWsUrl(
         SERVER_URL,
-        bootstrap.ws_path,
-        bootstrap.token,
-        bootstrap.ws_url ?? null,
+        currentBootstrap.ws_path,
+        currentBootstrap.token,
+        currentBootstrap.ws_url ?? null,
       ),
       reauthenticate: async () => {
         try {
-          await refreshAuth();
-          const fresh = useAuthStore.getState().bootstrap;
+          const fresh = await refreshAuth('socket-reauthentication');
           if (!fresh) return null;
           return deriveWsUrl(
             SERVER_URL,
@@ -59,7 +61,7 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
           return null;
         }
       },
-      maxFrameBytes: bootstrap.limits?.transport.max_frame_bytes,
+      maxFrameBytes: currentBootstrap.limits?.transport.max_frame_bytes,
     });
     socketRef.current = socket;
 
@@ -93,6 +95,7 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
     });
 
     const offEvent = socket.onEvent((event) => {
+      markActivity();
       applyInboundEvent(event);
     });
 
@@ -106,7 +109,7 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
     };
     // Socket identity follows authentication. Store actions are stable Zustand references.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bootstrap?.token, phase]);
+  }, [phase]);
 
   useEffect(() => {
     if (!bootstrap) return;
@@ -121,7 +124,7 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
     setRuntimeModelName(bootstrap.model_name?.trim() || null);
     // Keep the existing socket synchronized when a bootstrap renewal completes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bootstrap?.expires_in]);
+  }, [bootstrap?.token, bootstrap?.limits?.transport.max_frame_bytes]);
 
   return socketRef;
 }

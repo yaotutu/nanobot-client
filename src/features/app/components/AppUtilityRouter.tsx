@@ -1,14 +1,29 @@
-import { AutomationsScreen } from '@/features/automations/components/AutomationsScreen';
-import { AppsScreen } from '@/features/capabilities/components/AppsScreen';
-import { SettingsScreen } from '@/features/settings/components/SettingsScreen';
-import { SkillsScreen } from '@/features/skills/components/SkillsScreen';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+
+import type { AppUtilityView } from '@/features/app/model/navigation';
+import { createDeferredComponent } from '@/hooks/use-deferred-component';
+import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type { LocalPreferences } from '@/stores/local-preferences-store';
 import type { BootstrapResponse } from '@/types/api/runtime';
 import type { SettingsPayload } from '@/types/api/settings';
-import type { RuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import type { Palette } from '@/ui/palette';
 
-import type { AppUtilityView } from '@/features/app/model/navigation';
+/**
+ * 工具页不属于聊天首屏。每个页面使用显式异步组件加载器，用户第一次打开对应页面时才执行模块。
+ * 不使用 React.lazy/Suspense，避免旧 Android + Fabric 在懒加载树提交阶段出现原生崩溃。
+ */
+const DeferredAutomationsScreen = createDeferredComponent(() => import(
+  '@/features/automations/components/AutomationsScreen'
+).then(({ AutomationsScreen }) => AutomationsScreen));
+const DeferredAppsScreen = createDeferredComponent(() => import(
+  '@/features/capabilities/components/AppsScreen'
+).then(({ AppsScreen }) => AppsScreen));
+const DeferredSettingsScreen = createDeferredComponent(() => import(
+  '@/features/settings/components/SettingsScreen'
+).then(({ SettingsScreen }) => SettingsScreen));
+const DeferredSkillsScreen = createDeferredComponent(() => import(
+  '@/features/skills/components/SkillsScreen'
+).then(({ SkillsScreen }) => SkillsScreen));
 
 interface AppUtilityRouterProps {
   bootstrap: BootstrapResponse;
@@ -24,36 +39,68 @@ interface AppUtilityRouterProps {
 }
 
 export function AppUtilityRouter(props: AppUtilityRouterProps) {
+  const fallback = <UtilityLoading colors={props.colors} />;
+
   switch (props.view) {
     case 'apps':
       return (
-        <AppsScreen
+        <DeferredAppsScreen
           key={`apps:${props.bootstrap.token}`}
-          colors={props.colors}
-          onBackToChat={props.onBackToChat}
-          onRestart={props.onRestart}
-          restartPolicy={props.runtimePolicy}
+          componentProps={{
+            colors: props.colors,
+            onBackToChat: props.onBackToChat,
+            onRestart: props.onRestart,
+            restartPolicy: props.runtimePolicy,
+          }}
+          enabled
+          fallback={fallback}
         />
       );
     case 'skills':
-      return <SkillsScreen colors={props.colors} />;
+      return (
+        <DeferredSkillsScreen
+          componentProps={{ colors: props.colors }}
+          enabled
+          fallback={fallback}
+        />
+      );
     case 'automations':
       return (
-        <AutomationsScreen
-          colors={props.colors}
-          onOpenLinkedChat={props.onOpenLinkedChat}
+        <DeferredAutomationsScreen
+          componentProps={{
+            colors: props.colors,
+            onOpenLinkedChat: props.onOpenLinkedChat,
+          }}
+          enabled
+          fallback={fallback}
         />
       );
     case 'settings':
       return (
-        <SettingsScreen
-          colors={props.colors}
-          onChangePreferences={props.onChangePreferences}
-          onRestart={props.onRestart}
-          onSettingsChange={props.onSettingsChange}
-          preferences={props.preferences}
-          runtimeMetadata={props.bootstrap}
+        <DeferredSettingsScreen
+          componentProps={{
+            colors: props.colors,
+            onChangePreferences: props.onChangePreferences,
+            onRestart: props.onRestart,
+            onSettingsChange: props.onSettingsChange,
+            preferences: props.preferences,
+            runtimeMetadata: props.bootstrap,
+          }}
+          enabled
+          fallback={fallback}
         />
       );
   }
 }
+
+function UtilityLoading({ colors }: { colors: Palette }) {
+  return (
+    <View accessibilityRole="progressbar" style={styles.loading}>
+      <ActivityIndicator color={colors.muted} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+});

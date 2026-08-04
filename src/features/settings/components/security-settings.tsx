@@ -1,4 +1,8 @@
-import { Check, CircleAlert, RefreshCw, ShieldCheck, X } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
+import X from 'lucide-react-native/icons/x';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

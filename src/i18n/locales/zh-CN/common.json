@@ -890,7 +890,10 @@
     "open": "已连接",
     "reconnecting": "重连中…",
     "closed": "已断开",
-    "error": "连接出错"
+    "error": "连接出错",
+    "syncing": "正在同步会话…",
+    "offline": "网络不可用",
+    "deliveryUnknown": "无法确认消息是否送达，正在同步会话，请确认历史记录后再重试。"
   },
   "thread": {
     "loadingConversation": "正在加载话题…",

@@ -6,7 +6,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import { GitFork, Quote, RotateCw } from 'lucide-react-native';
+import GitFork from 'lucide-react-native/icons/git-fork';
+import Quote from 'lucide-react-native/icons/quote';
+import RotateCw from 'lucide-react-native/icons/rotate-cw';
 
 import { parseQuotedUserMessage } from '@/services/text/user-quote-format';
 import { formatDateTime } from '@/services/text/format';
@@ -14,10 +16,8 @@ import type {
   CliAppInfo,
   McpPresetInfo,
 } from '@/types/api/capabilities';
-import type {
-  SlashCommand,
-  UIMessage,
-} from '@/types/api/chat';
+import type { SlashCommand } from '@/types/api/chat/commands';
+import type { UIMessage } from '@/types/api/chat/messages';
 import type { Palette } from '@/ui/palette';
 
 import { MarkdownText } from '@/features/chat/components/widgets/markdown-text';

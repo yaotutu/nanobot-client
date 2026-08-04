@@ -1,28 +1,28 @@
 import * as SplashScreen from 'expo-splash-screen';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { RootErrorBoundary } from '@/components/overlays/error-boundary';
 import { DebugOverlay } from '@/components/overlays/debug-overlay';
+import { RootErrorBoundary } from '@/components/overlays/error-boundary';
+import { ensureI18n } from '@/i18n';
 import { debugLog } from '@/services/runtime/debug-log';
-import { ensureI18n, setAppLanguage } from '@/i18n';
+import { markStartup, measureStartup } from '@/services/runtime/startup-performance';
 import { useLocalPreferencesStore } from '@/stores/local-preferences-store';
 
-// Prevent auto-hide so we can explicitly hide once the first screen renders.
+// 在模块初始化阶段立即阻止自动隐藏；真正隐藏由首页首个轻量 View 的 onLayout 负责。
 void SplashScreen.preventAutoHideAsync();
-debugLog('LAYOUT', 'module eval + preventAutoHideAsync');
+markStartup('layout_module');
 
-// Catch any uncaught JS errors globally so they appear in the on-screen
-// debug overlay (console.* is stripped in release builds).
+// 捕获未处理 JS 错误并写入可视 DebugOverlay；release 构建不能依赖会被剥离的 console.*。
 if (typeof globalThis !== 'undefined') {
   const handler = (globalThis as unknown as { ErrorUtils?: { setGlobalHandler?: (fn: (err: unknown, isFatal?: boolean) => void) => void } }).ErrorUtils;
   if (handler?.setGlobalHandler) {
     handler.setGlobalHandler((err: unknown, isFatal?: boolean) => {
-      const e = err as { name?: string; message?: string; stack?: string } | undefined;
-      debugLog('GLOBAL_ERROR', `${isFatal ? 'FATAL' : 'non-fatal'} ${e?.name}: ${e?.message}`);
+      const error = err as { name?: string; message?: string } | undefined;
+      debugLog('GLOBAL_ERROR', `${isFatal ? 'FATAL' : 'non-fatal'} ${error?.name}: ${error?.message}`);
     });
   }
 }
@@ -30,63 +30,56 @@ if (typeof globalThis !== 'undefined') {
 function LocalizationGate({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
+  const settledRef = useRef(false);
 
   useEffect(() => {
-    debugLog('GATE', 'effect start');
     let cancelled = false;
+    const markReady = () => {
+      if (cancelled || settledRef.current) return;
+      settledRef.current = true;
+      setReady(true);
+      markStartup('localization_ready');
+      measureStartup('localization_total', 'preferences_start', 'localization_ready');
+    };
     const fallbackTimer = setTimeout(() => {
-      if (!cancelled && !ready) {
-        debugLog('GATE', 'FALLBACK timeout -> ready');
-        setTimedOut(true);
-        setReady(true);
-      }
+      if (cancelled || settledRef.current) return;
+      debugLog('GATE', 'startup timeout; continue with fallback state');
+      setTimedOut(true);
+      markReady();
     }, 2500);
 
-    void ensureI18n()
-      .then(async () => {
+    const initialize = async () => {
+      try {
+        // 先读取持久化偏好，随后只加载用户实际选择的语言，避免启动时解析全部语言包。
+        markStartup('preferences_start');
         await useLocalPreferencesStore.getState().hydrate();
-        return useLocalPreferencesStore.getState().preferences;
-      })
-      .then((preferences) => {
-        if (cancelled) return;
-        debugLog('GATE', `prefs read lang=${preferences.language}`);
-        return setAppLanguage(preferences.language as never);
-      })
-      .then(() => {
-        debugLog('GATE', 'lang set');
-      })
-      .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : String(err);
-        debugLog('GATE', `error ${message}`);
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setReady(true);
-          debugLog('GATE', 'ready=true');
-        }
-      });
+        markStartup('preferences_end');
+
+        const { language } = useLocalPreferencesStore.getState().preferences;
+        markStartup('i18n_start');
+        await ensureI18n(language);
+        markStartup('i18n_end');
+        measureStartup('preferences_hydrate', 'preferences_start', 'preferences_end');
+        measureStartup('i18n_initialize', 'i18n_start', 'i18n_end');
+      } catch (error) {
+        debugLog('GATE', `startup error: ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        markReady();
+      }
+    };
+
+    void initialize();
     return () => {
       cancelled = true;
       clearTimeout(fallbackTimer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (ready) {
-      debugLog('GATE', 'hiding splash screen');
-      void SplashScreen.hideAsync().catch(() => {
-        debugLog('GATE', 'splash hide failed');
-      });
-    }
-  }, [ready]);
 
   if (!ready) {
     return (
       <View style={bootStyles.root}>
         <ActivityIndicator color="#6F6E69" size="large" />
         <Text style={bootStyles.text}>{timedOut ? 'Starting...' : 'Loading...'}</Text>
-        <DebugOverlay />
       </View>
     );
   }
@@ -95,7 +88,10 @@ function LocalizationGate({ children }: { children: ReactNode }) {
 }
 
 export default function RootLayout() {
-  debugLog('LAYOUT', 'RootLayout render');
+  useEffect(() => {
+    markStartup('root_layout_mounted');
+  }, []);
+
   return (
     <SafeAreaProvider>
       <View style={styles.root}>
