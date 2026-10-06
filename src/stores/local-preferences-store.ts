@@ -3,30 +3,11 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
 import { normalizeLocale, resolveDeviceLocale } from '@/i18n/config';
-import type {
-  AppLanguage,
-  AppTheme,
-  FileEditDisplayMode,
-  LocalActivityMode,
-  LocalDensity,
-} from '@/types/domain';
-
-export type {
-  AppLanguage,
-  AppTheme,
-  FileEditDisplayMode,
-  LocalActivityMode,
-  LocalDensity,
-} from '@/types/domain';
+import type { AppLanguage, AppTheme } from '@/types/domain';
 
 export interface LocalPreferences {
   theme: AppTheme;
   language: AppLanguage;
-  density: LocalDensity;
-  activityMode: LocalActivityMode;
-  codeWrap: boolean;
-  brandLogos: boolean;
-  fileEditDisplayMode: FileEditDisplayMode;
 }
 
 const STORAGE_KEY = 'nanobot-native.local-preferences';
@@ -34,24 +15,14 @@ const STORAGE_KEY = 'nanobot-native.local-preferences';
 export const DEFAULT_LOCAL_PREFS: LocalPreferences = {
   theme: 'light',
   language: resolveDeviceLocale(),
-  density: 'comfortable',
-  activityMode: 'auto',
-  codeWrap: true,
-  brandLogos: false,
-  fileEditDisplayMode: 'summary',
 };
 
 function normalize(raw: unknown): LocalPreferences {
   const value = raw && typeof raw === 'object' ? (raw as Partial<LocalPreferences>) : {};
+  // 显式构造当前偏好，统一规范化主题与语言，确保内存状态和持久化内容只含这两个字段。
   return {
     theme: value.theme === 'dark' ? 'dark' : 'light',
     language: normalizeLocale(value.language),
-    // 已取消的显示选项统一恢复稳定默认值，避免旧安装残留不可见、无法调整的状态。
-    density: DEFAULT_LOCAL_PREFS.density,
-    activityMode: DEFAULT_LOCAL_PREFS.activityMode,
-    codeWrap: DEFAULT_LOCAL_PREFS.codeWrap,
-    brandLogos: DEFAULT_LOCAL_PREFS.brandLogos,
-    fileEditDisplayMode: DEFAULT_LOCAL_PREFS.fileEditDisplayMode,
   };
 }
 

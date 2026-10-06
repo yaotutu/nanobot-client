@@ -154,69 +154,12 @@
   "thread": {
     "loadingConversation": "正在載入話題…",
     "empty": {
-      "greetings": {
-        "workOn": "我們要一起做點什麼？",
-        "start": "今天從哪裡開始？",
-        "build": "今天要一起打造什麼？",
-        "tackle": "我們要一起解決什麼？"
-      },
-      "quickActions": {
-        "plan": {
-          "title": "建立專案計畫",
-          "prompt": "請為我接下來要建置的內容擬定一份簡潔的專案計畫。"
-        },
-        "analyze": {
-          "title": "分析這些資料",
-          "prompt": "請分析這些資料，並指出最重要的模式。"
-        },
-        "brainstorm": {
-          "title": "腦力激盪想法",
-          "prompt": "請針對這個問題提出幾個實用構想，並說明各自的取捨。"
-        },
-        "code": {
-          "title": "撰寫程式碼",
-          "prompt": "請協助我撰寫這個任務所需的程式碼，先從最小且有用的變更開始。"
-        },
-        "summarize": {
-          "title": "摘要這份文件",
-          "prompt": "請摘要這份文件，並列出重點。"
-        },
-        "more": {
-          "title": "更多",
-          "prompt": "請列出幾種能在這個工作區提供協助的實用方式。"
-        }
-      },
-      "imageQuickActions": {
-        "icon": {
-          "title": "設計應用程式圖示",
-          "prompt": "請為 nanobot 產生一個簡潔的 1:1 應用程式圖示：友善的機器人、簡約向量風格、柔和的藍白配色，不含文字。"
-        },
-        "sticker": {
-          "title": "製作貼圖",
-          "prompt": "請產生一張可愛的貼圖風格圖片，主角是小巧的機器人助理，背景看似透明，表情生動俏皮。"
-        },
-        "poster": {
-          "title": "建立海報",
-          "prompt": "請產生一張個人 AI 助理的精緻海報概念圖，採用現代構圖與鮮明的視覺層級，適合用於到達網頁。"
-        },
-        "product": {
-          "title": "產品示意圖",
-          "prompt": "請產生一張對話式 AI Web 應用程式的簡潔產品示意圖，採用極簡介面、精緻打光與逼真的裝置外框。"
-        },
-        "portrait": {
-          "title": "風格化人像",
-          "prompt": "請產生一幅風格化的友善 AI 夥伴人像，採用柔和光線與細緻親切的現代插畫風格。"
-        },
-        "edit": {
-          "title": "編輯圖片",
-          "prompt": "請協助我編輯圖片；先詢問我要上傳或指定哪張圖片，再產生編輯結果。"
-        }
-      }
+      "title": "有什麼想聊的？",
+      "subtitle": "從一個問題、一個想法，或一份檔案開始。"
     },
     "header": {
       "toggleSidebar": "切換側邊欄",
       "newChat": "開始新話題",
-      "toggleTheme": "切換佈景主題",
       "settings": "開啟設定",
       "sessionInfo": "對話詳細資料"
     },
@@ -246,8 +189,6 @@
       }
     },
     "composer": {
-      "placeholderThread": "輸入訊息…",
-      "placeholderHero": "任何問題都可以問…",
       "placeholderOpening": "正在開啟新話題…",
       "placeholderStreaming": "模型正在回覆…",
       "inputAria": "訊息輸入框",
@@ -402,7 +343,8 @@
         "defaultShort": "預設",
         "full": "完整存取權",
         "fullShort": "完整"
-      }
+      },
+      "placeholder": "輸入訊息…"
     },
     "scrollToBottom": "捲動到底部",
     "loadEarlier": "載入更早訊息",

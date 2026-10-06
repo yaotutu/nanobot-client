@@ -52,5 +52,5 @@ const styles = StyleSheet.create({
   forkBoundary: { marginVertical: 13, flexDirection: 'row', alignItems: 'center', gap: 10 },
   forkBoundaryLine: { height: StyleSheet.hairlineWidth, flex: 1 },
   forkBoundaryText: { fontSize: 11 },
-  messageActionButton: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  messageActionButton: { width: 40, height: 44, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 });

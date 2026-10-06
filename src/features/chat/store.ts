@@ -4,7 +4,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import { normalizeWorkspaceScope } from '@/services/runtime/workspace-paths';
 
 import { hasPendingAgentActivity } from './activity/model/activity-timeline';
-import { projectWebuiThreadMessages } from './model/thread-display-compat';
+import { projectWebuiThreadMessages } from './model/thread-messages';
 import { chatIdFromKey } from './model/chat-key';
 import {
   mergeLatestMessages,

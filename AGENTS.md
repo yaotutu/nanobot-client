@@ -98,11 +98,19 @@ android/ ios/      Expo Prebuild 产物（已 git ignore）
 - 不发送级联删除自动任务参数；服务端拒绝删除时保留会话并显示提示。
 - 已移除录音、日期选择和渠道二维码依赖；不要误删聊天附件／视频展示。
 
+### 消息页结构
+
+- `NanobotScreen` 组装控制器、键盘避让、连接状态与弹窗；`ChatHeader` 只包含侧栏、标题／提示导航、新会话。
+- `ChatSurface` 切换空会话／加载／消息列表的内容区域，底部 composer 始终只挂载一次，避免首条消息发送时丢失输入焦点。
+- `ComposerInputRow` 只负责附件、输入和发送／停止；模型、权限与项目选择统一放在输入框下方。
+- `fetchThread` 仅接收 `schemaVersion: 3 / projection: events`，经 `model/thread-events.ts` 回放成领域消息；不接受旧 `messages` 线上快照。
+- 历史回放与实时消息共用 `stream-fold`；`model/thread-messages.ts` 统一过滤控制命令与计算展示时间，不包含历史文本兼容清洗。
+
 ## 编码约定
 
 - TypeScript strict；`tsconfig.json` 中定义了 `@/*` → `src/*`、`@/assets/*` → `assets/*` 的路径别名。
 - ESLint：flat config（`eslint.config.mjs`），启用 `@typescript-eslint` 推荐规则 + `eslint-plugin-react-hooks`。`android/`、`dist/`、`ios/` 被忽略。
-- 入口样式调色板以 `#FAFAF9` / `#208AEF` 为基础，遵循 `app.json` 中的 `userInterfaceStyle: automatic`。
+- 认证／侧栏沿用共享调色板；聊天页使用 `src/features/chat/ui/chat-theme.ts` 独立定义的浅色／深色调色板。不要把旧聊天密度、活动模式、代码换行等显示偏好加回来。
 - i18n：所有面向用户文本必须走 i18next；新增 key 时同步更新所有 `src/i18n/locales/*/common.json`。
 - 不要提交 `android/`、`ios/`、`dist/`、`expo-env.d.ts`、`src/services/credentials/dev-secret.ts`（参见 `.gitignore`）。
 - 修改包名 / 原生配置后必须重新 `npm run android`，仅 `npm start` 不会反映原生变更。

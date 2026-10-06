@@ -1,6 +1,5 @@
 import { View } from 'react-native';
 
-import type { FileEditDisplayMode } from '@/stores/local-preferences-store';
 import type { Palette } from '@/ui/palette';
 
 import { FileEditRow } from './FileEditRow';
@@ -10,13 +9,11 @@ import { type FileEditSummary, fileDiffRevision } from '@/features/chat/activity
 export function FileEditGroup({
   colors,
   edits,
-  displayMode,
   onOpenFilePreview,
   resolveFilePreviewAvailability,
 }: {
   colors: Palette;
   edits: FileEditSummary[];
-  displayMode: FileEditDisplayMode;
   onOpenFilePreview?: (path: string) => void;
   resolveFilePreviewAvailability?: (path: string) => Promise<boolean>;
 }) {
@@ -25,7 +22,6 @@ export function FileEditGroup({
       {edits.map((edit) => (
         <FileEditRow
           colors={colors}
-          displayMode={displayMode}
           edit={edit}
           key={`${edit.key}:${fileDiffRevision(edit.diff)}`}
           onOpenFilePreview={onOpenFilePreview}

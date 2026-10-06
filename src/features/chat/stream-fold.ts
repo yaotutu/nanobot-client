@@ -15,6 +15,7 @@ import {
 } from '@/features/chat/stream-fold/activity-events';
 import {
   clearActivitySegment,
+  currentEventTime,
   createStreamFoldState,
   prepareStreamFoldForUserTurn,
   resetStreamFoldState,
@@ -63,12 +64,27 @@ export function foldStreamEvent(
       : messages;
   }
   if (event.event === 'stream_end') return applyStreamEnd(messages, event, state);
-  if (event.event === 'reasoning_end') return closeReasoningStream(messages);
+  if (event.event === 'reasoning_end') {
+    // 持久化的结束事件可能只有完整文本，没有前面的 delta；完整文本覆盖而不是再次拼接。
+    let next = messages;
+    if (typeof event.text === 'string') {
+      const turn = turnFields(event, 'reasoning');
+      const target = next.findLastIndex((message) =>
+        message.role === 'assistant' && message.content === '' && message.reasoning !== undefined
+        && (!turn.turnId || message.turnId === turn.turnId),
+      );
+      next = target >= 0
+        ? next.map((message, index) => index === target ? { ...message, reasoning: event.text } : message)
+        : attachReasoningChunk(next, event.text, state, turn);
+    }
+    return closeReasoningStream(next, currentEventTime(state));
+  }
   if (event.event === 'file_edit') return mergeFileEditTrace(messages, event, state);
   if (event.event === 'message' && event.kind === 'reasoning') {
     if (state.fileEditSegmentId) clearActivitySegment(state);
     return closeReasoningStream(
       attachReasoningChunk(messages, event.text, state, turnFields(event, 'reasoning')),
+      currentEventTime(state),
     );
   }
   if (event.event === 'message' && (event.kind === 'tool_hint' || event.kind === 'progress')) {

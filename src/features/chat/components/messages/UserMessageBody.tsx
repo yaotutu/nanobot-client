@@ -79,6 +79,7 @@ function translucentTokenColor(color: string): string {
 }
 
 const styles = StyleSheet.create({
-  messageText: { fontSize: 15.5, lineHeight: 23 },
-  inlineToken: { fontWeight: '600', borderRadius: 4 },
+  // 与 Markdown 正文保持同一阅读节奏；气泡底色和布局仍由外层消息组件负责。
+  messageText: { fontSize: 16, lineHeight: 24 },
+  inlineToken: { fontWeight: '600', borderRadius: 6 },
 });

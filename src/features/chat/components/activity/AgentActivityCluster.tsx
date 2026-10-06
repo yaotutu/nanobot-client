@@ -23,7 +23,6 @@ import {
 } from '@/features/chat/activity/model/tool-helpers';
 import { isReasoningOnlyAssistant } from '@/features/chat/activity/model/activity-timeline';
 import { coalesceActivityMessages } from '@/features/chat/activity/model/activity-message-model';
-import type { FileEditDisplayMode, LocalActivityMode } from '@/stores/local-preferences-store';
 import type { Palette } from '@/ui/palette';
 import type {
   CliAppInfo,
@@ -42,8 +41,6 @@ interface AgentActivityClusterProps {
   resolveFilePreviewAvailability?: (path: string) => Promise<boolean>;
   startedAtMs?: number;
   turnLatencyMs?: number;
-  activityMode?: LocalActivityMode;
-  fileEditDisplayMode?: FileEditDisplayMode;
 }
 
 const ACTIVITY_SCROLL_NEAR_BOTTOM_PX = 24;
@@ -59,8 +56,6 @@ export function AgentActivityCluster({
   resolveFilePreviewAvailability,
   startedAtMs,
   turnLatencyMs,
-  activityMode = 'auto',
-  fileEditDisplayMode = 'summary',
 }: AgentActivityClusterProps) {
   const { t } = useTranslation();
   const [manualExpanded, setManualExpanded] = useState<boolean | null>(null);
@@ -90,7 +85,8 @@ export function AgentActivityCluster({
   const hasNonReasoningActivity = hasToolActivity || fileEdits.length > 0;
   const hasOnlyFileActivity = fileEdits.length > 0
     && activityMessages.every(messageHasOnlyFileActivity);
-  const expanded = manualExpanded ?? (activityMode === 'expanded' || isTurnStreaming || completionHoldOpen);
+  // 手动选择优先；未手动切换时，流式期间自动展开，完成后沿用短暂保持再折叠的规则。
+  const expanded = manualExpanded ?? (isTurnStreaming || completionHoldOpen);
 
   const cancelActivityScrollFrame = useCallback(() => {
     if (scrollFrameRef.current === null) return;
@@ -157,7 +153,6 @@ export function AgentActivityCluster({
       <View style={[styles.container, hasBodyBelow && styles.withBodyBelow]}>
         <FileEditGroup
           colors={colors}
-          displayMode={fileEditDisplayMode}
           edits={fileEdits}
           onOpenFilePreview={onOpenFilePreview}
           resolveFilePreviewAvailability={resolveFilePreviewAvailability}
@@ -234,7 +229,6 @@ export function AgentActivityCluster({
           {fileEdits.length ? (
             <FileEditGroup
               colors={colors}
-              displayMode={fileEditDisplayMode}
               edits={fileEdits}
               onOpenFilePreview={onOpenFilePreview}
               resolveFilePreviewAvailability={resolveFilePreviewAvailability}

@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import { useResolvedFilePreviewAvailability } from '@/features/chat/hooks/use-resolved-file-preview-availability';
 import { countDiffLines, parseRenderableFileDiff } from '@/services/text/file-diff';
 import { compactActivityPath, redactActivityText, safeActivityDetail } from '@/services/text/log-redaction';
-import type { FileEditDisplayMode } from '@/stores/local-preferences-store';
 import type { Palette } from '@/ui/palette';
 
 import {
@@ -27,17 +26,16 @@ const INITIAL_VISIBLE_DIFF_LINES = 160;
 export function FileEditRow({
   colors,
   edit,
-  displayMode,
   onOpenFilePreview,
   resolveFilePreviewAvailability,
 }: {
   colors: Palette;
   edit: FileEditSummary;
-  displayMode: FileEditDisplayMode;
   onOpenFilePreview?: (path: string) => void;
   resolveFilePreviewAvailability?: (path: string) => Promise<boolean>;
 }) {
   const { t } = useTranslation();
+  // 每次挂载默认只展示文件摘要；diff 展开由当前卡片的按钮控制，不读取持久化偏好。
   const [open, setOpen] = useState(false);
   const [expandedLines, setExpandedLines] = useState(false);
   const failed = edit.status === 'error';
@@ -66,10 +64,10 @@ export function FileEditRow({
     [edit.diff],
   );
   const totalLineCount = countDiffLines(renderableDiff);
-  const canRenderDiff = displayMode !== 'summary' && !running && !failed && totalLineCount > 0;
-  const shouldAutoCollapse = totalLineCount > INITIAL_VISIBLE_DIFF_LINES || Boolean(edit.diff?.truncated);
-  const startsCollapsed = displayMode === 'collapsed_diff' || shouldAutoCollapse;
-  const shouldRenderBody = canRenderDiff && (!startsCollapsed || open);
+  const canRenderDiff = !running && !failed && totalLineCount > 0;
+  const isLargeDiff = totalLineCount > INITIAL_VISIBLE_DIFF_LINES || Boolean(edit.diff?.truncated);
+  // 仅在用户展开且存在可展示的 diff 时渲染正文；长 diff 仍先限于 160 行，再由“查看更多”放开。
+  const shouldRenderBody = canRenderDiff && open;
   const lineLimit = expandedLines ? totalLineCount : Math.min(totalLineCount, INITIAL_VISIBLE_DIFF_LINES);
   const visibleDiff = useMemo(
     () => selectVisibleDiffLines(renderableDiff, lineLimit),
@@ -126,7 +124,7 @@ export function FileEditRow({
         ) : null}
       </View>
 
-      {canRenderDiff && startsCollapsed ? (
+      {canRenderDiff ? (
         <Pressable
           accessibilityLabel={open
             ? t('message.collapseDiff', { defaultValue: 'Collapse diff' })
@@ -149,7 +147,7 @@ export function FileEditRow({
             style={{ transform: [{ rotate: open ? '90deg' : '0deg' }] }}
           />
           <Text style={[styles.diffToggleLabel, { color: colors.muted }]}>
-            {shouldAutoCollapse
+            {isLargeDiff
               ? t('message.viewLargeDiff', { defaultValue: 'View large diff' })
               : t('message.viewDiff', { defaultValue: 'View diff' })}
           </Text>

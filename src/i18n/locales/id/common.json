@@ -154,69 +154,12 @@
   "thread": {
     "loadingConversation": "Memuat percakapan…",
     "empty": {
-      "greetings": {
-        "workOn": "Apa yang kita kerjakan bersama?",
-        "start": "Kita mulai dari mana?",
-        "build": "Apa yang kita bangun hari ini?",
-        "tackle": "Apa yang kita selesaikan bersama?"
-      },
-      "quickActions": {
-        "plan": {
-          "title": "Buat rencana proyek",
-          "prompt": "Buat rencana proyek ringkas untuk apa yang sebaiknya saya bangun berikutnya."
-        },
-        "analyze": {
-          "title": "Analisis data ini",
-          "prompt": "Bantu saya menganalisis data ini dan soroti pola yang paling penting."
-        },
-        "brainstorm": {
-          "title": "Brainstorm ide",
-          "prompt": "Brainstorm beberapa ide praktis dan tradeoff untuk masalah ini."
-        },
-        "code": {
-          "title": "Tulis kode",
-          "prompt": "Bantu saya menulis kode untuk tugas ini, mulai dari perubahan berguna yang paling kecil."
-        },
-        "summarize": {
-          "title": "Ringkas dokumen ini",
-          "prompt": "Ringkas dokumen ini dan daftar poin-poin utamanya."
-        },
-        "more": {
-          "title": "Lainnya",
-          "prompt": "Tunjukkan beberapa cara berguna Anda dapat membantu di workspace ini."
-        }
-      },
-      "imageQuickActions": {
-        "icon": {
-          "title": "Desain ikon aplikasi",
-          "prompt": "Buat ikon aplikasi 1:1 yang bersih untuk nanobot: robot ramah, gaya vektor sederhana, palet biru dan putih lembut, tanpa teks."
-        },
-        "sticker": {
-          "title": "Buat stiker",
-          "prompt": "Buat gambar gaya stiker yang lucu dari asisten robot kecil, latar terlihat transparan, ekspresif dan menyenangkan."
-        },
-        "poster": {
-          "title": "Buat poster",
-          "prompt": "Buat konsep poster yang rapi untuk asisten AI pribadi, komposisi modern, hierarki visual kuat, cocok untuk landing page."
-        },
-        "product": {
-          "title": "Mockup produk",
-          "prompt": "Buat gambar mockup produk yang bersih untuk aplikasi web AI percakapan, antarmuka minimal, pencahayaan premium, bingkai perangkat realistis."
-        },
-        "portrait": {
-          "title": "Potret bergaya",
-          "prompt": "Buat potret bergaya dari pendamping AI yang ramah, pencahayaan lembut, detail tetapi tetap mudah didekati, gaya ilustrasi modern."
-        },
-        "edit": {
-          "title": "Edit gambar",
-          "prompt": "Bantu saya mengedit gambar. Minta saya mengunggah atau menyebutkan gambar terlebih dahulu, lalu buat hasil editnya."
-        }
-      }
+      "title": "Apa yang ingin kamu bahas?",
+      "subtitle": "Mulai dengan pertanyaan, ide, atau berkas."
     },
     "header": {
       "toggleSidebar": "Tampilkan atau sembunyikan sidebar",
       "newChat": "Mulai topik baru",
-      "toggleTheme": "Alihkan tema dari header",
       "settings": "Buka pengaturan",
       "sessionInfo": "Detail sesi"
     },
@@ -246,8 +189,6 @@
       }
     },
     "composer": {
-      "placeholderThread": "Ketik pesan Anda…",
-      "placeholderHero": "Apa yang sedang Anda pikirkan?",
       "placeholderOpening": "Membuka topik baru…",
       "placeholderStreaming": "Model sedang merespons…",
       "inputAria": "Input pesan",
@@ -402,7 +343,8 @@
         "defaultShort": "Default",
         "full": "Akses penuh",
         "fullShort": "Penuh"
-      }
+      },
+      "placeholder": "Ketik pesan Anda…"
     },
     "scrollToBottom": "Gulir ke bawah",
     "loadEarlier": "Muat pesan sebelumnya",

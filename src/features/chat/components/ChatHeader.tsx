@@ -1,80 +1,64 @@
+import ListTree from 'lucide-react-native/icons/list-tree';
+import Menu from 'lucide-react-native/icons/menu';
+import SquarePen from 'lucide-react-native/icons/square-pen';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import ListTree from 'lucide-react-native/icons/list-tree';
-import Menu from 'lucide-react-native/icons/menu';
-import Moon from 'lucide-react-native/icons/moon';
-import Sun from 'lucide-react-native/icons/sun';
-
-import type { LocalPreferences } from '@/stores/local-preferences-store';
+import { chatLayout } from '@/features/chat/ui/chat-theme';
 import type { Palette } from '@/ui/palette';
 
 export interface ChatHeaderProps {
   colors: Palette;
-  dark: boolean;
-  preferences: LocalPreferences;
-  activeKey: string | null;
   chatTitle: string;
   hasUserPrompts: boolean;
   onOpenDrawer: () => void;
   onOpenPromptNavigator: () => void;
-  onChangePreferences: (next: LocalPreferences) => void;
+  onStartNewChat: () => void;
 }
 
-export function ChatHeader(props: ChatHeaderProps) {
+/** 顶部仅保留会话相关操作；主题切换统一由设置管理，不再占用聊天页工具栏。 */
+export function ChatHeader({ colors, chatTitle, hasUserPrompts, onOpenDrawer, onOpenPromptNavigator, onStartNewChat }: ChatHeaderProps) {
   const { t } = useTranslation();
-  const { colors, dark, preferences } = props;
-
   return (
     <View style={styles.header}>
       <Pressable
+        accessibilityRole="button"
         accessibilityLabel={t('thread.header.toggleSidebar')}
-        hitSlop={8}
-        onPress={props.onOpenDrawer}
-        style={({ pressed }) => [styles.headerButton, pressed && { backgroundColor: colors.pressed }]}
+        onPress={onOpenDrawer}
+        style={({ pressed }) => [styles.button, { backgroundColor: pressed ? colors.pressed : colors.card }]}
       >
-        <Menu color={colors.muted} size={18} strokeWidth={1.8} />
+        <Menu color={colors.foreground} size={21} strokeWidth={1.8} />
       </Pressable>
-      {props.activeKey ? (
-        <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.muted }]}>{props.chatTitle}</Text>
-      ) : <View style={styles.headerTitleFill} />}
-      <View style={styles.headerActions}>
-        {props.activeKey && props.hasUserPrompts ? (
-          <Pressable
-            accessibilityLabel={t('thread.promptNavigator.open')}
-            hitSlop={6}
-            onPress={props.onOpenPromptNavigator}
-            style={({ pressed }) => [styles.headerButton, pressed && { backgroundColor: colors.pressed }]}
-          >
-            <ListTree color={colors.muted} size={17} strokeWidth={1.8} />
-          </Pressable>
-        ) : null}
+      <View style={styles.heading}>
+        {hasUserPrompts ? <Text style={[styles.brand, { color: colors.subtle }]}>{t('app.brand')}</Text> : null}
         <Pressable
-          accessibilityLabel={t('thread.header.toggleTheme')}
-          hitSlop={8}
-          onPress={() => props.onChangePreferences({ ...preferences, theme: dark ? 'light' : 'dark' })}
-          style={({ pressed }) => [styles.headerButton, pressed && { backgroundColor: colors.pressed }]}
+          accessibilityRole={hasUserPrompts ? 'button' : undefined}
+          accessibilityLabel={hasUserPrompts ? t('thread.promptNavigator.open') : undefined}
+          disabled={!hasUserPrompts}
+          onPress={onOpenPromptNavigator}
+          style={styles.titleRow}
         >
-          {dark
-            ? <Sun color={colors.muted} size={18} strokeWidth={1.8} />
-            : <Moon color={colors.muted} size={18} strokeWidth={1.8} />}
+          <Text numberOfLines={1} style={[styles.title, { color: colors.foreground }]}>{chatTitle}</Text>
+          {hasUserPrompts ? <ListTree color={colors.subtle} size={14} strokeWidth={1.8} /> : null}
         </Pressable>
       </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('sidebar.newChat')}
+        onPress={onStartNewChat}
+        style={({ pressed }) => [styles.button, { backgroundColor: pressed ? colors.pressed : colors.card }]}
+      >
+        <SquarePen color={colors.foreground} size={20} strokeWidth={1.8} />
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    height: 45,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingHorizontal: 11,
-  },
-  headerButton: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  headerActions: { flexDirection: 'row', alignItems: 'center' },
-  headerTitle: { minWidth: 0, flex: 1, fontSize: 12, fontWeight: '500' },
-  headerTitleFill: { minWidth: 0, flex: 1 },
+  header: { minHeight: 82, width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: chatLayout.horizontalInset, paddingVertical: 12 },
+  button: { width: chatLayout.controlSize, height: chatLayout.controlSize, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  heading: { minWidth: 0, flex: 1, alignItems: 'center', gap: 4 },
+  brand: { fontSize: 11, fontWeight: '600', letterSpacing: 1.1 },
+  titleRow: { minHeight: 44, maxWidth: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  title: { flexShrink: 1, fontSize: 18, lineHeight: 25, fontWeight: '600', letterSpacing: -0.4 },
 });

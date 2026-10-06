@@ -27,15 +27,10 @@ jest.mock('@/services/api/api', () => ({
   },
 }));
 
-// 用非默认的其他偏好检查 onChange 是否完整保留字段；冻结对象防止直接修改入参。
+// 仅提供当前支持的主题与语言；冻结对象，确保单项更新保留另一项且不直接修改入参。
 const preferences = Object.freeze<LocalPreferences>({
   theme: 'light',
   language: 'en',
-  density: 'compact',
-  activityMode: 'expanded',
-  codeWrap: false,
-  brandLogos: true,
-  fileEditDisplayMode: 'diff',
 });
 
 const createProps = () => ({

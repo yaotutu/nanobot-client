@@ -24,7 +24,7 @@ import type { WorkspaceScopePayload, WorkspacesPayload } from '@/types/api/works
 import { styles, type WorkspaceColors } from './workspace-controls-styles';
 
 export function WorkspaceProjectPicker({
-  isHero,
+  canChangeProject,
   disabled = false,
   scope,
   defaultScope,
@@ -33,7 +33,7 @@ export function WorkspaceProjectPicker({
   colors,
   onChange,
 }: {
-  isHero: boolean;
+  canChangeProject: boolean;
   disabled?: boolean;
   scope: WorkspaceScopePayload | null;
   defaultScope: WorkspaceScopePayload | null;
@@ -50,7 +50,8 @@ export function WorkspaceProjectPicker({
   const projectLabel = currentProjectScope
     ? currentProjectScope.project_name || projectNameFromPath(currentProjectScope.project_path)
     : t('thread.composer.workspace.projectPlaceholder');
-  const visible = isHero
+  // 调用方按会话状态决定能否切换项目；默认 scope、回调和服务端权限限制仍需同时满足。
+  const visible = canChangeProject
     && Boolean(defaultScope)
     && Boolean(onChange)
     && controls?.can_change_project !== false;
@@ -75,9 +76,11 @@ export function WorkspaceProjectPicker({
   };
 
   return (
-    <View style={[styles.projectBar, { backgroundColor: colors.pressed }]}>
+    <View style={styles.projectControl}>
       <Pressable
         accessibilityLabel={t('thread.composer.workspace.projectAria')}
+        accessibilityRole="button"
+        accessibilityState={{ disabled, expanded: open }}
         disabled={disabled}
         onPress={() => {
           setPathDraft(currentProjectScope?.project_path ?? '');
@@ -86,7 +89,7 @@ export function WorkspaceProjectPicker({
         }}
         style={({ pressed }) => [
           styles.projectTrigger,
-          pressed && { backgroundColor: colors.background },
+          pressed && { backgroundColor: colors.pressed },
           disabled && styles.disabled,
         ]}
       >

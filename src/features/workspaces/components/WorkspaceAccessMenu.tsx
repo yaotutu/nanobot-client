@@ -15,14 +15,12 @@ export function WorkspaceAccessMenu({
   scope,
   disabled = false,
   canUseFullAccess,
-  isHero,
   colors,
   onChange,
 }: {
   scope: WorkspaceScopePayload;
   disabled?: boolean;
   canUseFullAccess: boolean;
-  isHero: boolean;
   colors: WorkspaceColors;
   onChange?: (scope: WorkspaceScopePayload) => void;
 }) {
@@ -32,6 +30,10 @@ export function WorkspaceAccessMenu({
   const accessLabel = isFull
     ? t('thread.composer.workspace.full')
     : t('thread.composer.workspace.default');
+  // footer 使用简短文案保持 chip 紧凑；无障碍标签和弹窗选项继续使用完整权限名称。
+  const chipLabel = isFull
+    ? t('thread.composer.workspace.fullShort')
+    : t('thread.composer.workspace.defaultShort');
 
   const setMode = (mode: WorkspaceAccessMode) => {
     if (mode === 'full' && !canUseFullAccess) return;
@@ -43,11 +45,12 @@ export function WorkspaceAccessMenu({
     <>
       <Pressable
         accessibilityLabel={`${t('thread.composer.workspace.accessAria')}: ${accessLabel}`}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: disabled || !onChange, expanded: open }}
         disabled={disabled || !onChange}
         onPress={() => setOpen(true)}
         style={({ pressed }) => [
           styles.accessTrigger,
-          isHero ? styles.accessTriggerHero : styles.accessTriggerThread,
           pressed && { backgroundColor: colors.pressed },
           (disabled || !onChange) && styles.disabled,
         ]}
@@ -56,11 +59,7 @@ export function WorkspaceAccessMenu({
           ? <AlertTriangle color="#D97706" size={14} strokeWidth={2} />
           : <Hand color={colors.muted} size={14} strokeWidth={1.9} />}
         <Text numberOfLines={1} style={[styles.accessText, { color: isFull ? '#D97706' : colors.muted }]}>
-          {isHero
-            ? accessLabel
-            : isFull
-              ? t('thread.composer.workspace.fullShort')
-              : t('thread.composer.workspace.defaultShort')}
+          {chipLabel}
         </Text>
         <ChevronDown color={isFull ? '#D97706' : colors.subtle} size={12} strokeWidth={2} />
       </Pressable>

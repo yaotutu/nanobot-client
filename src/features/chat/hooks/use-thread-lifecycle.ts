@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
 
 import { fetchThread } from '@/features/chat/api';
-import { hasPendingAgentActivity } from '@/features/chat/activity/model/activity-timeline';
 import { useChatStore } from '@/features/chat/store';
 import { useConnectionStore, type NanobotSocket } from '@/features/connection';
 import i18n from '@/i18n';
@@ -40,9 +39,7 @@ export function useCanonicalRefresh(activeKey: string | null, enabled: boolean):
       if (!thread || controller.signal.aborted || !currentThreadMatches(requestKey)) return;
       const hasPending = Boolean(
         thread.active_turn_id
-          || (typeof thread.has_pending_tool_calls === 'boolean'
-            ? thread.has_pending_tool_calls
-            : hasPendingAgentActivity(thread.messages)),
+          || thread.has_pending_tool_calls,
       );
       if (hasPending) {
         useChatStore.getState().setTurnActive(true);
@@ -54,9 +51,7 @@ export function useCanonicalRefresh(activeKey: string | null, enabled: boolean):
         hasMoreBefore: Boolean(thread.page?.has_more_before),
         userMessageOffset: Math.max(0, thread.page?.user_message_offset ?? 0),
         forkBoundaryMessageCount:
-          typeof thread.fork_boundary_message_count === 'number'
-            ? thread.fork_boundary_message_count
-            : null,
+          thread.forkBoundaryMessageCount,
         activeTurnId: thread.active_turn_id ?? null,
       });
       useConnectionStore.getState().clearReconnectNeeded();
@@ -104,18 +99,14 @@ export function useThreadLifecycle({
         if (!thread || controller.signal.aborted || !currentThreadMatches(requestKey)) return;
         const threadActive = Boolean(
           thread.active_turn_id
-            || (typeof thread.has_pending_tool_calls === 'boolean'
-              ? thread.has_pending_tool_calls
-              : hasPendingAgentActivity(thread.messages)),
+            || thread.has_pending_tool_calls,
         );
         useChatStore.getState().applyCanonicalHistory(thread.messages, {
           beforeCursor: thread.page?.before_cursor ?? null,
           hasMoreBefore: Boolean(thread.page?.has_more_before),
           userMessageOffset: Math.max(0, thread.page?.user_message_offset ?? 0),
           forkBoundaryMessageCount:
-            typeof thread.fork_boundary_message_count === 'number'
-              ? thread.fork_boundary_message_count
-              : null,
+            thread.forkBoundaryMessageCount,
           activeTurnId: thread.active_turn_id ?? null,
         });
         useChatStore.getState().setTurnActive(threadActive);
@@ -159,9 +150,7 @@ export function useThreadLifecycle({
       store.setBeforeCursor(thread.page?.before_cursor ?? null, Boolean(thread.page?.has_more_before));
       store.setUserMessageOffset(Math.max(0, thread.page?.user_message_offset ?? 0));
       store.setForkBoundaryMessageCount(
-        typeof thread.fork_boundary_message_count === 'number'
-          ? thread.fork_boundary_message_count
-          : null,
+        thread.forkBoundaryMessageCount,
       );
     } catch (caught) {
       if (isAbortError(caught)) return;

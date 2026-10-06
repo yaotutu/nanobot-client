@@ -6,8 +6,21 @@ import type {
   UIFileEdit,
   UIMessageSource,
 } from './messages';
+import type { UICliAppAttachment, UIMcpPresetAttachment } from './media';
 
-export type InboundEvent =
+export type InboundEvent = (
+  | {
+      event: 'user_message';
+      chat_id: string;
+      text: string;
+      starts_turn?: boolean;
+      media_urls?: Array<{ url: string; name?: string }>;
+      cli_apps?: UICliAppAttachment[];
+      mcp_presets?: UIMcpPresetAttachment[];
+      turn_id?: string;
+      turn_phase?: string;
+      turn_seq?: number;
+    }
   | { event: 'ready'; chat_id: string; client_id: string }
   | { event: 'attached'; chat_id: string }
   | { event: 'message_accepted'; chat_id: string; turn_id: string }
@@ -56,6 +69,7 @@ export type InboundEvent =
   | {
       event: 'reasoning_end';
       chat_id: string;
+      text?: string;
       stream_id?: string;
       turn_id?: string;
       turn_phase?: string;
@@ -64,6 +78,7 @@ export type InboundEvent =
   | {
       event: 'stream_end';
       chat_id: string;
+      source?: UIMessageSource;
       stream_id?: string;
       text?: string;
       resuming?: boolean;
@@ -114,4 +129,9 @@ export type InboundEvent =
       detail?: string;
       reason?: string;
       turn_id?: string;
-    };
+    }
+) & {
+  /** 服务端持久化事件的稳定标识和时间；实时事件不要求携带。 */
+  projection_id?: string;
+  created_at_ms?: number;
+};

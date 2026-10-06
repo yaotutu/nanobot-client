@@ -13,6 +13,7 @@ import {
   closeActiveAssistantStream,
   matchesTurn,
   nextMessageId,
+  currentEventTime,
   replaceMessageAt,
   turnFields,
   type StreamFoldState,
@@ -103,7 +104,7 @@ export function appendAnswerChunk(
         content: '',
         isStreaming: true,
         ...turn,
-        createdAt: Date.now(),
+        createdAt: currentEventTime(state),
       },
     ];
     targetIndex = next.length - 1;
@@ -133,7 +134,8 @@ export function applyStreamEnd(
       ?? findStreamingAssistantIndex(next, state, turn);
     if (targetIndex !== null) {
       const target = next[targetIndex];
-      const merged: UIMessage = { ...target, content: event.text, isStreaming: true, ...turn };
+      const merged: UIMessage = { ...target, content: event.text, isStreaming: true, reasoningStreaming: false,
+        ...(event.source ? { source: event.source } : {}), ...turn };
       next = replaceMessageAt(next, targetIndex, merged);
       if (event.resuming === true && event.merge_next === true) {
         state.closedAssistantStreamIds.delete(merged.id);
@@ -146,9 +148,10 @@ export function applyStreamEnd(
         id,
         role: 'assistant',
         content: event.text,
+        ...(event.source ? { source: event.source } : {}),
         isStreaming: true,
         ...turn,
-        createdAt: Date.now(),
+        createdAt: currentEventTime(state),
       }];
       if (event.resuming === true && event.merge_next === true) {
         state.activeAssistant = { id, index: next.length - 1 };

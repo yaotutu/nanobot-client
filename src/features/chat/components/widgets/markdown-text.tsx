@@ -2,7 +2,7 @@ import { Image as ExpoImage } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View, type TextStyle } from 'react-native';
+import { StyleSheet, Text, View, type TextStyle, type StyleProp, type ViewStyle } from 'react-native';
 import Markdown, {
   MarkdownIt,
   type ASTNode,
@@ -32,7 +32,6 @@ interface MarkdownTextProps {
   colors: MarkdownPalette;
   dark: boolean;
   streaming?: boolean;
-  codeWrap?: boolean;
   onOpenFilePreview?: (path: string) => void;
   resolveFilePreviewAvailability?: (path: string) => Promise<boolean>;
 }
@@ -62,88 +61,110 @@ export function MarkdownText({
   colors,
   dark,
   streaming = false,
-  codeWrap = true,
   onOpenFilePreview,
   resolveFilePreviewAvailability,
 }: MarkdownTextProps) {
   const { t } = useTranslation();
   const styles = useMemo<Partial<MarkdownStyles>>(() => ({
     body: { width: '100%', color: colors.foreground },
-    text: { color: colors.foreground, fontSize: 15.5, lineHeight: 23.5 },
-    paragraph: { marginTop: 0, marginBottom: 11 },
-    headingContainer: { marginTop: 8, marginBottom: 8 },
-    heading1: { color: colors.foreground, fontSize: 25, lineHeight: 31, fontWeight: '700' },
-    heading2: { color: colors.foreground, fontSize: 21, lineHeight: 27, fontWeight: '700' },
-    heading3: { color: colors.foreground, fontSize: 18, lineHeight: 24, fontWeight: '700' },
-    heading4: { color: colors.foreground, fontSize: 16, lineHeight: 22, fontWeight: '700' },
-    heading5: { color: colors.foreground, fontSize: 15, lineHeight: 21, fontWeight: '700' },
-    heading6: { color: colors.muted, fontSize: 14, lineHeight: 20, fontWeight: '700' },
-    strong: { color: colors.foreground, fontWeight: '700' },
+    // 正文与用户消息统一为 16/24；标题用留白分层，避免默认下划线打断阅读。
+    text: { color: colors.foreground, fontSize: 16, lineHeight: 24 },
+    paragraph: { marginTop: 0, marginBottom: 12 },
+    headingContainer: { marginTop: 16, marginBottom: 8 },
+    heading1Container: { paddingBottom: 0, borderBottomWidth: 0 },
+    heading2Container: { paddingBottom: 0, borderBottomWidth: 0 },
+    heading1: { color: colors.foreground, fontSize: 26, lineHeight: 34, fontWeight: '600' },
+    heading2: { color: colors.foreground, fontSize: 22, lineHeight: 30, fontWeight: '600' },
+    heading3: { color: colors.foreground, fontSize: 19, lineHeight: 28, fontWeight: '600' },
+    heading4: { color: colors.foreground, fontSize: 17, lineHeight: 26, fontWeight: '600' },
+    heading5: { color: colors.foreground, fontSize: 16, lineHeight: 24, fontWeight: '600' },
+    heading6: { color: colors.muted, fontSize: 16, lineHeight: 24, fontWeight: '600' },
+    strong: { color: colors.foreground, fontWeight: '600' },
     em: { color: colors.foreground, fontStyle: 'italic' },
     strikethrough: { textDecorationLine: 'line-through', color: colors.muted },
     link: { color: dark ? '#8AB4F8' : '#2867B2', textDecorationLine: 'underline' },
+    // 仅给内容块添加柔和表面，浅暗主题均沿用 Palette，不设置消息外层背景。
     blockquote: {
       borderLeftColor: colors.border,
-      borderLeftWidth: 3,
-      paddingLeft: 13,
-      paddingVertical: 3,
+      borderLeftWidth: 2,
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 0,
       marginLeft: 0,
-      marginBottom: 11,
-      backgroundColor: 'transparent',
+      marginTop: 4,
+      marginBottom: 12,
+      backgroundColor: colors.pressed,
     },
     codeInline: {
       color: colors.foreground,
       backgroundColor: colors.pressed,
-      borderRadius: 5,
+      borderRadius: 6,
       fontFamily: process.env.EXPO_OS === 'ios' ? 'Menlo' : 'monospace',
-      fontSize: 13.5,
-      paddingHorizontal: 4,
-      paddingVertical: 1,
+      fontSize: 14,
+      lineHeight: 24,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
     },
-    list: { width: '100%', marginBottom: 8 },
-    listItem: { minWidth: 0, flex: 1, paddingLeft: 3 },
-    listUnorderedItem: { flexDirection: 'row', marginBottom: 4 },
-    listUnorderedItemIcon: { color: colors.muted, fontSize: 20, lineHeight: 23, marginRight: 7 },
-    listOrderedItem: { flexDirection: 'row', marginBottom: 4 },
+    list: { width: '100%', marginBottom: 12 },
+    listItem: { minWidth: 0, flex: 1, paddingLeft: 4 },
+    listUnorderedItem: { flexDirection: 'row', marginTop: 0, marginBottom: 6 },
+    listUnorderedItemIcon: { color: colors.muted, fontSize: 20, lineHeight: 24, marginRight: 8 },
+    listOrderedItem: { flexDirection: 'row', marginTop: 0, marginBottom: 6 },
     listOrderedItemIcon: {
       color: colors.muted,
-      fontSize: 14,
-      lineHeight: 23,
+      fontSize: 16,
+      lineHeight: 24,
       minWidth: 24,
-      marginRight: 5,
+      marginRight: 8,
       textAlign: 'right',
     },
     table: {
       borderColor: colors.border,
       borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: 9,
+      borderRadius: 16,
       overflow: 'hidden',
-      marginBottom: 13,
+      backgroundColor: colors.card,
+      marginTop: 4,
+      marginBottom: 12,
     },
     tableHeader: { backgroundColor: colors.pressed },
     tableHeaderCell: {
       flex: 1,
-      paddingHorizontal: 8,
-      paddingVertical: 7,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      // 覆盖渲染器默认的四边框，避免硬编码浅色边线在暗色主题中透出。
+      borderWidth: 0,
+      borderColor: colors.border,
       borderRightColor: colors.border,
       borderRightWidth: StyleSheet.hairlineWidth,
     },
     tableRow: {
       flexDirection: 'row',
+      borderColor: colors.border,
       borderBottomColor: colors.border,
       borderBottomWidth: StyleSheet.hairlineWidth,
     },
     tableRowCell: {
       flex: 1,
-      paddingHorizontal: 8,
-      paddingVertical: 7,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      // 覆盖渲染器默认的四边框，避免硬编码浅色边线在暗色主题中透出。
+      borderWidth: 0,
+      borderColor: colors.border,
       borderRightColor: colors.border,
       borderRightWidth: StyleSheet.hairlineWidth,
     },
-    hr: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 15 },
+    hr: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 16 },
   }), [colors, dark]);
 
   const rules = useMemo<RenderRules>(() => ({
+    // 列表行自身负责间距，取消其段落的额外底边距，避免简单列表被拉成大块空白。
+    paragraph: (node, children, parent, ruleStyles) => (
+      <View key={node.key} style={[ruleStyles.paragraph as StyleProp<ViewStyle>, parent.some((ancestor) => ancestor.type === 'list_item') && { marginBottom: 0 }]}>
+        {children}
+      </View>
+    ),
     code_inline: (node: ASTNode) => {
       const path = node.content.trim();
       if (isLikelyFilePath(path)) {
@@ -161,6 +182,7 @@ export function MarkdownText({
         <Text key={node.key} selectable style={styles.codeInline as TextStyle}>{node.content}</Text>
       );
     },
+    // 块级代码保留共享组件的圆角、内边距及复制/换行交互，不另加外层容器。
     code_block: (node: ASTNode) => (
       <CodeBlock
         code={node.content}
@@ -168,7 +190,7 @@ export function MarkdownText({
         dark={dark}
         highlight={!streaming}
         key={node.key}
-        wrap={codeWrap}
+        wrap
       />
     ),
     fence: (node: ASTNode) => (
@@ -179,7 +201,7 @@ export function MarkdownText({
         highlight={!streaming}
         key={node.key}
         language={node.sourceInfo}
-        wrap={codeWrap}
+        wrap
       />
     ),
     image: (node: ASTNode) => {
@@ -238,7 +260,6 @@ export function MarkdownText({
       <Text key={node.key} selectable style={{ color: colors.muted }}>{node.content}</Text>
     ),
   }), [
-    codeWrap,
     colors,
     dark,
     onOpenFilePreview,
@@ -272,7 +293,7 @@ const nativeStyles = StyleSheet.create({
     maxWidth: 420,
     aspectRatio: 1.6,
     overflow: 'hidden',
-    borderRadius: 14,
+    borderRadius: 16,
     marginBottom: 12,
   },
   image: { width: '100%', height: '100%' },

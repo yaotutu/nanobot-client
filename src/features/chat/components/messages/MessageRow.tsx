@@ -30,7 +30,6 @@ interface MessageRowProps {
   message: UIMessage;
   colors: Palette;
   dark: boolean;
-  codeWrap: boolean;
   cliApps: CliAppInfo[];
   mcpPresets: McpPresetInfo[];
   slashCommands: SlashCommand[];
@@ -49,7 +48,6 @@ export function MessageRow({
   message,
   colors,
   dark,
-  codeWrap,
   cliApps,
   mcpPresets,
   slashCommands,
@@ -122,8 +120,7 @@ export function MessageRow({
       ) : null}
       {hasContent ? (
         assistant ? (
-          <MarkdownText
-            codeWrap={codeWrap}
+          <View style={[styles.assistantBubble, { backgroundColor: colors.pressed }]}><MarkdownText
             colors={colors}
             dark={dark}
             onOpenFilePreview={onOpenFilePreview}
@@ -131,7 +128,7 @@ export function MessageRow({
             streaming={Boolean(message.isStreaming)}
           >
             {visibleContent}
-          </MarkdownText>
+          </MarkdownText></View>
         ) : (
           <View style={[styles.userBubble, { backgroundColor: colors.userBubble }]}>
             <UserMessageBody
@@ -145,7 +142,7 @@ export function MessageRow({
           </View>
         )
       ) : message.isStreaming ? (
-        <View style={styles.streamingDots}>
+        <View style={[styles.streamingDots, { backgroundColor: colors.pressed }]}>
           <View style={[styles.streamingDot, { backgroundColor: colors.subtle }]} />
           <View style={[styles.streamingDot, { backgroundColor: colors.subtle }]} />
           <View style={[styles.streamingDot, { backgroundColor: colors.subtle }]} />
@@ -226,21 +223,22 @@ export function MessageRow({
 }
 
 const styles = StyleSheet.create({
-  row: { width: '100%', marginVertical: 7 },
+  row: { width: '100%', marginVertical: 3 },
   assistantRow: { alignItems: 'flex-start' },
   userRow: { alignItems: 'flex-end' },
-  userBubble: { maxWidth: '100%', borderRadius: 18, borderBottomRightRadius: 6, paddingHorizontal: 14, paddingVertical: 10 },
-  userMessageStack: { maxWidth: '86%' },
+  userBubble: { maxWidth: '86%', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 13 },
+  // 助手回复保持整行可用宽度，给代码、表格和文件引用留足空间。
+  assistantBubble: { width: '100%', borderRadius: 22, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 2 },
   quotedContext: { width: '100%', marginBottom: 7, borderLeftWidth: 2, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   quotedContextHeader: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 },
   quotedContextLabel: { fontSize: 10, fontWeight: '700' },
   quotedContextText: { fontSize: 12, lineHeight: 17 },
   automationBadge: { alignSelf: 'flex-start', marginBottom: 7, borderWidth: StyleSheet.hairlineWidth, borderRadius: 9, paddingHorizontal: 8, paddingVertical: 4 },
   automationBadgeText: { fontSize: 10.5, fontWeight: '600' },
-  messageActions: { minHeight: 32, marginTop: 3, flexDirection: 'row', alignItems: 'center', gap: 2 },
+  messageActions: { minHeight: 44, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 2 },
   userMessageActions: { minHeight: 32, alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center' },
   completedAt: { marginLeft: 4, fontSize: 10.5, fontVariant: ['tabular-nums'] },
-  messageActionButton: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  streamingDots: { height: 22, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  messageActionButton: { width: 40, height: 44, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  streamingDots: { minHeight: 48, borderRadius: 22, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', gap: 6 },
   streamingDot: { width: 5, height: 5, borderRadius: 3 },
 });

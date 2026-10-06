@@ -18,6 +18,7 @@ import {
   detachedActivitySegmentId,
   ensureActivitySegmentId,
   nextMessageId,
+  currentEventTime,
   replaceMessageAt,
   turnFields,
   type StreamFoldState,
@@ -187,7 +188,7 @@ export function mergeActivityTrace(
     ...(structuredEvents.length ? { toolEvents: structuredEvents } : {}),
     activitySegmentId: segmentId,
     ...turnFields(event, 'activity'),
-    createdAt: Date.now(),
+    createdAt: currentEventTime(state),
   }];
 }
 
@@ -249,6 +250,6 @@ export function mergeFileEditTrace(
     fileEdits: normalized,
     activitySegmentId: segmentId,
     ...turnFields(event, 'activity'),
-    createdAt: Date.now(),
+    createdAt: currentEventTime(state),
   }];
 }

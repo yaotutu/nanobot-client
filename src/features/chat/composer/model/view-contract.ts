@@ -16,7 +16,6 @@ import type { Palette } from '@/ui/palette';
 export interface ComposerAppearance {
   colors: Palette;
   dark: boolean;
-  variant: 'hero' | 'thread';
 }
 
 export interface ComposerDraft {
@@ -65,6 +64,7 @@ export interface ComposerRuntimeState {
 }
 
 export interface ComposerWorkspaceState {
+  canChangeProject: boolean;
   controls: WorkspacesPayload['controls'] | null;
   defaultScope: WorkspaceScopePayload | null;
   disabled: boolean;

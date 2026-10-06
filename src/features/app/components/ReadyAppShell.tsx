@@ -57,14 +57,12 @@ export function ReadyAppShell() {
   return (
     <View style={styles.root}>
       <NanobotScreen
-        colors={colors}
         controller={chatController}
         dark={dark}
         model={model}
         navigationRevision={navigation.chatResetRevision}
-        onChangePreferences={changePreferences}
         onOpenDrawer={() => navigation.setDrawerOpen(true)}
-        preferences={preferences}
+        onStartNewChat={startNewChat}
       />
       <PreferencesModal
         colors={colors}

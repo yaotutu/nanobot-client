@@ -16,6 +16,8 @@ export interface StreamFoldState {
   fileEditSegmentId: string | null;
   activitySegmentCounter: number;
   messageCounter: number;
+  /** 回放时使用服务端事件身份；实时折叠仍使用本地生成的身份和时间。 */
+  persistedEvent?: { id: string; createdAt: number };
   suppressStreamUntilTurnEnd: boolean;
 }
 
@@ -50,8 +52,13 @@ export function nextMessageId(
   prefix: string,
   turnId?: string,
 ): string {
+  if (state.persistedEvent) return `${prefix}-${state.persistedEvent.id}`;
   state.messageCounter += 1;
-  return `${prefix}-${turnId ?? 'legacy'}-${Date.now()}-${state.messageCounter}`;
+  return `${prefix}-${turnId ?? 'local'}-${Date.now()}-${state.messageCounter}`;
+}
+
+export function currentEventTime(state: StreamFoldState): number {
+  return state.persistedEvent?.createdAt ?? Date.now();
 }
 
 export function turnFields(

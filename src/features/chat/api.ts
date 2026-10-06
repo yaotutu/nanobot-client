@@ -1,3 +1,5 @@
+import i18n from '@/i18n';
+import { projectThreadEvents, type ChatThreadSnapshot } from './model/thread-events';
 import { apiClient, ApiError } from '@/services/api/api';
 import type {
   FetchThreadOptions,
@@ -12,16 +14,20 @@ export interface FetchThreadRequestOptions extends FetchThreadOptions {
 export async function fetchThread(
   key: string,
   options: FetchThreadRequestOptions = {},
-): Promise<WebuiThreadPersistedPayload | null> {
+): Promise<ChatThreadSnapshot | null> {
   const query: Record<string, string | number> = {};
   if (options.limit !== undefined) query.limit = options.limit;
   if (options.direction) query.direction = options.direction;
   if (options.before) query.before = options.before;
   try {
-    return await apiClient.request<WebuiThreadPersistedPayload>(
+    const payload = await apiClient.request<WebuiThreadPersistedPayload>(
       `/api/sessions/${encodeURIComponent(key)}/webui-thread`,
       { method: 'GET', query, signal: options.signal },
     );
+    if (payload.schemaVersion !== 3 || payload.projection !== 'events' || !Array.isArray(payload.events)) {
+      throw new Error(i18n.t('chat.loadThreadFailed'));
+    }
+    return projectThreadEvents(payload);
   } catch (caught) {
     if (caught instanceof ApiError && caught.status === 404) return null;
     throw caught;

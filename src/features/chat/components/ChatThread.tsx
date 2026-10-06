@@ -21,7 +21,6 @@ import type {
   McpPresetInfo,
 } from '@/types/api/capabilities';
 import type { SlashCommand } from '@/types/api/chat/commands';
-import type { LocalPreferences } from '@/stores/local-preferences-store';
 
 
 export interface ChatThreadProps {
@@ -51,7 +50,6 @@ export interface ChatThreadProps {
   // theme
   colors: Palette;
   dark: boolean;
-  preferences: LocalPreferences;
 
   // capabilities
   cliApps: CliAppInfo[];
@@ -91,7 +89,6 @@ export function ChatThread({
   retryingMessageId,
   colors,
   dark,
-  preferences,
   cliApps,
   mcpPresets,
   slashCommands,
@@ -115,7 +112,7 @@ export function ChatThread({
           {
             paddingBottom: 18,
             backgroundColor: colors.background,
-            rowGap: preferences.density === 'compact' ? 3 : 10,
+            rowGap: 18,
           },
         ]}
         data={units}
@@ -158,11 +155,9 @@ export function ChatThread({
               {item.type === 'activity' ? (
                 <View style={styles.activityRow}>
                   <AgentActivityCluster
-                    activityMode={preferences.activityMode}
                     colors={colors}
                     cliApps={cliApps}
                     hasBodyBelow={hasBodyBelow}
-                    fileEditDisplayMode={preferences.fileEditDisplayMode}
                     isTurnStreaming={liveActivityClusterIndices.has(index)}
                     messages={item.messages}
                     mcpPresets={mcpPresets}
@@ -175,7 +170,6 @@ export function ChatThread({
               ) : (
                 <ExtractedMessageRow
                   colors={colors}
-                  codeWrap={preferences.codeWrap}
                   dark={dark}
                   forkBusy={forkingMessageId === item.message.id}
                   forkIndex={forkIndexes[index]}
@@ -222,15 +216,15 @@ export function ChatThread({
 
 const styles = StyleSheet.create({
   threadListArea: { minHeight: 0, flex: 1 },
-  messagesContent: { flexGrow: 1, paddingHorizontal: 15, paddingTop: 12 },
+  messagesContent: { flexGrow: 1, paddingHorizontal: 18, paddingTop: 14 },
   scrollToBottomButton: {
     position: 'absolute',
     right: 16,
     bottom: 10,
-    width: 38,
-    height: 38,
+    width: 44,
+    height: 44,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 19,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -240,6 +234,6 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   loadOlderButton: { minHeight: 42, alignItems: 'center', justifyContent: 'center' },
-  loadOlderText: { fontSize: 12, fontWeight: '500' },
-  activityRow: { width: '100%', marginVertical: 5, paddingHorizontal: 5 },
+  loadOlderText: { fontSize: 13, fontWeight: '500' },
+  activityRow: { width: '100%', marginVertical: 3, paddingHorizontal: 2 },
 });

@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import X from 'lucide-react-native/icons/x';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,18 +26,15 @@ import type {
   ChatScreenController,
 } from '@/features/chat/model/chat-screen-contract';
 import { sessionTitle } from '@/services/text/format';
-import type { LocalPreferences } from '@/stores/local-preferences-store';
-import type { Palette } from '@/ui/palette';
+import { chatPaletteForTheme } from '@/features/chat/ui/chat-theme';
 
 interface NanobotScreenProps {
   controller: ChatScreenController;
-  colors: Palette;
   dark: boolean;
-  preferences: LocalPreferences;
   model: ChatModelSelection;
   navigationRevision: number;
-  onChangePreferences: (next: LocalPreferences) => void;
   onOpenDrawer: () => void;
+  onStartNewChat: () => void;
 }
 
 export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
@@ -52,7 +50,8 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
     setFilePreviewPath,
     resetForSessionChange,
   } = useChatLocalState();
-  const { colors, dark, preferences } = shell;
+  const { dark } = shell;
+  const colors = chatPaletteForTheme(dark);
   const composerController = useComposerController({
     cliApps: capabilities.cliApps,
     limits: capabilities.bootstrap.limits,
@@ -89,7 +88,7 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
   const chatTitle = session.activeSession
     ? session.sidebarState.title_overrides[session.activeSession.key]
       || sessionTitle(session.activeSession)
-    : t('sidebar.newChat');
+    : t('app.brand');
 
   const handleSessionReset = useCallback(() => {
     resetForSessionChange();
@@ -129,7 +128,6 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
       composer={composerController}
       controller={controller}
       dark={dark}
-      hasMessages={hasMessages}
       model={shell.model}
     />
   );
@@ -139,33 +137,32 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
       behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
       style={[styles.root, { backgroundColor: colors.background }]}
     >
+      {/* 显式跟随应用主题，不能让系统浅色模式把暗色页面的状态栏文字变成黑色。 */}
+      <StatusBar style={dark ? 'light' : 'dark'} />
       <View style={{ height: insets.top, backgroundColor: colors.background }} />
       <ChatHeader
-        activeKey={session.activeKey}
         colors={colors}
-        dark={dark}
-        preferences={preferences}
         chatTitle={chatTitle}
         hasUserPrompts={hasUserPrompts}
         onOpenDrawer={shell.onOpenDrawer}
         onOpenPromptNavigator={() => setPromptNavigatorOpen(true)}
-        onChangePreferences={shell.onChangePreferences}
+        onStartNewChat={shell.onStartNewChat}
       />
 
       {!runtime.networkAvailable || runtime.connectionStatus !== 'open' || runtime.connectionSyncing ? (
         <Pressable
           accessibilityRole="button"
           onPress={() => void runtime.reconnect()}
-          style={[styles.connectionBanner, { backgroundColor: colors.errorBackground }]}
+          style={[styles.connectionBanner, { backgroundColor: !runtime.networkAvailable ? colors.errorBackground : colors.pressed }]}
         >
-          <Text style={[styles.connectionText, { color: colors.errorText }]}>
+          <Text style={[styles.connectionText, { color: !runtime.networkAvailable ? colors.errorText : colors.muted }]}>
             {t(!runtime.networkAvailable
               ? 'connection.offline'
               : runtime.connectionSyncing
                 ? 'connection.syncing'
                 : `connection.${runtime.connectionStatus}`)}
           </Text>
-          <Text style={[styles.connectionAction, { color: colors.errorText }]}>
+          <Text style={[styles.connectionAction, { color: colors.foreground }]}>
             {t('settings.channels.reconnect')}
           </Text>
         </Pressable>
@@ -211,7 +208,6 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
           retryingMessageId: messageActions.retryingMessageId,
           colors,
           dark,
-          preferences,
           cliApps: capabilities.cliApps,
           mcpPresets: capabilities.mcpPresets,
           slashCommands: capabilities.slashCommands,
@@ -223,12 +219,6 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
           resolveFilePreviewAvailability,
           onOpenFilePreview: session.activeKey ? setFilePreviewPath : undefined,
           onQuote: setAssistantQuoteSource,
-        }}
-      />
-      <View
-        style={{
-          height: Math.max(insets.bottom, 7),
-          backgroundColor: colors.background,
         }}
       />
 
@@ -254,26 +244,26 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   connectionBanner: {
-    marginHorizontal: 13,
-    marginTop: 3,
-    borderRadius: 10,
+    marginHorizontal: 18,
+    marginTop: 4,
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 9,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  connectionText: { flex: 1, fontSize: 12, lineHeight: 17 },
+  connectionText: { flex: 1, fontSize: 13, lineHeight: 19 },
   connectionAction: { fontSize: 12, fontWeight: '600' },
   errorBanner: {
-    marginHorizontal: 13,
-    marginTop: 3,
-    borderRadius: 10,
+    marginHorizontal: 18,
+    marginTop: 4,
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 9,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  errorText: { flex: 1, fontSize: 12, lineHeight: 17 },
+  errorText: { flex: 1, fontSize: 13, lineHeight: 19 },
 });

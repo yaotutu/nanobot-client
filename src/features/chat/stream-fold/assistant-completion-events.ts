@@ -12,6 +12,7 @@ import {
   clearActivitySegment,
   matchesTurn,
   nextMessageId,
+  currentEventTime,
   replaceMessageAt,
   turnFields,
   type StreamFoldState,
@@ -38,7 +39,7 @@ export function stampLastAssistantCompletion(
   messages: UIMessage[],
   event: Extract<InboundEvent, { event: 'turn_end' }>,
 ): UIMessage[] {
-  const completedAt = Date.now();
+  const completedAt = event.created_at_ms ?? Date.now();
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
     if (
@@ -69,7 +70,7 @@ function absorbCompleteAssistantMessage(
     return [...messages, {
       id: nextMessageId(state, 'assistant', message.turnId),
       role: 'assistant',
-      createdAt: Date.now(),
+      createdAt: currentEventTime(state),
       ...message,
     }];
   }

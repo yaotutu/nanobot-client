@@ -154,69 +154,12 @@
   "thread": {
     "loadingConversation": "Cargando conversación…",
     "empty": {
-      "greetings": {
-        "workOn": "¿En qué trabajamos juntos?",
-        "start": "¿Por dónde empezamos?",
-        "build": "¿Qué construimos hoy?",
-        "tackle": "¿Qué resolvemos juntos?"
-      },
-      "quickActions": {
-        "plan": {
-          "title": "Crear un plan de proyecto",
-          "prompt": "Crea un plan de proyecto conciso para lo que debería construir después."
-        },
-        "analyze": {
-          "title": "Analizar estos datos",
-          "prompt": "Ayúdame a analizar estos datos y destaca los patrones más importantes."
-        },
-        "brainstorm": {
-          "title": "Lluvia de ideas",
-          "prompt": "Propón algunas ideas prácticas y sus compensaciones para este problema."
-        },
-        "code": {
-          "title": "Escribir código",
-          "prompt": "Ayúdame a escribir el código para esta tarea, empezando por el cambio útil más pequeño."
-        },
-        "summarize": {
-          "title": "Resumir este documento",
-          "prompt": "Resume este documento y enumera las conclusiones clave."
-        },
-        "more": {
-          "title": "Más",
-          "prompt": "Muéstrame algunas formas útiles en las que puedes ayudar en este workspace."
-        }
-      },
-      "imageQuickActions": {
-        "icon": {
-          "title": "Diseñar un icono de app",
-          "prompt": "Genera un icono de app 1:1 limpio para nanobot: robot amigable, estilo vectorial simple, paleta suave azul y blanca, sin texto."
-        },
-        "sticker": {
-          "title": "Crear un sticker",
-          "prompt": "Genera una imagen estilo sticker de un pequeño asistente robot, con fondo de apariencia transparente, expresivo y divertido."
-        },
-        "poster": {
-          "title": "Crear un póster",
-          "prompt": "Genera un concepto de póster pulido para un asistente personal de IA, composición moderna, jerarquía visual fuerte, apto para una landing page."
-        },
-        "product": {
-          "title": "Mockup de producto",
-          "prompt": "Genera una imagen limpia de mockup de producto para una app web de IA conversacional, interfaz mínima, iluminación premium, marco de dispositivo realista."
-        },
-        "portrait": {
-          "title": "Retrato estilizado",
-          "prompt": "Genera un retrato estilizado de un compañero de IA amigable, luz suave, detallado pero cercano, estilo de ilustración moderna."
-        },
-        "edit": {
-          "title": "Editar una imagen",
-          "prompt": "Ayúdame a editar una imagen. Primero pídeme que suba o indique la imagen, y luego genera el resultado editado."
-        }
-      }
+      "title": "¿Qué tienes en mente?",
+      "subtitle": "Empieza con una pregunta, una idea o un archivo."
     },
     "header": {
       "toggleSidebar": "Mostrar u ocultar la barra lateral",
       "newChat": "Iniciar un tema nuevo",
-      "toggleTheme": "Cambiar tema desde el encabezado",
       "settings": "Abrir configuración",
       "sessionInfo": "Detalles de la sesión"
     },
@@ -246,8 +189,6 @@
       }
     },
     "composer": {
-      "placeholderThread": "Escribe tu mensaje…",
-      "placeholderHero": "¿Qué tienes en mente?",
       "placeholderOpening": "Abriendo un nuevo tema…",
       "placeholderStreaming": "El modelo está respondiendo…",
       "inputAria": "Entrada de mensaje",
@@ -402,7 +343,8 @@
         "defaultShort": "Predeterm.",
         "full": "Acceso completo",
         "fullShort": "Completo"
-      }
+      },
+      "placeholder": "Escribe tu mensaje…"
     },
     "scrollToBottom": "Desplazarse al final",
     "loadEarlier": "Cargar mensajes anteriores",

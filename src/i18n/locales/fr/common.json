@@ -154,69 +154,12 @@
   "thread": {
     "loadingConversation": "Chargement de la conversation…",
     "empty": {
-      "greetings": {
-        "workOn": "Sur quoi travaillons-nous ensemble ?",
-        "start": "Par où commence-t-on ?",
-        "build": "Que construisons-nous aujourd'hui ?",
-        "tackle": "Que résout-on ensemble ?"
-      },
-      "quickActions": {
-        "plan": {
-          "title": "Créer un plan de projet",
-          "prompt": "Créez un plan de projet concis pour ce que je devrais construire ensuite."
-        },
-        "analyze": {
-          "title": "Analyser ces données",
-          "prompt": "Aidez-moi à analyser ces données et à faire ressortir les tendances les plus importantes."
-        },
-        "brainstorm": {
-          "title": "Trouver des idées",
-          "prompt": "Proposez quelques idées pratiques et leurs compromis pour ce problème."
-        },
-        "code": {
-          "title": "Écrire du code",
-          "prompt": "Aidez-moi à écrire le code pour cette tâche, en commençant par le plus petit changement utile."
-        },
-        "summarize": {
-          "title": "Résumer ce document",
-          "prompt": "Résumez ce document et listez les points clés à retenir."
-        },
-        "more": {
-          "title": "Plus",
-          "prompt": "Montrez-moi quelques façons utiles dont vous pouvez m’aider dans cet espace de travail."
-        }
-      },
-      "imageQuickActions": {
-        "icon": {
-          "title": "Créer une icône d’app",
-          "prompt": "Générez une icône d’application 1:1 propre pour nanobot : robot sympathique, style vectoriel simple, palette douce bleu et blanc, sans texte."
-        },
-        "sticker": {
-          "title": "Créer un sticker",
-          "prompt": "Générez une image façon sticker d’un petit assistant robot, avec un fond d’apparence transparente, expressive et ludique."
-        },
-        "poster": {
-          "title": "Créer une affiche",
-          "prompt": "Générez un concept d’affiche soigné pour un assistant IA personnel, composition moderne, hiérarchie visuelle forte, adapté à une landing page."
-        },
-        "product": {
-          "title": "Maquette produit",
-          "prompt": "Générez une maquette produit propre pour une application web d’IA conversationnelle, interface minimale, éclairage premium, cadre d’appareil réaliste."
-        },
-        "portrait": {
-          "title": "Portrait stylisé",
-          "prompt": "Générez un portrait stylisé d’un compagnon IA sympathique, lumière douce, détaillé mais accessible, style illustration moderne."
-        },
-        "edit": {
-          "title": "Modifier une image",
-          "prompt": "Aidez-moi à modifier une image. Demandez-moi d’abord de téléverser ou d’indiquer l’image, puis générez le résultat modifié."
-        }
-      }
+      "title": "Qu’avez-vous en tête ?",
+      "subtitle": "Commencez par une question, une idée ou un fichier."
     },
     "header": {
       "toggleSidebar": "Afficher ou masquer la barre latérale",
       "newChat": "Démarrer un nouveau sujet",
-      "toggleTheme": "Changer le thème depuis l’en-tête",
       "settings": "Ouvrir les paramètres",
       "sessionInfo": "Détails de la session"
     },
@@ -246,8 +189,6 @@
       }
     },
     "composer": {
-      "placeholderThread": "Saisissez votre message…",
-      "placeholderHero": "Qu’avez-vous en tête ?",
       "placeholderOpening": "Ouverture d’un nouveau sujet…",
       "placeholderStreaming": "Le modèle est en train de répondre…",
       "inputAria": "Champ de message",
@@ -402,7 +343,8 @@
         "defaultShort": "Par défaut",
         "full": "Accès complet",
         "fullShort": "Complet"
-      }
+      },
+      "placeholder": "Saisissez votre message…"
     },
     "scrollToBottom": "Faire défiler vers le bas",
     "loadEarlier": "Charger les messages précédents",

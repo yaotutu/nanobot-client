@@ -11,7 +11,6 @@ interface ChatComposerContainerProps {
   colors: Palette;
   controller: ChatScreenController;
   dark: boolean;
-  hasMessages: boolean;
   model: ChatModelSelection;
   composer: ComposerController;
 }
@@ -21,7 +20,6 @@ export function ChatComposerContainer({
   composer,
   controller,
   dark,
-  hasMessages,
   model,
 }: ChatComposerContainerProps) {
   return (
@@ -38,7 +36,6 @@ export function ChatComposerContainer({
         appearance={{
           colors,
           dark,
-          variant: hasMessages || controller.thread.loading ? 'thread' : 'hero',
         }}
         attachments={{
           items: composer.attachments.attachments,
@@ -84,6 +81,7 @@ export function ChatComposerContainer({
           onSlashCommandSelect: composer.selectSlashCommand,
         }}
         workspace={{
+          canChangeProject: !controller.session.activeKey,
           controls: controller.workspace.catalog?.controls ?? null,
           defaultScope: controller.workspace.catalog?.default_scope ?? null,
           disabled: controller.runtime.turnActive,

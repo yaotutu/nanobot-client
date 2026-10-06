@@ -13,17 +13,18 @@ import {
   ensureActivitySegmentId,
   matchesTurn,
   nextMessageId,
+  currentEventTime,
   replaceMessageAt,
   type StreamFoldState,
   type StreamTurnFields,
 } from './state';
 
-export function closeReasoningStream(messages: UIMessage[]): UIMessage[] {
+export function closeReasoningStream(messages: UIMessage[], completedAt = Date.now()): UIMessage[] {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const candidate = messages[index];
     if (!candidate.reasoningStreaming) continue;
     const latencyMs = candidate.latencyMs === undefined && candidate.createdAt > 1_000_000_000_000
-      ? Math.max(0, Math.round(Date.now() - candidate.createdAt))
+      ? Math.max(0, Math.round(completedAt - candidate.createdAt))
       : candidate.latencyMs;
     return replaceMessageAt(messages, index, {
       ...candidate,
@@ -69,7 +70,7 @@ export function attachReasoningChunk(
       isStreaming: true,
       activitySegmentId: ensureActivitySegmentId(state),
       ...turn,
-      createdAt: Date.now(),
+      createdAt: currentEventTime(state),
     },
   ];
 }

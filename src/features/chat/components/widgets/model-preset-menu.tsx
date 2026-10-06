@@ -13,6 +13,8 @@ import {
   View,
 } from 'react-native';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import type { ModelPresetInfo } from '@/types/api/chat/models';
 
 interface ModelPresetPalette {
@@ -43,6 +45,7 @@ export function ModelPresetMenu({
   presets,
 }: ModelPresetMenuProps) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
   const options = useMemo(() => {
@@ -81,7 +84,6 @@ export function ModelPresetMenu({
         onPress={handleBadgePress}
         style={({ pressed }) => [
           styles.badge,
-          { backgroundColor: colors.pressed },
           pressed && !disabled ? styles.pressed : null,
           disabled ? styles.disabled : null,
         ]}
@@ -93,7 +95,7 @@ export function ModelPresetMenu({
       <Modal animationType="slide" onRequestClose={() => setOpen(false)} transparent visible={open}>
         <View style={styles.modalRoot}>
           <Pressable accessibilityLabel={t('common.dismiss')} onPress={() => setOpen(false)} style={styles.backdrop} />
-          <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 16) }]}>
             <View style={[styles.header, { borderBottomColor: colors.border }]}>
               <View>
                 <Text style={[styles.title, { color: colors.foreground }]}>{t('settings.models.selectModel')}</Text>
@@ -145,23 +147,23 @@ export function ModelPresetMenu({
 
 const styles = StyleSheet.create({
   badge: {
-    maxWidth: 154,
-    height: 31,
+    maxWidth: 170,
+    minHeight: 44,
     borderRadius: 16,
     paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
   },
-  badgeText: { minWidth: 0, flexShrink: 1, fontSize: 11.5, fontWeight: '600' },
+  badgeText: { minWidth: 0, flexShrink: 1, fontSize: 12, fontWeight: '600' },
   pressed: { opacity: 0.72 },
   disabled: { opacity: 0.5 },
   modalRoot: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.38)' },
   sheet: {
     maxHeight: '72%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },

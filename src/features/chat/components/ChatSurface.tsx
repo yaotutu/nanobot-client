@@ -1,15 +1,14 @@
 import { type ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ChatThreadProps } from '@/features/chat/components/ChatThread';
+import { chatLayout } from '@/features/chat/ui/chat-theme';
 import { createDeferredComponent } from '@/hooks/use-deferred-component';
 import type { Palette } from '@/ui/palette';
 
-/**
- * 空会话不需要消息 Markdown、代码高亮、工具活动等渲染模块。ChatThread 仅在存在消息时加载。
- * 使用显式 state 更新挂载组件，避免 React.lazy/Suspense 在 Fabric 提交阶段触发原生崩溃。
- */
+// 继续延迟加载较重的消息渲染模块；这与页面布局无关，不为旧 UI 保留切换分支。
 const DeferredChatThread = createDeferredComponent(() => import(
   '@/features/chat/components/ChatThread'
 ).then(({ ChatThread }) => ChatThread));
@@ -22,45 +21,33 @@ interface ChatSurfaceProps {
   threadProps: ChatThreadProps;
 }
 
-export function ChatSurface(props: ChatSurfaceProps) {
+/** 空会话、历史加载和对话共用同一个底部输入区域，首条消息不会再导致输入框换位置。 */
+export function ChatSurface({ colors, composer, hasMessages, threadLoading, threadProps }: ChatSurfaceProps) {
   const { t } = useTranslation();
-
-  if (!props.hasMessages) {
-    if (props.threadLoading) {
-      return (
-        <>
-          <ThreadLoading colors={props.colors} label={t('thread.loadingConversation')} />
-          <View style={[styles.threadComposer, { backgroundColor: props.colors.background }]}>
-            {props.composer}
-          </View>
-        </>
-      );
-    }
-    return (
-      <View style={styles.heroArea}>
-        <View style={styles.heroContent}>
-          <Text
-            adjustsFontSizeToFit
-            numberOfLines={1}
-            style={[styles.greeting, { color: props.colors.foreground }]}
-          >
-            {t('thread.empty.greetings.workOn')}
-          </Text>
-          <View style={styles.heroComposer}>{props.composer}</View>
-        </View>
-      </View>
-    );
-  }
-
+  const insets = useSafeAreaInsets();
   return (
     <>
-      <DeferredChatThread
-        componentProps={props.threadProps}
-        enabled={props.hasMessages}
-        fallback={<ThreadLoading colors={props.colors} label={t('thread.loadingConversation')} />}
-      />
-      <View style={[styles.threadComposer, { backgroundColor: props.colors.background }]}>
-        {props.composer}
+      <View style={styles.content}>
+        {hasMessages ? (
+          <DeferredChatThread
+            componentProps={threadProps}
+            enabled
+            fallback={<ThreadLoading colors={colors} label={t('thread.loadingConversation')} />}
+          />
+        ) : threadLoading ? (
+          <ThreadLoading colors={colors} label={t('thread.loadingConversation')} />
+        ) : (
+          <ScrollView contentContainerStyle={styles.emptyContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <View style={[styles.welcomeMark, { backgroundColor: colors.userBubble }]}>
+              <Text style={[styles.welcomeLetter, { color: colors.userText }]}>n</Text>
+            </View>
+            <Text style={[styles.greeting, { color: colors.foreground }]}>{t('thread.empty.title')}</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>{t('thread.empty.subtitle')}</Text>
+          </ScrollView>
+        )}
+      </View>
+      <View style={[styles.composerDock, { backgroundColor: colors.background, paddingBottom: Math.max(insets.bottom, 12) }]}>
+        {composer}
       </View>
     </>
   );
@@ -68,22 +55,21 @@ export function ChatSurface(props: ChatSurfaceProps) {
 
 function ThreadLoading({ colors, label }: { colors: Palette; label: string }) {
   return (
-    <View style={styles.loadingThreadArea}>
-      <View style={styles.loadingConversation}>
-        <ActivityIndicator color={colors.muted} />
-        <Text style={[styles.loadingText, { color: colors.muted }]}>{label}</Text>
-      </View>
+    <View style={styles.loading}>
+      <ActivityIndicator color={colors.muted} />
+      <Text style={[styles.loadingText, { color: colors.muted }]}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  heroArea: { flex: 1, justifyContent: 'center', paddingHorizontal: 20, paddingBottom: 70 },
-  heroContent: { width: '100%', maxWidth: 720, alignSelf: 'center', alignItems: 'center' },
-  greeting: { width: '100%', fontSize: 34, lineHeight: 39, fontWeight: '400', textAlign: 'center' },
-  heroComposer: { width: '100%', marginTop: 28 },
-  loadingThreadArea: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loadingConversation: { alignItems: 'center', gap: 10 },
-  loadingText: { fontSize: 13 },
-  threadComposer: { paddingHorizontal: 10, paddingTop: 5 },
+  content: { minHeight: 0, flex: 1, width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center' },
+  emptyContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30, paddingVertical: 24, gap: 16 },
+  welcomeMark: { width: 68, height: 68, borderRadius: 25, alignItems: 'center', justifyContent: 'center', marginBottom: 7, transform: [{ rotate: '-6deg' }] },
+  welcomeLetter: { fontSize: 42, fontWeight: '600', lineHeight: 52 },
+  greeting: { maxWidth: 360, fontSize: 28, lineHeight: 38, fontWeight: '500', letterSpacing: -0.8, textAlign: 'center' },
+  subtitle: { maxWidth: 300, fontSize: 15, lineHeight: 24, textAlign: 'center' },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  loadingText: { fontSize: 14 },
+  composerDock: { width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center', paddingHorizontal: 16, paddingTop: 10 },
 });
