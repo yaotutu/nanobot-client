@@ -2,13 +2,12 @@ import { useCallback, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppModals } from '@/features/app/components/AppModals';
-import { AppUtilityRouter } from '@/features/app/components/AppUtilityRouter';
-import { AppUtilityWorkspace } from '@/features/app/components/AppUtilityWorkspace';
 import { useAppController } from '@/features/app/hooks/use-app-controller';
 import { useAppModelSelection } from '@/features/app/hooks/use-app-model-selection';
 import { useAppNavigation } from '@/features/app/hooks/use-app-navigation';
 import { useAppPreferences } from '@/features/app/hooks/use-app-preferences';
 import { NanobotScreen } from '@/features/chat/screen';
+import { PreferencesModal } from '@/features/settings';
 import { markStartup } from '@/services/runtime/startup-performance';
 import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
 
@@ -55,48 +54,26 @@ export function ReadyAppShell() {
     app.workspace.startNewChatInProject(projectPath, projectName);
   }, [app, navigation]);
 
-  const openLinkedChat = useCallback((sessionKey: string) => {
-    navigation.resetChat();
-    app.sidebar.selectSession(sessionKey);
-  }, [app, navigation]);
-
   return (
     <View style={styles.root}>
-      {navigation.utilityView === 'chat' ? (
-        <NanobotScreen
-          colors={colors}
-          controller={chatController}
-          dark={dark}
-          model={model}
-          navigationRevision={navigation.chatResetRevision}
-          onChangePreferences={changePreferences}
-          onOpenDrawer={() => navigation.setDrawerOpen(true)}
-          onOpenSettings={() => navigation.openUtility('settings')}
-          preferences={preferences}
-        />
-      ) : (
-        <AppUtilityWorkspace
-          colors={colors}
-          dark={dark}
-          onChangePreferences={changePreferences}
-          onOpenDrawer={() => navigation.setDrawerOpen(true)}
-          preferences={preferences}
-          view={navigation.utilityView}
-        >
-          <AppUtilityRouter
-            bootstrap={bootstrap}
-            colors={colors}
-            onBackToChat={navigation.returnToChat}
-            onChangePreferences={changePreferences}
-            onOpenLinkedChat={openLinkedChat}
-            onRestart={app.runtime.restartServer}
-            onSettingsChange={model.setSettings}
-            preferences={preferences}
-            runtimePolicy={model.runtimePolicy}
-            view={navigation.utilityView}
-          />
-        </AppUtilityWorkspace>
-      )}
+      <NanobotScreen
+        colors={colors}
+        controller={chatController}
+        dark={dark}
+        model={model}
+        navigationRevision={navigation.chatResetRevision}
+        onChangePreferences={changePreferences}
+        onOpenDrawer={() => navigation.setDrawerOpen(true)}
+        preferences={preferences}
+      />
+      <PreferencesModal
+        colors={colors}
+        preferences={preferences}
+        visible={navigation.preferencesOpen}
+        onChange={changePreferences}
+        onClose={() => navigation.setPreferencesOpen(false)}
+        onLogout={app.runtime.logout}
+      />
       <AppModals
         app={app}
         colors={colors}
@@ -104,12 +81,11 @@ export function ReadyAppShell() {
         onCloseDrawer={() => navigation.setDrawerOpen(false)}
         onCloseSessionSearch={() => navigation.setSessionSearchOpen(false)}
         onOpenSearch={navigation.openSearch}
-        onOpenUtility={navigation.openUtility}
+        onOpenPreferences={navigation.openPreferences}
         onSelectSession={selectSession}
         onStartNewChat={startNewChat}
         onStartNewChatInProject={startNewChatInProject}
         sessionSearchOpen={navigation.sessionSearchOpen}
-        utilityView={navigation.utilityView}
       />
     </View>
   );

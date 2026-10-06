@@ -1,9 +1,6 @@
 import { Image } from 'expo-image';
 import Archive from 'lucide-react-native/icons/archive';
 import ArchiveRestore from 'lucide-react-native/icons/archive-restore';
-import Blocks from 'lucide-react-native/icons/blocks';
-import Brain from 'lucide-react-native/icons/brain';
-import CalendarClock from 'lucide-react-native/icons/calendar-clock';
 import Search from 'lucide-react-native/icons/search';
 import Settings from 'lucide-react-native/icons/settings';
 import SquarePen from 'lucide-react-native/icons/square-pen';
@@ -15,7 +12,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ChatGroupLabels } from '@/features/sidebar/chat-groups';
 import { useSidebarActions } from '@/features/sidebar/hooks/use-sidebar-actions';
 import { useSidebarListModel } from '@/features/sidebar/hooks/use-sidebar-list-model';
-import type { SessionAutomationJob } from '@/types/api/automations';
 import type { SessionDeleteResult } from '@/types/api/chat/thread';
 import type { ConnectionStatus } from '@/types/api/runtime';
 import type { ChatSummary, SidebarStatePayload } from '@/types/api/sidebar';
@@ -36,12 +32,8 @@ interface SidebarDrawerProps {
   connectionStatus: ConnectionStatus;
   networkAvailable: boolean;
   defaultWorkspacePath?: string | null;
-  activeUtility: 'apps' | 'skills' | 'automations' | 'settings' | null;
   onClose: () => void;
   onOpenSearch: () => void;
-  onOpenApps: () => void;
-  onOpenSkills: () => void;
-  onOpenAutomations: () => void;
   onOpenSettings: () => void;
   onNewChat: () => void;
   onReconnect: () => Promise<void>;
@@ -53,9 +45,7 @@ interface SidebarDrawerProps {
   onRename: (key: string, title: string) => Promise<void>;
   onRenameProject: (projectKey: string, title: string) => Promise<void>;
   onSetShowArchived: (show: boolean) => Promise<void>;
-  onDelete: (key: string, options?: { deleteAutomations?: boolean }) => Promise<SessionDeleteResult>;
-  onGetSessionAutomations: (key: string) => Promise<SessionAutomationJob[]>;
-  onLogout: () => void;
+  onDelete: (key: string) => Promise<SessionDeleteResult>;
 }
 
 export function SidebarDrawer(props: SidebarDrawerProps) {
@@ -68,12 +58,8 @@ export function SidebarDrawer(props: SidebarDrawerProps) {
     connectionStatus,
     networkAvailable,
     defaultWorkspacePath,
-    activeUtility,
     onClose,
     onOpenSearch,
-    onOpenApps,
-    onOpenSkills,
-    onOpenAutomations,
     onOpenSettings,
     onNewChat,
     onReconnect,
@@ -86,11 +72,9 @@ export function SidebarDrawer(props: SidebarDrawerProps) {
     onRenameProject,
     onSetShowArchived,
     onDelete,
-    onGetSessionAutomations,
-    onLogout,
   } = props;
   const insets = useSafeAreaInsets();
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const groupLabels = useMemo<ChatGroupLabels>(() => ({
     pinned: t('chat.groups.pinned'),
@@ -110,11 +94,9 @@ export function SidebarDrawer(props: SidebarDrawerProps) {
   const actions = useSidebarActions({
     state,
     t,
-    locale: i18n.resolvedLanguage ?? i18n.language,
     onRename,
     onRenameProject,
     onDelete,
-    onGetSessionAutomations,
   });
 
   if (!visible) return null;
@@ -141,14 +123,7 @@ export function SidebarDrawer(props: SidebarDrawerProps) {
           <View style={styles.actions}>
             <SidebarAction icon={SquarePen} label={t('sidebar.newChat')} onPress={() => { onNewChat(); onClose(); }} />
             <SidebarAction icon={Search} label={t('sidebar.searchAria')} onPress={onOpenSearch} />
-            <SidebarAction active={activeUtility === 'apps'} icon={Blocks} label={t('sidebar.apps')} onPress={onOpenApps} />
-            <SidebarAction active={activeUtility === 'skills'} icon={Brain} label={t('sidebar.skills.title')} onPress={onOpenSkills} />
-            <SidebarAction
-              active={activeUtility === 'automations'}
-              icon={CalendarClock}
-              label={t('sidebar.automations')}
-              onPress={onOpenAutomations}
-            />
+
             {state.archived_keys.length > 0 ? (
               <SidebarAction
                 icon={state.view.show_archived ? ArchiveRestore : Archive}
@@ -183,7 +158,7 @@ export function SidebarDrawer(props: SidebarDrawerProps) {
           />
 
           <View style={styles.footer}>
-            <SidebarAction active={activeUtility === 'settings'} icon={Settings} label={t('sidebar.settings')} onPress={onOpenSettings} />
+            <SidebarAction icon={Settings} label={t('sidebar.settings')} onPress={onOpenSettings} />
             <Pressable
               accessibilityLabel={t(networkAvailable ? `connection.${connectionStatus}` : 'connection.offline')}
               onPress={() => void onReconnect()}
@@ -198,9 +173,6 @@ export function SidebarDrawer(props: SidebarDrawerProps) {
               />
             </Pressable>
           </View>
-          <Pressable accessibilityLabel={t('app.account.logoutHint')} onLongPress={onLogout} style={styles.logoutTarget}>
-            <Text style={styles.logoutHint}>{t('app.account.logoutHint')}</Text>
-          </Pressable>
 
           <SidebarActionSheets
             actionProject={actions.actionProject}

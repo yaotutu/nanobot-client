@@ -46,14 +46,12 @@ function normalize(raw: unknown): LocalPreferences {
   return {
     theme: value.theme === 'dark' ? 'dark' : 'light',
     language: normalizeLocale(value.language),
-    density: value.density === 'compact' ? 'compact' : 'comfortable',
-    activityMode: value.activityMode === 'expanded' ? 'expanded' : 'auto',
-    codeWrap: value.codeWrap !== false,
-    brandLogos: value.brandLogos === true,
-    fileEditDisplayMode:
-      value.fileEditDisplayMode === 'diff' || value.fileEditDisplayMode === 'collapsed_diff'
-        ? value.fileEditDisplayMode
-        : 'summary',
+    // 已取消的显示选项统一恢复稳定默认值，避免旧安装残留不可见、无法调整的状态。
+    density: DEFAULT_LOCAL_PREFS.density,
+    activityMode: DEFAULT_LOCAL_PREFS.activityMode,
+    codeWrap: DEFAULT_LOCAL_PREFS.codeWrap,
+    brandLogos: DEFAULT_LOCAL_PREFS.brandLogos,
+    fileEditDisplayMode: DEFAULT_LOCAL_PREFS.fileEditDisplayMode,
   };
 }
 

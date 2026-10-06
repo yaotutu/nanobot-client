@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 
-import type { ModelPresetInfo } from '@/types/api/settings';
+import type { ModelPresetInfo } from '@/types/api/chat/models';
 
 interface ModelPresetPalette {
   background: string;
@@ -30,7 +30,6 @@ interface ModelPresetMenuProps {
   colors: ModelPresetPalette;
   disabled?: boolean;
   displayLabel: string;
-  onOpenSettings: () => void;
   onPresetChange: (name: string) => Promise<void>;
   presets: ModelPresetInfo[];
 }
@@ -40,7 +39,6 @@ export function ModelPresetMenu({
   colors,
   disabled = false,
   displayLabel,
-  onOpenSettings,
   onPresetChange,
   presets,
 }: ModelPresetMenuProps) {
@@ -50,16 +48,12 @@ export function ModelPresetMenu({
   const options = useMemo(() => {
     const order = new Map(presets.map((preset, index) => [preset.name, index]));
     return presets
-      .filter((preset) => !preset.is_default && preset.name.trim())
+      .filter((preset) => preset.name.trim())
       .sort((left, right) => (order.get(left.name) ?? 0) - (order.get(right.name) ?? 0));
   }, [presets]);
 
   const handleBadgePress = () => {
-    if (disabled) return;
-    if (!options.length) {
-      onOpenSettings();
-      return;
-    }
+    if (disabled || options.length < 2) return;
     setOpen(true);
   };
 
@@ -72,6 +66,8 @@ export function ModelPresetMenu({
     try {
       await onPresetChange(name);
       setOpen(false);
+    } catch {
+      // 控制器已经回滚选择并显示错误；弹窗继续保持打开，允许重新选择。
     } finally {
       setPending(null);
     }
@@ -81,7 +77,7 @@ export function ModelPresetMenu({
     <>
       <Pressable
         accessibilityLabel={`${t('settings.rows.currentModel')}: ${displayLabel}`}
-        disabled={disabled}
+        disabled={disabled || options.length < 2}
         onPress={handleBadgePress}
         style={({ pressed }) => [
           styles.badge,
@@ -91,7 +87,7 @@ export function ModelPresetMenu({
         ]}
       >
         <Text numberOfLines={1} style={[styles.badgeText, { color: colors.muted }]}>{displayLabel}</Text>
-        <ChevronDown color={colors.subtle} size={12} strokeWidth={2} />
+        {options.length > 1 ? <ChevronDown color={colors.subtle} size={12} strokeWidth={2} /> : null}
       </Pressable>
 
       <Modal animationType="slide" onRequestClose={() => setOpen(false)} transparent visible={open}>
@@ -139,15 +135,6 @@ export function ModelPresetMenu({
                   </Pressable>
                 );
               })}
-              <Pressable
-                onPress={() => {
-                  setOpen(false);
-                  onOpenSettings();
-                }}
-                style={({ pressed }) => [styles.settingsRow, pressed ? { backgroundColor: colors.pressed } : null]}
-              >
-                <Text style={[styles.settingsText, { color: colors.muted }]}>{t('settings.nav.models')}</Text>
-              </Pressable>
             </ScrollView>
           </View>
         </View>
@@ -204,6 +191,4 @@ const styles = StyleSheet.create({
   rowBody: { minWidth: 0, flex: 1 },
   rowTitle: { fontSize: 14, fontWeight: '600' },
   rowDetail: { marginTop: 3, fontSize: 11.5 },
-  settingsRow: { minHeight: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  settingsText: { fontSize: 12.5, fontWeight: '600' },
 });

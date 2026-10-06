@@ -8,7 +8,6 @@ import {
   type NanobotSocket,
 } from '@/features/connection';
 import i18n from '@/i18n';
-import { resolveRuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
 import { normalizeWorkspaceScope } from '@/services/runtime/workspace-paths';
 import { formatQuotedUserMessage, normalizeQuotedContext } from '@/services/text/user-quote-format';
 import type {
@@ -17,7 +16,6 @@ import type {
 } from '@/types/api/chat/commands';
 import type { UIMessage } from '@/types/api/chat/messages';
 import type { BootstrapResponse } from '@/types/api/runtime';
-import type { ChatSummary } from '@/types/api/sidebar';
 import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 
 import { chatIdFromKey } from '../model/chat-key';
@@ -98,7 +96,6 @@ export function useChatCommands({
   bootstrap,
   messages,
   onChatCreated,
-  sessions,
   socketRef,
 }: {
   activeKey: string | null;
@@ -106,7 +103,6 @@ export function useChatCommands({
   bootstrap: BootstrapResponse | null;
   messages: UIMessage[];
   onChatCreated: (chatId: string, workspaceScope: WorkspaceScopePayload | null) => void;
-  sessions: ChatSummary[];
   socketRef: RefObject<NanobotSocket | null>;
 }) {
   const sendMessage = useCallback(
@@ -134,6 +130,11 @@ export function useChatCommands({
         try {
           chatId = await socket.newChat(5_000, workspaceScope);
           onChatCreated(chatId, workspaceScope);
+          // 草稿阶段还没有 chatId，模型选择暂存在输入状态。创建会话后先等待系统命令确认，
+          // 再发用户消息，保证首条消息不会悄悄使用服务端默认模型。已有会话不重复切换。
+          if (normalizedOptions.modelPreset?.trim()) {
+            await socket.sendSystemCommand(chatId, `/model ${normalizedOptions.modelPreset.trim()}`);
+          }
         } catch (caught) {
           const message = caught instanceof Error ? caught.message : i18n.t('chat.createFailed');
           useChatStore.getState().setError(message);
@@ -211,38 +212,6 @@ export function useChatCommands({
     await socket.sendSystemCommand(chatId, `/model ${name}`);
   }, [activeKey, socketRef]);
 
-  const transcribeAudio = useCallback(async (dataUrl: string, options?: { durationMs?: number }) => {
-    const socket = socketRef.current;
-    if (!socket) throw new Error(i18n.t('connection.closed'));
-    return socket.transcribeAudio(dataUrl, { durationMs: options?.durationMs });
-  }, [socketRef]);
-
-  const restartServer = useCallback(() => {
-    const policy = resolveRuntimeClientPolicy(bootstrap);
-    if (!policy.canRestart) {
-      useChatStore.getState().setError(
-        policy.restartUnavailableReason
-          ?? i18n.t('app.system.restartUnavailable', { defaultValue: 'This client cannot restart nanobot' }),
-      );
-      return;
-    }
-    const socket = socketRef.current;
-    const chatId = chatIdFromKey(activeKey) ?? sessions[0]?.chatId ?? '';
-    if (!socket || !chatId) {
-      useChatStore.getState().setError(
-        i18n.t('app.system.restartNeedsTopic', { defaultValue: 'No topic is available to restart nanobot' }),
-      );
-      return;
-    }
-    const restart = socket.sendMessage(chatId, '/restart', undefined, { startsNewRun: false });
-    useChatStore.getState().markSideChannel(restart.turnId);
-    void restart.accepted.catch(() => {
-      useChatStore.getState().setError(
-        i18n.t('app.system.restartFailed', { defaultValue: 'Could not restart nanobot' }),
-      );
-    });
-  }, [activeKey, bootstrap, sessions, socketRef]);
-
   const retryFromMessage = useCallback(async (messageId: string) => {
     if (!socketRef.current || !chatIdFromKey(activeKey)) return;
     const message = messages.find((item) => item.id === messageId);
@@ -251,10 +220,8 @@ export function useChatCommands({
 
   return {
     changeModelPreset,
-    restartServer,
     retryFromMessage,
     sendMessage,
     stopTurn,
-    transcribeAudio,
   };
 }

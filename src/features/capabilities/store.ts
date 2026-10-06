@@ -3,9 +3,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 
 import type {
   CliAppInfo,
-  CliAppsPayload,
   McpPresetInfo,
-  McpPresetsPayload,
 } from '@/types/api/capabilities';
 import type { SlashCommand } from '@/types/api/chat/commands';
 
@@ -21,17 +19,13 @@ type CapabilityErrors = Record<CapabilityResource, string | null>;
 interface CapabilitiesState {
   slashCommands: SlashCommand[];
   cliApps: CliAppInfo[];
-  cliAppsPayload: CliAppsPayload | null;
   mcpPresets: McpPresetInfo[];
-  mcpPresetsPayload: McpPresetsPayload | null;
   loading: boolean;
   errors: CapabilityErrors;
 }
 
 interface CapabilitiesActions {
   refreshAll(): Promise<void>;
-  applyCliAppsPayload(payload: CliAppsPayload): void;
-  applyMcpPresetsPayload(payload: McpPresetsPayload): void;
   resetAll(): void;
 }
 
@@ -57,9 +51,7 @@ export const useCapabilitiesStore = create<CapabilitiesStore>()(
   subscribeWithSelector((set) => ({
     slashCommands: [],
     cliApps: [],
-    cliAppsPayload: null,
     mcpPresets: [],
-    mcpPresetsPayload: null,
     loading: false,
     errors: { ...EMPTY_ERRORS },
 
@@ -81,11 +73,9 @@ export const useCapabilitiesStore = create<CapabilitiesStore>()(
           cliApps: cli.status === 'fulfilled'
             ? cli.value.apps.filter((app) => app.installed)
             : state.cliApps,
-          cliAppsPayload: cli.status === 'fulfilled' ? cli.value : state.cliAppsPayload,
           mcpPresets: mcp.status === 'fulfilled'
             ? mcp.value.presets.filter((preset) => preset.installed && preset.configured)
             : state.mcpPresets,
-          mcpPresetsPayload: mcp.status === 'fulfilled' ? mcp.value : state.mcpPresetsPayload,
           loading: false,
           errors: {
             slashCommands: rejectionMessage(slash),
@@ -103,22 +93,6 @@ export const useCapabilitiesStore = create<CapabilitiesStore>()(
       return request;
     },
 
-    applyCliAppsPayload(payload) {
-      set((state) => ({
-        cliApps: payload.apps.filter((app) => app.installed),
-        cliAppsPayload: payload,
-        errors: { ...state.errors, cliApps: null },
-      }));
-    },
-
-    applyMcpPresetsPayload(payload) {
-      set((state) => ({
-        mcpPresets: payload.presets.filter((preset) => preset.installed && preset.configured),
-        mcpPresetsPayload: payload,
-        errors: { ...state.errors, mcpPresets: null },
-      }));
-    },
-
     resetAll() {
       generation += 1;
       activeRefreshId = null;
@@ -126,18 +100,10 @@ export const useCapabilitiesStore = create<CapabilitiesStore>()(
       set({
         slashCommands: [],
         cliApps: [],
-        cliAppsPayload: null,
         mcpPresets: [],
-        mcpPresetsPayload: null,
         loading: false,
         errors: { ...EMPTY_ERRORS },
       });
     },
   })),
 );
-
-export const selectCliApps = (s: CapabilitiesStore) => s.cliApps;
-export const selectCliAppsPayload = (s: CapabilitiesStore) => s.cliAppsPayload;
-export const selectMcpPresets = (s: CapabilitiesStore) => s.mcpPresets;
-export const selectMcpPresetsPayload = (s: CapabilitiesStore) => s.mcpPresetsPayload;
-export const selectSlashCommands = (s: CapabilitiesStore) => s.slashCommands;

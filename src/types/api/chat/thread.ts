@@ -1,4 +1,3 @@
-import type { SessionAutomationJob } from '../automations';
 import type { WorkspaceScopePayload } from '../workspaces';
 import type { UIMessage } from './messages';
 
@@ -32,5 +31,5 @@ export interface FetchThreadOptions {
 export interface SessionDeleteResult {
   deleted: boolean;
   blocked_by_automations?: boolean;
-  automations?: SessionAutomationJob[];
+  automations?: unknown[];
 }

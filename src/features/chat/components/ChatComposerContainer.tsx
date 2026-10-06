@@ -1,5 +1,3 @@
-import { useTranslation } from 'react-i18next';
-
 import { Composer } from '@/features/chat/components/Composer';
 import { StreamErrorNotice } from '@/features/chat/components/widgets/stream-error-notice';
 import type { ComposerController } from '@/features/chat/hooks/use-composer-controller';
@@ -15,7 +13,6 @@ interface ChatComposerContainerProps {
   dark: boolean;
   hasMessages: boolean;
   model: ChatModelSelection;
-  onOpenSettings: () => void;
   composer: ComposerController;
 }
 
@@ -26,10 +23,7 @@ export function ChatComposerContainer({
   dark,
   hasMessages,
   model,
-  onOpenSettings,
 }: ChatComposerContainerProps) {
-  const { t } = useTranslation();
-
   return (
     <>
       {controller.errors.stream ? (
@@ -67,7 +61,6 @@ export function ChatComposerContainer({
           displayName: model.modelDisplayLabel,
           presets: model.orderedModelPresets,
           onChange: model.changeModelPreset,
-          onOpenSettings,
         }}
         runtime={{
           disabled: composer.sending
@@ -89,12 +82,6 @@ export function ChatComposerContainer({
           onMentionSelect: composer.selectMentionCandidate,
           onSkillSelect: composer.selectSkillCandidate,
           onSlashCommandSelect: composer.selectSlashCommand,
-        }}
-        voice={{
-          error: composer.voiceError
-            ? t(`thread.composer.voiceErrors.${composer.voiceError}`)
-            : null,
-          recorder: composer.voiceRecorder,
         }}
         workspace={{
           controls: controller.workspace.catalog?.controls ?? null,

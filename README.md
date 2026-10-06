@@ -1,8 +1,36 @@
 # nanobot-client
 
-基于 Expo SDK 57、React Native 和 Expo Router 的 nanobot 移动客户端。
+基于 Expo SDK 57、React Native 和 Expo Router 的 nanobot 移动聊天客户端。
 
 项目使用 `expo-dev-client` 和本地原生构建，不依赖商店版 Expo Go，也不要求使用 EAS 云端构建。
+
+## 当前功能范围
+
+客户端只负责聊天，不再充当服务端管理面板：
+
+- 文字聊天、流式回复、停止生成、断网重连和历史恢复；
+- 会话新建、搜索、切换、重命名、删除，以及已有的置顶、归档和项目分组；
+- 图片／文件附件、消息引用、分支会话和文件预览；
+- 聊天内的模型预设选择、`/` 命令、技能及已安装工具的 `@` 提示、工作目录选择；
+- 本地偏好仅提供主题、语言和退出登录。
+
+Apps／Skills 管理页、自动任务、渠道、模型与 Provider 管理、语音输入和服务端配置已移除。
+这些服务端能力本身不会被禁用或删除；关联自动任务的会话仍由服务端阻止误删。
+
+默认网关为 `http://192.168.55.201:8765`，可用 `EXPO_PUBLIC_NANOBOT_SERVER_URL` 显式覆盖。
+鉴权方式保持不变，不把密码写入仓库。
+
+本次精简删除了录音、日期任务选择和渠道二维码依赖。已有开发环境无需重新配置 Java 或 Android SDK，
+但应更新依赖并重新生成、安装开发包，以移除旧原生模块和麦克风权限：
+
+```bash
+npm ci
+npx expo prebuild --platform android --clean
+npm run android
+```
+
+`--clean` 会重建已忽略的 Android 生成目录；若有未迁回 config plugin 的手动原生改动，请先备份。
+后续纯 TS／样式改动仍只需 `npm start`。
 
 ## 环境要求
 
@@ -144,11 +172,11 @@ src/app -> src/features/app -> src/features/<feature>/index.ts
 
 - **Feature 公共入口**：跨 feature 只能通过 `src/features/<feature>/index.ts` 导入，ESLint 会阻止深层跨域依赖。
 - **应用编排层**：业务路由只渲染 `@/features/app`；`features/app` 负责组合各业务域和应用级生命周期。
-- **独立 Zustand store**：auth、connection、chat、sidebar、capabilities、settings、workspaces 等按域维护单一状态来源。
+- **独立 Zustand store**：auth、connection、chat、sidebar、capabilities、skills、workspaces 等按域维护单一状态来源。
 - **认证双代次**：`sessionEpoch` 表示身份会话变化，`tokenGeneration` 表示 token 签发变化，静默续期不会触发全部业务状态重置。
 - **连接恢复分层**：NetInfo/AppState 恢复原因由应用层记录；transport 只负责刷新一次性凭据、替换 socket、队列和 pending request 生命周期。
 - **Socket 职责拆分**：protocol、commands、inbound router、listeners、pending registry、outbound queue 和 reconnect policy 均为独立模块。
-- **API 类型窄入口**：chat/settings 新代码从领域文件导入，同时保留聚合文件作为兼容入口。
+- **聊天 API 窄入口**：类型从 `types/api/chat/<domain>.ts` 导入；模型目录只保留只读字段，不再依赖设置管理类型。
 - **纯模型优先测试**：stream-fold、媒体去重、文件路径压缩和工具展示等纯逻辑从组件中提取后由 Vitest 覆盖。
 
 `npm run check` 会执行 lint、typecheck、Vitest、Native Jest 和 Android Metro bundle smoke。

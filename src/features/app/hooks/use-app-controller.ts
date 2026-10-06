@@ -19,7 +19,6 @@ import { selectSessions, selectSidebarState, useSidebarStore } from '@/features/
 import { useSkillsStore } from '@/features/skills/store';
 import { useWorkspacesStore } from '@/features/workspaces/store';
 import { normalizeWorkspaceScope } from '@/services/runtime/workspace-paths';
-import type { SessionAutomationJob } from '@/types/api/automations';
 import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 
 export function useAppController() {
@@ -41,7 +40,6 @@ export function useAppController() {
   const renameSession = useSidebarStore((state) => state.renameSession);
   const renameProject = useSidebarStore((state) => state.renameProject);
   const setShowArchived = useSidebarStore((state) => state.setShowArchived);
-  const getSessionAutomations = useSidebarStore((state) => state.getSessionAutomations);
 
   const activeKey = useChatStore((state) => state.activeKey);
   const messages = useChatStore((state) => state.messages);
@@ -110,7 +108,6 @@ export function useAppController() {
     bootstrap,
     messages,
     onChatCreated: sessionCommands.selectCreatedChat,
-    sessions,
     socketRef,
   });
 
@@ -122,12 +119,6 @@ export function useAppController() {
     useChatStore.getState().selectSession(key, useSidebarStore.getState().sessions);
   }, []);
   const dismissStreamError = useCallback(() => setStreamError(null), [setStreamError]);
-  const getSessionAutomationsTyped = useCallback(async (
-    key: string,
-  ): Promise<SessionAutomationJob[]> => {
-    const result = await getSessionAutomations(key);
-    return result as SessionAutomationJob[];
-  }, [getSessionAutomations]);
 
   const currentError = authError ?? chatError;
   const chat: ChatScreenController | null = bootstrap ? {
@@ -154,7 +145,6 @@ export function useAppController() {
       goalState,
       sendMessage: chatCommands.sendMessage,
       stopTurn: chatCommands.stopTurn,
-      transcribeAudio: chatCommands.transcribeAudio,
     },
     workspace: {
       activeScope: activeWorkspaceScope,
@@ -168,7 +158,6 @@ export function useAppController() {
       clear: clearChatError,
       dismissStream: dismissStreamError,
     },
-    automations: { getForSession: getSessionAutomationsTyped },
   } : null;
 
   return {
@@ -204,7 +193,6 @@ export function useAppController() {
       renameSession,
       renameProject,
       setShowArchived,
-      getSessionAutomations: getSessionAutomationsTyped,
       removeSession: sessionCommands.removeSession,
     },
     workspace: {
@@ -214,7 +202,6 @@ export function useAppController() {
     },
     runtime: {
       logout: sessionCommands.logout,
-      restartServer: chatCommands.restartServer,
     },
   };
 }

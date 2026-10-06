@@ -1,9 +1,8 @@
 import ArrowUp from 'lucide-react-native/icons/arrow-up';
-import Mic from 'lucide-react-native/icons/mic';
 import Paperclip from 'lucide-react-native/icons/paperclip';
 import Square from 'lucide-react-native/icons/square';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 
 import { ModelPresetMenu } from '@/features/chat/components/widgets/model-preset-menu';
 import type {
@@ -11,10 +10,8 @@ import type {
   ComposerAttachments,
   ComposerModelState,
   ComposerRuntimeState,
-  ComposerVoiceState,
   ComposerWorkspaceState,
 } from '@/features/chat/composer/model/view-contract';
-import { formatVoiceDuration } from '@/features/chat/model/timeline';
 import { WorkspaceAccessMenu } from '@/features/workspaces';
 
 import { composerStyles as styles } from './composer-styles';
@@ -26,7 +23,6 @@ interface ComposerToolbarProps {
   model: ComposerModelState;
   runtime: ComposerRuntimeState;
   stopButton: boolean;
-  voice: ComposerVoiceState;
   workspace: ComposerWorkspaceState;
 }
 
@@ -37,12 +33,10 @@ export function ComposerToolbar({
   model,
   runtime,
   stopButton,
-  voice,
   workspace,
 }: ComposerToolbarProps) {
   const { t } = useTranslation();
   const { colors, variant } = appearance;
-  const voiceRecorder = voice.recorder;
 
   return (
     <View style={styles.composerToolbar}>
@@ -60,81 +54,27 @@ export function ComposerToolbar({
         >
           <Paperclip color={colors.muted} size={17} strokeWidth={1.8} />
         </Pressable>
-        {voiceRecorder.phase === 'recording' ? (
-          <View style={styles.voiceMeter}>
-            <View style={styles.voiceWaveform}>
-              {voiceRecorder.waveform.map((level, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.voiceWaveBar,
-                    {
-                      backgroundColor: '#E5484D',
-                      height: Math.max(3, Math.round(level * 20)),
-                    },
-                  ]}
-                />
-              ))}
-            </View>
-            <Text selectable style={[styles.voiceDuration, { color: colors.muted }]}>
-              {formatVoiceDuration(voiceRecorder.elapsedMs)}
-            </Text>
-          </View>
-        ) : (
-          <>
-            {workspace.scope ? (
-              <WorkspaceAccessMenu
-                canUseFullAccess={workspace.controls?.can_use_full_access !== false}
-                colors={colors}
-                disabled={runtime.disabled || workspace.disabled}
-                isHero={variant === 'hero'}
-                onChange={workspace.onChange}
-                scope={workspace.scope}
-              />
-            ) : null}
-            <ModelPresetMenu
-              activePreset={model.activePreset}
-              colors={colors}
-              disabled={runtime.disabled}
-              displayLabel={model.displayName}
-              onOpenSettings={model.onOpenSettings}
-              onPresetChange={model.onChange}
-              presets={model.presets}
-            />
-          </>
-        )}
+        {/* 移除录音波形后，工作区权限与模型选择始终显示；禁用状态仍由运行时统一控制。 */}
+        {workspace.scope ? (
+          <WorkspaceAccessMenu
+            canUseFullAccess={workspace.controls?.can_use_full_access !== false}
+            colors={colors}
+            disabled={runtime.disabled || workspace.disabled}
+            isHero={variant === 'hero'}
+            onChange={workspace.onChange}
+            scope={workspace.scope}
+          />
+        ) : null}
+        <ModelPresetMenu
+          activePreset={model.activePreset}
+          colors={colors}
+          disabled={runtime.disabled}
+          displayLabel={model.displayName}
+          onPresetChange={model.onChange}
+          presets={model.presets}
+        />
       </View>
       <View style={styles.composerToolbarRight}>
-        {!runtime.turnActive ? (
-          <Pressable
-            accessibilityLabel={
-              voiceRecorder.phase === 'recording'
-                ? t('thread.composer.voice.stop')
-                : t('thread.composer.tools.voice')
-            }
-            accessibilityState={{
-              busy: voiceRecorder.phase === 'transcribing',
-              disabled: voiceRecorder.disabled,
-            }}
-            delayLongPress={140}
-            disabled={voiceRecorder.disabled}
-            hitSlop={6}
-            onLongPress={voiceRecorder.onLongPress}
-            onPress={voiceRecorder.onPress}
-            onPressOut={voiceRecorder.onPressOut}
-            style={[
-              styles.roundIconButton,
-              voiceRecorder.phase === 'recording' && styles.voiceRecordingButton,
-              voiceRecorder.disabled && styles.sendButtonDisabled,
-            ]}
-          >
-            {voiceRecorder.phase === 'transcribing'
-              ? <ActivityIndicator color={colors.muted} size="small" />
-              : voiceRecorder.phase === 'recording'
-                ? <Square color="#FFFFFF" fill="#FFFFFF" size={10} />
-                : <Mic color={colors.muted} size={17} strokeWidth={1.8} />}
-          </Pressable>
-        ) : null}
         <Pressable
           accessibilityLabel={
             stopButton ? t('thread.composer.stop') : t('thread.composer.send')

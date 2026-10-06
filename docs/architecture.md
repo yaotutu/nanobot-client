@@ -2,6 +2,35 @@
 
 本文描述 `nanobot-client` 当前的模块边界、依赖方向和连接恢复设计。新增代码应优先遵循这些规则；如果确实需要跨层依赖，应先调整公共接口，而不是直接深层导入实现文件。
 
+## 0. 聊天核心与功能边界
+
+主页面始终是聊天；抽屉、会话搜索、本地偏好以弹窗覆盖，不再用管理页替换聊天树。
+打开偏好不会清空草稿、重置滚动位置或重建 WebSocket。切换会话才通过导航代次清理聊天临时状态。
+
+现存业务域：
+
+| Feature | 职责 |
+| --- | --- |
+| app | 启动壳、认证后的聊天编排、弹窗导航和恢复生命周期 |
+| auth / connection | 认证、续期、WebSocket 流式协议与连接恢复 |
+| chat | 编辑器、附件、消息归并／展示、文件预览、模型选择 |
+| sidebar | 会话列表、搜索、置顶／归档／分组、重命名和删除 |
+| settings | 仅本地主题／语言／退出弹窗，不访问服务端设置 |
+| capabilities / skills | 只读聊天命令、技能和已安装工具提示，无管理 UI |
+| workspaces | 会话工作目录及访问范围选择 |
+
+已删除 automations、channels、security 管理域和完整设置管理 API。
+聊天仍依赖的只读目录继续在首帧后／空闲时刷新，认证、消息流和恢复路径保持原实现。
+
+`features/chat/api/model-catalog.ts` 沿用 `/api/settings`，仅投影模型预设、调用顺序和默认预设；
+无需为了客户端精简更改服务端接口。新会话的首条消息先通过原有 `/model` 系统命令确认所选模型，再发送用户文本。
+模型菜单可选回默认模型，不再提供“管理模型”入口。
+
+删除会话不发送 `delete_automations`，也不预查询任务详情；服务端返回
+`blocked_by_automations` 时保留会话并提示到服务端处理任务，避免隐式级联删除。
+主题和语言继续使用原存储键；已取消的显示偏好采用固定默认值，不迁移或删除服务端聊天数据。
+录音生命周期和权限已移除，图片／文件附件与已有音视频附件展示不受影响。
+
 ## 1. 总体依赖方向
 
 业务代码的主依赖链为：
@@ -157,11 +186,10 @@ assistant-events.ts             兼容导出入口
 
 ## 7. API 类型入口
 
-chat 和 settings 类型采用“窄入口 + 兼容入口”策略：
+聊天类型按领域拆分：
 
 ```text
 src/types/api/chat/<domain>.ts
-src/types/api/settings/<domain>.ts
 ```
 
 新代码应从最窄的领域文件导入，例如：
@@ -169,28 +197,20 @@ src/types/api/settings/<domain>.ts
 ```ts
 import type { InboundEvent } from '@/types/api/chat/events';
 import type { UIMediaAttachment } from '@/types/api/chat/media';
+import type { ChatModelCatalog } from '@/types/api/chat/models';
 ```
 
-以下文件暂时保留，用于兼容旧调用方，不应删除：
-
-```text
-src/types/api/chat.ts
-src/types/api/chat/index.ts
-src/types/api/settings.ts
-src/types/api/settings/index.ts
-src/features/settings/api.ts
-```
-
-迁移应逐步进行，不能为了追求目录整洁一次性破坏外部导入契约。
+`src/types/api/chat.ts` 和 `chat/index.ts` 保留聚合导出。
+已删除 settings／channels／automations 的管理类型，不再为不可达的页面维护兼容入口。
 
 ## 8. Services 归属
 
-只有不属于单一 feature、且被多个业务域共享的能力才进入 `src/services/`。例如 `nanobot-features.ts` 同时被 channels 和 settings 使用，因此保留在 `services/api`，而不是强行归入其中一个 feature 形成反向依赖。
+只有跨业务的基础能力进入 `src/services/`，当前包含 API 请求／bootstrap、凭据、链接、文本和启动诊断。
+已移除只服务于管理面板的 `nanobot-features` API 和远程重启 UI 策略。
 
 服务层应遵循：
 
 - 不导入 feature；
-- 不直接生成面向用户的 i18n 文案；
 - 网络错误尽量转换为稳定错误类型或错误码；
 - 平台 API 和资源清理由 service/hook 自身负责；
 - wire format 类型从 `src/types/api` 的窄入口导入。

@@ -17,13 +17,12 @@ export function ComposerContext(props: {
   quotedContext: string | null;
   attachments: ComposerAttachment[];
   attachmentError: string | null;
-  voiceError: string | null;
   onClearQuote: () => void;
   onRemoveAttachment: (id: string) => void;
   onRemoveQueuedPrompt: (id: string) => void;
 }) {
   const { t } = useTranslation();
-  const { colors, queuedPrompts, quotedContext, attachments, attachmentError, voiceError } = props;
+  const { colors, queuedPrompts, quotedContext, attachments, attachmentError } = props;
   return (
     <>
       {queuedPrompts.length ? (
@@ -60,7 +59,6 @@ export function ComposerContext(props: {
         </ScrollView>
       ) : null}
       {attachmentError ? <Text accessibilityRole="alert" style={[styles.attachmentError, { color: colors.errorText }]}>{attachmentError}</Text> : null}
-      {voiceError ? <Text accessibilityRole="alert" selectable style={[styles.voiceError, { color: colors.errorText }]}>{voiceError}</Text> : null}
     </>
   );
 }

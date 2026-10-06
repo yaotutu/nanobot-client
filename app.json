@@ -20,7 +20,8 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.nanobotclient",
       "blockedPermissions": [
-        "android.permission.SYSTEM_ALERT_WINDOW"
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -48,14 +49,7 @@
       ],
       "expo-document-picker",
       "./plugins/with-nanobot-network-security",
-      "@react-native-community/datetimepicker",
       "expo-video",
-      [
-        "expo-audio",
-        {
-          "microphonePermission": "允许 nanobot 使用麦克风进行语音输入。"
-        }
-      ],
       "expo-asset",
       "expo-localization"
     ],

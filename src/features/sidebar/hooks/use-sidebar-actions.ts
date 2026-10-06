@@ -3,9 +3,7 @@ import { useRef, useState } from 'react';
 import { Alert } from 'react-native';
 
 import type { SessionGroup } from '@/features/sidebar/chat-groups';
-import { automationDeleteSummary } from '@/features/sidebar/sidebar-list-model';
 import { sessionTitle } from '@/services/text/format';
-import type { SessionAutomationJob } from '@/types/api/automations';
 import type { SessionDeleteResult } from '@/types/api/chat/thread';
 import type { ChatSummary, SidebarStatePayload } from '@/types/api/sidebar';
 
@@ -16,13 +14,11 @@ export type RenameTarget =
 export function useSidebarActions(options: {
   state: SidebarStatePayload;
   t: TFunction;
-  locale: string;
   onRename: (key: string, title: string) => Promise<void>;
   onRenameProject: (projectKey: string, title: string) => Promise<void>;
-  onDelete: (key: string, options?: { deleteAutomations?: boolean }) => Promise<SessionDeleteResult>;
-  onGetSessionAutomations: (key: string) => Promise<SessionAutomationJob[]>;
+  onDelete: (key: string) => Promise<SessionDeleteResult>;
 }) {
-  const { state, t, locale, onRename, onRenameProject, onDelete, onGetSessionAutomations } = options;
+  const { state, t, onRename, onRenameProject, onDelete } = options;
   const [actionSession, setActionSession] = useState<ChatSummary | null>(null);
   const [actionProject, setActionProject] = useState<SessionGroup | null>(null);
   const [renameTarget, setRenameTarget] = useState<RenameTarget | null>(null);
@@ -62,43 +58,22 @@ export function useSidebarActions(options: {
     setActionSession(null);
     if (deletingKeysRef.current.has(session.key)) return;
     deletingKeysRef.current.add(session.key);
-    let automations: SessionAutomationJob[] = [];
-    try {
-      try {
-        automations = await onGetSessionAutomations(session.key);
-      } catch {
-        // Backend deletion remains protected when this preflight endpoint is unavailable.
-      }
-      const confirmDelete = (jobs: SessionAutomationJob[], forceDeleteAutomations = false) => {
-        const hasAutomations = jobs.length > 0 || forceDeleteAutomations;
-        const details = hasAutomations
-          ? jobs.length > 0
-            ? `${t('deleteConfirm.automationsDescription')}\n\n${automationDeleteSummary(jobs, t, locale)}`
-            : t('deleteConfirm.automationsDescription')
-          : t('deleteConfirm.description');
-        Alert.alert(t('deleteConfirm.title'), details, [
-          { text: t('deleteConfirm.cancel'), style: 'cancel', onPress: () => deletingKeysRef.current.delete(session.key) },
-          {
-            text: t('deleteConfirm.confirm'),
-            style: 'destructive',
-            onPress: () => {
-              void onDelete(session.key, hasAutomations ? { deleteAutomations: true } : undefined)
-                .then((result) => {
-                  if (result.blocked_by_automations) confirmDelete(result.automations ?? [], true);
-                  else deletingKeysRef.current.delete(session.key);
-                })
-                .catch((error) => {
-                  deletingKeysRef.current.delete(session.key);
-                  Alert.alert(t('deleteConfirm.title'), error instanceof Error ? error.message : t('settings.status.loadError'));
-                });
-            },
-          },
-        ]);
-      };
-      confirmDelete(automations);
-    } catch {
-      deletingKeysRef.current.delete(session.key);
-    }
+    const release = () => deletingKeysRef.current.delete(session.key);
+    Alert.alert(t('deleteConfirm.title'), t('deleteConfirm.description'), [
+      { text: t('deleteConfirm.cancel'), style: 'cancel', onPress: release },
+      {
+        text: t('deleteConfirm.confirm'), style: 'destructive', onPress: () => {
+          // 不发送 delete_automations：客户端不再管理任务，关联任务必须由服务端安全拦截。
+          void onDelete(session.key).then((result) => {
+            if (result.blocked_by_automations) {
+              Alert.alert(t('deleteConfirm.title'), t('deleteConfirm.blockedByAutomations'));
+            }
+          }).catch((error: unknown) => {
+            Alert.alert(t('deleteConfirm.title'), error instanceof Error ? error.message : t('settings.status.loadError'));
+          }).finally(release);
+        },
+      },
+    ], { cancelable: true, onDismiss: release });
   };
 
   return {

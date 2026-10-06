@@ -37,34 +37,29 @@ interface NanobotScreenProps {
   navigationRevision: number;
   onChangePreferences: (next: LocalPreferences) => void;
   onOpenDrawer: () => void;
-  onOpenSettings: () => void;
 }
 
 export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
-  const { session, capabilities, thread, runtime, errors, automations } = controller;
+  const { session, capabilities, thread, runtime, errors } = controller;
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const {
     assistantQuoteSource,
     promptNavigatorOpen,
-    sessionInfoOpen,
     filePreviewPath,
     setAssistantQuoteSource,
     setPromptNavigatorOpen,
-    setSessionInfoOpen,
     setFilePreviewPath,
     resetForSessionChange,
   } = useChatLocalState();
   const { colors, dark, preferences } = shell;
-  const { settings } = shell.model;
   const composerController = useComposerController({
     cliApps: capabilities.cliApps,
     limits: capabilities.bootstrap.limits,
+    modelPreset: shell.model.activeModelPreset,
     mcpPresets: capabilities.mcpPresets,
     onSendMessage: runtime.sendMessage,
     onStopTurn: runtime.stopTurn,
-    onTranscribeAudio: runtime.transcribeAudio,
-    settings,
     skills: capabilities.skills,
     slashCommands: capabilities.slashCommands,
     turnActive: runtime.turnActive,
@@ -136,7 +131,6 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
       dark={dark}
       hasMessages={hasMessages}
       model={shell.model}
-      onOpenSettings={shell.onOpenSettings}
     />
   );
 
@@ -155,7 +149,6 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
         hasUserPrompts={hasUserPrompts}
         onOpenDrawer={shell.onOpenDrawer}
         onOpenPromptNavigator={() => setPromptNavigatorOpen(true)}
-        onOpenSessionInfo={() => setSessionInfoOpen(true)}
         onChangePreferences={shell.onChangePreferences}
       />
 
@@ -243,20 +236,16 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
         activeKey={session.activeKey}
         colors={colors}
         dark={dark}
-        chatTitle={chatTitle}
         messages={thread.messages}
         promptNavigatorOpen={promptNavigatorOpen}
-        sessionInfoOpen={sessionInfoOpen}
         assistantQuoteSource={assistantQuoteSource}
         filePreviewPath={filePreviewPath}
         token={capabilities.bootstrap.api_token}
         onClosePromptNavigator={() => setPromptNavigatorOpen(false)}
-        onCloseSessionInfo={() => setSessionInfoOpen(false)}
         onCloseAssistantQuote={() => setAssistantQuoteSource(null)}
         onCloseFilePreview={() => setFilePreviewPath(null)}
         onConfirmAssistantQuote={composerController.confirmQuote}
         onJumpToPrompt={jumpToPrompt}
-        onGetSessionAutomations={automations.getForSession}
       />
     </KeyboardAvoidingView>
   );

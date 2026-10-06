@@ -5,3 +5,4 @@ export { useCanonicalRefresh, useThreadLifecycle } from './hooks/use-thread-life
 export { chatIdFromKey } from './model/chat-key';
 export type { ChatScreenController } from './model/chat-screen-contract';
 export { useChatStore } from './store';
+export { fetchChatModelCatalog } from './api/model-catalog';

@@ -29,7 +29,7 @@ export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-t
 
 ```bash
 npm ci                     # 安装依赖（提交后第一次必跑）
-npm run check              # lint + typecheck（提交前必跑）
+npm run check              # lint + typecheck + 单元/Native 测试 + Android bundle smoke（提交前必跑）
 npm run lint               # 仅 ESLint
 npm run typecheck          # 仅 tsc --noEmit
 
@@ -88,7 +88,15 @@ android/ ios/      Expo Prebuild 产物（已 git ignore）
 - `src/services/api/bootstrap.ts`、`src/services/credentials/local-dev-bootstrap.ts` — 启动期开发者模式装配
 - `src/services/runtime/debug-log.ts` + `src/components/debug-overlay.tsx` — 调试日志（release 构建中 `console.*` 会被剥离，UI overlay 是唯一可视通道）
 - `src/i18n/` — i18next + react-i18next，支持 `en/es/fr/id/ja/ko/pt-BR/vi/zh-CN/zh-TW`
-- `src/services/api/config.ts` — 网关地址解析（`EXPO_PUBLIC_NANOBOT_SERVER_URL` → ADB reverse tunnel → 默认局域网地址）
+- `src/services/api/config.ts` — 网关地址解析（`EXPO_PUBLIC_NANOBOT_SERVER_URL` → `http://192.168.55.201:8765`，不自动切换 ADB 地址）
+
+### 聊天精简后的功能边界
+
+- `features/settings` 仅包含本地主题／语言／退出弹窗；不要恢复服务端管理面板。
+- `features/capabilities`、`features/skills` 只保留聊天所需的只读目录，不含 Apps／Skills 页面。
+- 模型目录读取在 `features/chat/api/model-catalog.ts`，不提供 Provider／模型配置写接口。
+- 不发送级联删除自动任务参数；服务端拒绝删除时保留会话并显示提示。
+- 已移除录音、日期选择和渠道二维码依赖；不要误删聊天附件／视频展示。
 
 ## 编码约定
 
@@ -102,7 +110,7 @@ android/ ios/      Expo Prebuild 产物（已 git ignore）
 ## 本地开发技巧
 
 - 真机连接：`adb devices -l`，首次或原生改动后用 `npm run android` 构建安装；纯 TS / 样式改动 `npm start` 即可。
-- USB 连接 Android 想用主机网关：`adb reverse tcp:8765 tcp:8765`，`src/services/api/config.ts` 会自动使用 `localhost:8765`。
+- USB 连接 Android 想用主机网关：先执行 `adb reverse tcp:8765 tcp:8765`，再显式设置 `EXPO_PUBLIC_NANOBOT_SERVER_URL=http://localhost:8765`；默认仍连接指定局域网地址。
 - 自定义网关地址：构建时设置 `EXPO_PUBLIC_NANOBOT_SERVER_URL`。
 - `package.json` 的 `overrides.xcode.uuid` 用于压制 SDK 57 工具链的间接依赖告警；升级 Expo 后重新审计，若上游已修复可移除。
 

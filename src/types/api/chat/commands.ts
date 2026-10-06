@@ -29,6 +29,8 @@ export interface SlashCommand {
 }
 
 export interface SendMessageOptions {
+  /** 仅用于新会话首条消息：先用既有 /model 系统命令应用预设，不增加网关协议字段。 */
+  modelPreset?: string;
   cliApps?: UICliAppAttachment[];
   mcpPresets?: UIMcpPresetAttachment[];
   quotedContext?: string;

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
 import i18n from '@/i18n';
+import type { SessionDeleteResult } from '@/types/api/chat/thread';
 import type {
   ChatSummary,
   SidebarStatePayload,
@@ -10,7 +11,6 @@ import type {
 import {
   deleteSession as apiDeleteSession,
   fetchSidebarState as apiFetchSidebarState,
-  fetchSessionAutomations as apiFetchSessionAutomations,
   listSessions as apiListSessions,
   updateSidebarState as apiUpdateSidebarState,
 } from './api';
@@ -44,9 +44,7 @@ interface SidebarActions {
   setShowArchived(show: boolean): Promise<void>;
   removeSession(
     key: string,
-    options?: { deleteAutomations?: boolean },
-  ): Promise<{ deleted: boolean }>;
-  getSessionAutomations(key: string): Promise<unknown[]>;
+  ): Promise<SessionDeleteResult>;
   /** 给新会话添加一个乐观条目（fork / sendMessage 中用到） */
   addOptimistic(session: ChatSummary): void;
   /** 替换 sessions（force-overwrite） */
@@ -199,10 +197,10 @@ export const useSidebarStore = create<SidebarStore>()(
         }));
       },
 
-      async removeSession(key, options) {
+      async removeSession(key) {
         try {
-          const result = await apiDeleteSession(key, options);
-          if (!result.deleted) return { deleted: false };
+          const result = await apiDeleteSession(key);
+          if (!result.deleted) return result;
           set((s) => ({ sessions: s.sessions.filter((sess) => sess.key !== key) }));
           await mutateSidebar((current) => {
             const title_overrides = { ...current.title_overrides };
@@ -221,17 +219,9 @@ export const useSidebarStore = create<SidebarStore>()(
             };
           });
           return { deleted: true };
-        } catch {
-          return { deleted: false };
-        }
-      },
-
-      async getSessionAutomations(key) {
-        try {
-          const payload = await apiFetchSessionAutomations(key);
-          return payload.jobs;
-        } catch {
-          return [];
+        } catch (error: unknown) {
+          set({ error: error instanceof Error ? error.message : i18n.t('settings.status.loadError') });
+          throw error;
         }
       },
 

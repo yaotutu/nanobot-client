@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -7,10 +7,6 @@ import { useComposerDraft } from '@/features/chat/composer/hooks/use-composer-dr
 import { useComposerQueue } from '@/features/chat/composer/hooks/use-composer-queue';
 import { useComposerSuggestions } from '@/features/chat/composer/hooks/use-composer-suggestions';
 import { useAttachments } from '@/features/chat/hooks/use-attachments';
-import {
-  type VoiceRecorderError,
-  useVoiceRecorder,
-} from '@/features/chat/hooks/use-voice-recorder';
 import {
   isSideChannelLifecycle,
   slashCommandLifecycle,
@@ -26,7 +22,6 @@ import type {
   SlashCommand,
 } from '@/types/api/chat/commands';
 import type { WebUIIngressLimits } from '@/types/api/runtime';
-import type { SettingsPayload } from '@/types/api/settings';
 
 export type {
   ComposerSlashCommand,
@@ -35,6 +30,7 @@ export type {
 
 interface UseComposerControllerOptions {
   cliApps: CliAppInfo[];
+  modelPreset: string;
   limits?: WebUIIngressLimits;
   mcpPresets: McpPresetInfo[];
   onSendMessage: (
@@ -43,11 +39,6 @@ interface UseComposerControllerOptions {
     options?: SendMessageOptions,
   ) => Promise<void>;
   onStopTurn: () => void;
-  onTranscribeAudio: (
-    dataUrl: string,
-    options?: { durationMs?: number },
-  ) => Promise<string>;
-  settings: SettingsPayload | null;
   skills: SkillSummary[];
   slashCommands: SlashCommand[];
   turnActive: boolean;
@@ -58,30 +49,19 @@ export function useComposerController(options: UseComposerControllerOptions) {
     cliApps,
     limits,
     mcpPresets,
+    modelPreset,
     onSendMessage,
     onStopTurn,
-    onTranscribeAudio,
-    settings,
     skills,
     slashCommands,
     turnActive,
   } = options;
   const { t } = useTranslation();
   const draft = useComposerDraft();
+  // 输入侧只保留文本与图片/文件附件，不再读取录音设置或装配转写回调。
+  // 附件仍使用网关下发的上传限制，音视频附件的展示与播放由消息组件负责。
   const attachments = useAttachments(limits);
   const queue = useComposerQueue({ onSendMessage, onStopTurn, turnActive });
-  const [voiceError, setVoiceError] = useState<VoiceRecorderError | null>(null);
-
-  const voiceRecorder = useVoiceRecorder({
-    disabled: queue.sending || turnActive,
-    maxDurationSec: settings?.transcription?.max_duration_sec,
-    maxUploadMb: settings?.transcription?.max_upload_mb,
-    onClearError: () => setVoiceError(null),
-    onError: setVoiceError,
-    onTranscript: draft.appendTranscript,
-    onTranscribeAudio,
-  });
-
   const suggestions = useComposerSuggestions({
     cliApps,
     clearDraft: draft.clear,
@@ -111,6 +91,7 @@ export function useComposerController(options: UseComposerControllerOptions) {
       mcpPresets,
     );
     const messageOptions: SendMessageOptions = {
+      modelPreset,
       ...(capabilityPayloads.cliApps.length
         ? { cliApps: capabilityPayloads.cliApps }
         : {}),
@@ -174,6 +155,7 @@ export function useComposerController(options: UseComposerControllerOptions) {
     cliApps,
     draft,
     mcpPresets,
+    modelPreset,
     queue,
     slashCommands,
     turnActive,
@@ -219,8 +201,6 @@ export function useComposerController(options: UseComposerControllerOptions) {
     visibleMentionCandidates: suggestions.visibleMentionCandidates,
     visibleSkillCandidates: suggestions.visibleSkillCandidates,
     visibleSlashCommands: suggestions.visibleSlashCommands,
-    voiceError,
-    voiceRecorder,
   };
 }
 

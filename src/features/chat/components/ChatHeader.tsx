@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import ListTodo from 'lucide-react-native/icons/list-todo';
 import ListTree from 'lucide-react-native/icons/list-tree';
 import Menu from 'lucide-react-native/icons/menu';
 import Moon from 'lucide-react-native/icons/moon';
@@ -19,7 +18,6 @@ export interface ChatHeaderProps {
   hasUserPrompts: boolean;
   onOpenDrawer: () => void;
   onOpenPromptNavigator: () => void;
-  onOpenSessionInfo: () => void;
   onChangePreferences: (next: LocalPreferences) => void;
 }
 
@@ -49,16 +47,6 @@ export function ChatHeader(props: ChatHeaderProps) {
             style={({ pressed }) => [styles.headerButton, pressed && { backgroundColor: colors.pressed }]}
           >
             <ListTree color={colors.muted} size={17} strokeWidth={1.8} />
-          </Pressable>
-        ) : null}
-        {props.activeKey ? (
-          <Pressable
-            accessibilityLabel={t('thread.header.sessionInfo')}
-            hitSlop={6}
-            onPress={props.onOpenSessionInfo}
-            style={({ pressed }) => [styles.headerButton, pressed && { backgroundColor: colors.pressed }]}
-          >
-            <ListTodo color={colors.muted} size={17} strokeWidth={1.8} />
           </Pressable>
         ) : null}
         <Pressable

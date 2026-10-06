@@ -1,5 +1,4 @@
 import { apiClient } from '@/services/api/api';
-import type { AutomationsPayload } from '@/types/api/automations';
 import type { SessionDeleteResult } from '@/types/api/chat/thread';
 import type {
   ChatSummary,
@@ -50,18 +49,9 @@ export async function updateSidebarState(state: SidebarStatePayload): Promise<Si
 
 export async function deleteSession(
   key: string,
-  options?: { deleteAutomations?: boolean },
 ): Promise<SessionDeleteResult> {
-  const query: Record<string, string> = {};
-  if (options?.deleteAutomations) query.delete_automations = 'true';
   return apiClient.request<SessionDeleteResult>(
     `/api/sessions/${encodeURIComponent(key)}/delete`,
-    { method: 'GET', query },
-  );
-}
-
-export async function fetchSessionAutomations(key: string): Promise<AutomationsPayload> {
-  return apiClient.get<AutomationsPayload>(
-    `/api/sessions/${encodeURIComponent(key)}/automations`,
+    { method: 'GET' },
   );
 }

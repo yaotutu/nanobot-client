@@ -1,4 +1,3 @@
-import type { SessionAutomationJob } from '@/types/api/automations';
 import type {
   CliAppInfo,
   McpPresetInfo,
@@ -12,7 +11,7 @@ import type {
 import type { StreamError } from '@/types/api/chat/errors';
 import type { UIMessage } from '@/types/api/chat/messages';
 import type { BootstrapResponse, ConnectionStatus, GoalStateWsPayload } from '@/types/api/runtime';
-import type { ModelPresetInfo, SettingsPayload } from '@/types/api/settings';
+import type { ModelPresetInfo } from '@/types/api/chat/models';
 import type { ChatSummary, SidebarStatePayload } from '@/types/api/sidebar';
 import type {
   WorkspaceScopePayload,
@@ -57,10 +56,6 @@ export interface ChatScreenController {
       options?: SendMessageOptions,
     ) => Promise<void>;
     stopTurn: () => void;
-    transcribeAudio: (
-      dataUrl: string,
-      options?: { durationMs?: number },
-    ) => Promise<string>;
   };
   workspace: {
     activeScope: WorkspaceScopePayload | null;
@@ -74,9 +69,6 @@ export interface ChatScreenController {
     clear: () => void;
     dismissStream: () => void;
   };
-  automations: {
-    getForSession: (key: string) => Promise<SessionAutomationJob[]>;
-  };
 }
 
 export interface ChatModelSelection {
@@ -84,5 +76,4 @@ export interface ChatModelSelection {
   changeModelPreset: (name: string) => Promise<void>;
   modelDisplayLabel: string;
   orderedModelPresets: ModelPresetInfo[];
-  settings: SettingsPayload | null;
 }

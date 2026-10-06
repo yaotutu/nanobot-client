@@ -2,11 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { fetchSettings } from '@/features/settings/api/catalog';
-import { resolveRuntimeClientPolicy } from '@/services/runtime/runtime-capabilities';
+import { fetchChatModelCatalog } from '@/features/chat';
+import type { ChatModelCatalog } from '@/types/api/chat/models';
 import type { BootstrapResponse } from '@/types/api/runtime';
 import type { ChatSummary } from '@/types/api/sidebar';
-import type { SettingsPayload } from '@/types/api/settings';
 
 interface UseAppModelSelectionOptions {
   activeSession: ChatSummary | null;
@@ -26,7 +25,7 @@ export function useAppModelSelection({
   turnModelName,
 }: UseAppModelSelectionOptions) {
   const { t } = useTranslation();
-  const [settings, setSettings] = useState<SettingsPayload | null>(null);
+  const [catalog, setCatalog] = useState<ChatModelCatalog | null>(null);
   const [localSelection, setLocalSelection] = useState<{
     scopeKey: string;
     preset: string;
@@ -34,12 +33,11 @@ export function useAppModelSelection({
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchSettings({ signal: controller.signal })
-      .then(setSettings)
+    fetchChatModelCatalog({ signal: controller.signal })
+      .then(setCatalog)
       .catch((error: unknown) => {
         if (error instanceof Error && error.name === 'AbortError') return;
-        // Keep the last successful settings payload and use bootstrap defaults
-        // when settings have never loaded.
+        // 目录刷新失败时保留上次模型列表；首次失败则使用 bootstrap 的模型名称。
       });
     return () => controller.abort();
   }, [bootstrap.api_token, modelSettingsRevision]);
@@ -50,9 +48,9 @@ export function useAppModelSelection({
     : null;
   const activeModelPreset = localPreset
     || activeSession?.modelPreset?.trim()
-    || settings?.agent.model_preset?.trim()
+    || catalog?.agent.model_preset?.trim()
     || 'default';
-  const activeModelPresetInfo = settings?.model_presets.find(
+  const activeModelPresetInfo = catalog?.model_presets.find(
     (preset) => preset.name === activeModelPreset,
   ) ?? null;
   const modelDisplayLabel = activeModelPresetInfo?.label?.trim()
@@ -63,13 +61,13 @@ export function useAppModelSelection({
     || 'nanobot';
   const orderedModelPresets = useMemo(() => {
     const order = new Map(
-      (settings?.model_call_order ?? []).map((name, index) => [name.trim(), index]),
+      (catalog?.model_call_order ?? []).map((name, index) => [name.trim(), index]),
     );
-    return [...(settings?.model_presets ?? [])].sort((left, right) => (
+    return [...(catalog?.model_presets ?? [])].sort((left, right) => (
       (order.get(left.name.trim()) ?? Number.POSITIVE_INFINITY)
       - (order.get(right.name.trim()) ?? Number.POSITIVE_INFINITY)
     ));
-  }, [settings?.model_call_order, settings?.model_presets]);
+  }, [catalog?.model_call_order, catalog?.model_presets]);
 
   const changeModelPreset = useCallback(async (name: string) => {
     const previous = localSelection;
@@ -91,9 +89,6 @@ export function useAppModelSelection({
     changeModelPreset,
     modelDisplayLabel,
     orderedModelPresets,
-    runtimePolicy: resolveRuntimeClientPolicy(settings, bootstrap),
-    settings,
-    setSettings,
   };
 }
 

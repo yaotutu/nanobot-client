@@ -1,5 +1,4 @@
 import type { AppController } from '@/features/app/hooks/use-app-controller';
-import type { AppUtilityView } from '@/features/app/model/navigation';
 import { createDeferredComponent } from '@/hooks/use-deferred-component';
 import type { Palette } from '@/ui/palette';
 
@@ -19,11 +18,10 @@ interface AppModalsProps {
   colors: Palette;
   drawerOpen: boolean;
   sessionSearchOpen: boolean;
-  utilityView: AppUtilityView;
   onCloseDrawer: () => void;
   onCloseSessionSearch: () => void;
   onOpenSearch: () => void;
-  onOpenUtility: (view: Exclude<AppUtilityView, 'chat'>) => void;
+  onOpenPreferences: () => void;
   onSelectSession: (key: string | null) => void;
   onStartNewChat: () => void;
   onStartNewChatInProject: (projectPath: string, projectName: string) => void;
@@ -38,23 +36,17 @@ export function AppModals(props: AppModalsProps) {
         <DeferredSidebarDrawer
           componentProps={{
             activeKey: app.chat?.session.activeKey ?? null,
-            activeUtility: props.utilityView === 'chat' ? null : props.utilityView,
             connectionStatus: app.connection.status,
             networkAvailable: app.connection.networkAvailable,
             defaultWorkspacePath: app.workspace.catalog?.default_scope.project_path ?? null,
             loading: app.sidebar.loading,
             onClose: props.onCloseDrawer,
-            onLogout: app.runtime.logout,
             onNewChat: props.onStartNewChat,
             onReconnect: app.connection.reconnect,
             onNewChatInProject: props.onStartNewChatInProject,
             onOpenSearch: props.onOpenSearch,
-            onOpenApps: () => props.onOpenUtility('apps'),
-            onOpenSkills: () => props.onOpenUtility('skills'),
-            onOpenAutomations: () => props.onOpenUtility('automations'),
-            onOpenSettings: () => props.onOpenUtility('settings'),
+            onOpenSettings: props.onOpenPreferences,
             onDelete: app.sidebar.removeSession,
-            onGetSessionAutomations: app.sidebar.getSessionAutomations,
             onRename: app.sidebar.renameSession,
             onRenameProject: app.sidebar.renameProject,
             onSelect: props.onSelectSession,

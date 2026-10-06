@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { SessionGroup } from '@/features/sidebar/chat-groups';
-import { buildSidebarListItems, formatDuration } from '@/features/sidebar/sidebar-list-model';
+import { buildSidebarListItems } from '@/features/sidebar/sidebar-list-model';
 import type { ChatSummary } from '@/types/api/sidebar';
 
 function session(key: string): ChatSummary {
@@ -52,12 +52,5 @@ describe('buildSidebarListItems', () => {
     });
 
     expect(items.at(-1)).toEqual({ type: 'more', key: 'show-more', hiddenCount: 1, totalCount: 3 });
-  });
-});
-
-describe('formatDuration', () => {
-  it('uses the largest exact unit', () => {
-    expect(formatDuration(7_200_000, 'en-US')).toContain('2');
-    expect(formatDuration(90_000, 'en-US')).toContain('90');
   });
 });

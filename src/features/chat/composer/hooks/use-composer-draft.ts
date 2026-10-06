@@ -37,22 +37,12 @@ export function useComposerDraft() {
     focusAt(content.length);
   }, [focusAt]);
 
-  const appendTranscript = useCallback((transcript: string) => {
-    setText((current) => (
-      current
-        ? `${current}${/\s$/.test(current) ? '' : ' '}${transcript}`
-        : transcript
-    ));
-    inputRef.current?.focus();
-  }, []);
-
   const confirmQuote = useCallback((content: string) => {
     setQuotedContext(normalizeQuotedContext(content));
     setTimeout(() => inputRef.current?.focus(), 0);
   }, []);
 
   return {
-    appendTranscript,
     clear,
     confirmQuote,
     cursor,

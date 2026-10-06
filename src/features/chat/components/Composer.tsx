@@ -10,6 +10,7 @@ import { ComposerSuggestions } from './ComposerSuggestions';
 import { ComposerToolbar } from './ComposerToolbar';
 import { composerStyles as styles } from './composer-styles';
 
+// 此组件只接收文本与附件输入状态，不再依赖录音或转写阶段。
 export function Composer({
   appearance,
   inputRef,
@@ -18,7 +19,6 @@ export function Composer({
   model,
   runtime,
   suggestions,
-  voice,
   workspace,
 }: ComposerProps) {
   const { t } = useTranslation();
@@ -31,7 +31,6 @@ export function Composer({
     && !attachments.busy
     && !attachments.items.some((item) => item.status === 'error');
   const stopButton = runtime.turnActive && !hasDraft;
-  const voiceBusy = voice.recorder.phase !== 'idle';
 
   return (
     <View
@@ -66,12 +65,11 @@ export function Composer({
         onRemoveQueuedPrompt={runtime.onRemoveQueuedPrompt}
         queuedPrompts={runtime.queuedPrompts}
         quotedContext={draft.quotedContext}
-        voiceError={voice.error}
       />
       <TextInput
         ref={inputRef}
         accessibilityLabel={t('thread.composer.inputAria')}
-        editable={!runtime.disabled && !voiceBusy}
+        editable={!runtime.disabled}
         maxLength={65_536}
         multiline
         onChangeText={draft.onChangeText}
@@ -99,7 +97,6 @@ export function Composer({
         model={model}
         runtime={runtime}
         stopButton={stopButton}
-        voice={voice}
         workspace={workspace}
       />
       <WorkspaceProjectPicker

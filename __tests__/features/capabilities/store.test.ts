@@ -92,7 +92,7 @@ describe('useCapabilitiesStore', () => {
     useCapabilitiesStore.getState().resetAll();
   });
 
-  it('stores catalog payloads and their chat-ready projections', async () => {
+  it('stores only chat-ready capabilities without management catalog state', async () => {
     mockSuccessfulRefresh();
 
     await useCapabilitiesStore.getState().refreshAll();
@@ -100,9 +100,7 @@ describe('useCapabilitiesStore', () => {
     expect(useCapabilitiesStore.getState()).toMatchObject({
       slashCommands: [slashCommand],
       cliApps: [cliPayload.apps[0]],
-      cliAppsPayload: cliPayload,
       mcpPresets: [mcpPayload.presets[0]],
-      mcpPresetsPayload: mcpPayload,
       loading: false,
       errors: {
         slashCommands: null,
@@ -125,9 +123,7 @@ describe('useCapabilitiesStore', () => {
     expect(useCapabilitiesStore.getState()).toMatchObject({
       slashCommands: [{ ...slashCommand, command: '/new' }],
       cliApps: [cliPayload.apps[0]],
-      cliAppsPayload: cliPayload,
       mcpPresets: [],
-      mcpPresetsPayload: { presets: [], installed_count: 0 },
       errors: {
         slashCommands: null,
         cliApps: 'CLI catalog unavailable',
@@ -162,15 +158,4 @@ describe('useCapabilitiesStore', () => {
     expect(fetchMcpPresets).toHaveBeenCalledTimes(1);
   });
 
-  it('updates the canonical payload and projection together after a mutation', () => {
-    const updated: CliAppsPayload = {
-      apps: [cliApp('new-cli', true), cliApp('old-cli', false)],
-      installed_count: 1,
-    };
-
-    useCapabilitiesStore.getState().applyCliAppsPayload(updated);
-
-    expect(useCapabilitiesStore.getState().cliAppsPayload).toBe(updated);
-    expect(useCapabilitiesStore.getState().cliApps).toEqual([updated.apps[0]]);
-  });
 });

@@ -4,10 +4,9 @@ import type { TextInput } from 'react-native';
 import type { CapabilityMentionCandidate } from '@/features/chat/composer/model/capability-mentions';
 import type { ComposerSlashCommand, QueuedPrompt } from '@/features/chat/hooks/use-composer-controller';
 import type { SkillMentionCandidate } from '@/features/chat/composer/model/skill-mentions';
-import type { VoiceRecorderController } from '@/features/chat/hooks/use-voice-recorder';
 import type { ComposerAttachment } from '@/types/api/chat/attachments';
 import type { GoalStateWsPayload } from '@/types/api/runtime';
-import type { SettingsPayload } from '@/types/api/settings';
+import type { ModelPresetInfo } from '@/types/api/chat/models';
 import type {
   WorkspaceScopePayload,
   WorkspacesPayload,
@@ -50,9 +49,8 @@ export interface ComposerSuggestionsState {
 export interface ComposerModelState {
   activePreset: string;
   displayName: string;
-  presets: SettingsPayload['model_presets'];
+  presets: ModelPresetInfo[];
   onChange: (name: string) => Promise<void>;
-  onOpenSettings: () => void;
 }
 
 export interface ComposerRuntimeState {
@@ -66,11 +64,6 @@ export interface ComposerRuntimeState {
   onStop: () => void;
 }
 
-export interface ComposerVoiceState {
-  error: string | null;
-  recorder: VoiceRecorderController;
-}
-
 export interface ComposerWorkspaceState {
   controls: WorkspacesPayload['controls'] | null;
   defaultScope: WorkspaceScopePayload | null;
@@ -80,6 +73,8 @@ export interface ComposerWorkspaceState {
   onChange: (scope: WorkspaceScopePayload) => void;
 }
 
+// 输入框契约仅组合文本草稿、附件及已有的运行/选择状态，不再接收录音控制器。
+// 模型设置仍服务于预设选择，音视频附件播放由消息展示层负责，不受输入契约精简影响。
 export interface ComposerProps {
   inputRef: RefObject<TextInput | null>;
   appearance: ComposerAppearance;
@@ -88,6 +83,5 @@ export interface ComposerProps {
   model: ComposerModelState;
   runtime: ComposerRuntimeState;
   suggestions: ComposerSuggestionsState;
-  voice: ComposerVoiceState;
   workspace: ComposerWorkspaceState;
 }

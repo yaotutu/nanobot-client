@@ -27,10 +27,6 @@ const nonAppFeaturePatterns = [
   },
   {
     group: [
-      '@/features/settings/components/SettingsScreen',
-      '@/features/capabilities/components/AppsScreen',
-      '@/features/skills/components/SkillsScreen',
-      '@/features/automations/components/AutomationsScreen',
       '@/features/sidebar/components/SidebarDrawer',
     ],
     message: 'Top-level feature screens must be composed by features/app.',
@@ -39,12 +35,9 @@ const nonAppFeaturePatterns = [
 
 const featureNames = [
   'auth',
-  'automations',
   'capabilities',
-  'channels',
   'chat',
   'connection',
-  'security',
   'settings',
   'sidebar',
   'skills',

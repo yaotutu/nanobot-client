@@ -125,10 +125,9 @@ export function useAppSessionCommands({
 
   const removeSession = useCallback(async (
     key: string,
-    options?: { deleteAutomations?: boolean },
   ): Promise<SessionDeleteResult> => {
     if (!authenticated) return { deleted: false };
-    const result = await useSidebarStore.getState().removeSession(key, options);
+    const result = await useSidebarStore.getState().removeSession(key);
     if (result.deleted && activeKey === key) {
       useChatStore.getState().selectSession(null, useSidebarStore.getState().sessions);
     }
