@@ -90,6 +90,14 @@
     "values": {
       "light": "浅色",
       "dark": "深色"
+    },
+    "preferences": {
+      "group": "偏好设置",
+      "account": "账户",
+      "note": "仅影响此设备的显示，不改变会话设置。",
+      "themeHint": "选择 nanobot 在此设备上的外观。",
+      "languageHint": "选择应用界面使用的语言。",
+      "back": "返回设置"
     }
   },
   "chat": {

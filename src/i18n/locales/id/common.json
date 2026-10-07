@@ -90,6 +90,14 @@
     "values": {
       "light": "Terang",
       "dark": "Gelap"
+    },
+    "preferences": {
+      "group": "Preferensi",
+      "account": "Akun",
+      "note": "Preferensi ini hanya berlaku di perangkat ini, bukan untuk percakapan Anda.",
+      "themeHint": "Pilih tampilan nanobot di perangkat ini.",
+      "languageHint": "Pilih bahasa antarmuka aplikasi.",
+      "back": "Kembali ke pengaturan"
     }
   },
   "chat": {

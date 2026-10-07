@@ -5,7 +5,17 @@ import { PreferencesModal } from '@/features/settings/components/PreferencesModa
 import { supportedLocales } from '@/i18n/config';
 import { apiClient } from '@/services/api/api';
 import type { LocalPreferences } from '@/stores/local-preferences-store';
-import { LIGHT_COLORS } from '@/ui/colors';
+import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
+
+// 仅隔离 Jest 无法直接加载的装饰性 ESM 图标，仍测试真实列表与 Modal 交互。
+jest.mock('lucide-react-native/icons/arrow-left', () => () => null);
+jest.mock('lucide-react-native/icons/check', () => () => null);
+jest.mock('lucide-react-native/icons/chevron-right', () => () => null);
+jest.mock('lucide-react-native/icons/languages', () => () => null);
+jest.mock('lucide-react-native/icons/log-out', () => () => null);
+jest.mock('lucide-react-native/icons/moon', () => () => null);
+jest.mock('lucide-react-native/icons/sun', () => () => null);
+jest.mock('lucide-react-native/icons/x', () => () => null);
 
 // 返回翻译 key，直接验证弹窗使用的文案契约，避免语言资源或异步初始化影响断言。
 jest.mock('react-i18next', () => ({
@@ -52,52 +62,40 @@ describe('PreferencesModal', () => {
     jest.spyOn(globalThis, 'fetch').mockImplementation(mockFetch);
   });
 
-  afterEach(() => {
-    // 恢复全局网络函数，确保本文件不会影响其他并行开发中的 native 测试。
-    jest.restoreAllMocks();
-  });
+  afterEach(() => { jest.restoreAllMocks(); });
 
   it('隐藏时不渲染内容，也不触发业务回调', async () => {
     const props = createProps();
     const result = await render(<PreferencesModal {...props} visible={false} />);
-
     expect(result.toJSON()).toBeNull();
     expect(props.onChange).not.toHaveBeenCalled();
     expect(props.onClose).not.toHaveBeenCalled();
     expect(props.onLogout).not.toHaveBeenCalled();
-    expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it('仅展示主题、语言和退出登录，以及弹窗标题与关闭按钮', async () => {
+  it('首页只展示主题和语言摘要，退出单独分组，不平铺全部选项', async () => {
     const result = await render(<PreferencesModal {...createProps()} />);
-
-    // 精确匹配全部可见文字及可操作控件数量，避免旧服务端设置入口悄悄回归。
     expect(result.getAllByText(/.+/).map((node) => node.props.children)).toEqual([
-      'sidebar.settings',
-      'common.dismiss',
-      'settings.rows.theme',
-      'settings.values.light',
-      'settings.values.dark',
-      'sidebar.language.label',
-      ...supportedLocales.map((locale) => locale.nativeLabel),
-      'app.account.logout',
+      'sidebar.settings', 'settings.preferences.note', 'settings.preferences.group',
+      'settings.rows.theme', 'settings.values.light', 'sidebar.language.label', 'English',
+      'settings.preferences.account', 'app.account.logout',
     ]);
-    expect(result.getAllByRole('radio')).toHaveLength(2 + supportedLocales.length);
-    expect(result.getAllByRole('button')).toHaveLength(2);
-    expect(result.getByRole('radio', { name: 'settings.values.light', checked: true })).toBeTruthy();
-    expect(result.getByRole('radio', { name: 'English', checked: true })).toBeTruthy();
+    expect(result.queryAllByRole('radio')).toHaveLength(0);
+    expect(result.getAllByRole('button')).toHaveLength(4);
+    expect(result.getByRole('button', { name: 'settings.rows.theme' })).toHaveAccessibilityValue({ text: 'settings.values.light' });
+    expect(result.getByRole('button', { name: 'sidebar.language.label' })).toHaveAccessibilityValue({ text: 'English' });
   });
 
   it('展示及本地操作均不调用服务端', async () => {
     const props = createProps();
     const result = await render(<PreferencesModal {...props} />);
-
+    await fireEvent.press(result.getByRole('button', { name: 'settings.rows.theme' }));
     await fireEvent.press(result.getByRole('radio', { name: 'settings.values.dark' }));
+    await fireEvent.press(result.getByRole('button', { name: 'settings.preferences.back' }));
+    await fireEvent.press(result.getByRole('button', { name: 'sidebar.language.label' }));
     await fireEvent.press(result.getByRole('radio', { name: '简体中文' }));
-    await fireEvent.press(result.getByRole('button', { name: 'common.dismiss' }));
+    await fireEvent.press(result.getByRole('button', { name: 'settings.preferences.back' }));
     await fireEvent.press(result.getByRole('button', { name: 'app.account.logout' }));
-
-    // 退出只委派给父层提供的回调；真实退出请求不属于本地偏好组件的职责。
     expect(props.onLogout).toHaveBeenCalledTimes(1);
     expect(apiClient.request).not.toHaveBeenCalled();
     expect(apiClient.get).not.toHaveBeenCalled();
@@ -105,75 +103,84 @@ describe('PreferencesModal', () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it.each(['light', 'dark'] as const)('选择主题 %s 时只变更 theme', async (theme) => {
+  it.each(['light', 'dark'] as const)('主题详情只显示两个选项，选择 %s 时仅变更 theme', async (theme) => {
     const props = createProps();
-    const currentPreferences: LocalPreferences = {
-      ...preferences,
-      theme: theme === 'light' ? 'dark' : 'light',
-    };
-    const result = await render(<PreferencesModal {...props} preferences={currentPreferences} />);
-
-    await fireEvent.press(result.getByRole('radio', { name: `settings.values.${theme}` }));
-
-    const next = { ...currentPreferences, theme };
-    expect(props.onChange).toHaveBeenCalledTimes(1);
-    expect(props.onChange).toHaveBeenCalledWith(next);
-    expect(props.onClose).not.toHaveBeenCalled();
-    expect(props.onLogout).not.toHaveBeenCalled();
-    // 此组件受控：父层回传新偏好后，选中状态才随之更新。
+    const result = await render(<PreferencesModal {...props} />);
+    await fireEvent.press(result.getByRole('button', { name: 'settings.rows.theme' }));
+    expect(result.getAllByRole('radio')).toHaveLength(2);
+    expect(result.queryByText('English')).toBeNull();
+    await fireEvent.press(result.getByRole('radio', { name: 'settings.values.' + theme }));
+    expect(props.onChange).toHaveBeenCalledWith({ ...preferences, theme });
+    const next = { ...preferences, theme };
     await result.rerender(<PreferencesModal {...props} preferences={next} />);
-    expect(result.getByRole('radio', { name: `settings.values.${theme}`, checked: true })).toBeTruthy();
+    expect(result.getByRole('radio', { name: 'settings.values.' + theme, checked: true })).toBeTruthy();
+    await fireEvent.press(result.getByRole('button', { name: 'settings.preferences.back' }));
+    expect(result.getByRole('button', { name: 'settings.rows.theme' })).toHaveAccessibilityValue({ text: 'settings.values.' + theme });
   });
 
-  it.each(supportedLocales)('选择语言 $code 时只变更 language', async (locale) => {
+  it.each(supportedLocales)('语言详情选择 $code 时只变更 language，并立即更新勾选与首页摘要', async (locale) => {
     const props = createProps();
-    const currentPreferences: LocalPreferences = {
-      ...preferences,
-      language: locale.code === 'en' ? 'zh-CN' : 'en',
-    };
-    const result = await render(<PreferencesModal {...props} preferences={currentPreferences} />);
-
+    const result = await render(<PreferencesModal {...props} />);
+    await fireEvent.press(result.getByRole('button', { name: 'sidebar.language.label' }));
+    expect(result.getAllByRole('radio')).toHaveLength(supportedLocales.length);
+    expect(result.queryByText('settings.values.light')).toBeNull();
     await fireEvent.press(result.getByRole('radio', { name: locale.nativeLabel }));
-
-    const next = { ...currentPreferences, language: locale.code };
-    expect(props.onChange).toHaveBeenCalledTimes(1);
-    expect(props.onChange).toHaveBeenCalledWith(next);
-    expect(props.onClose).not.toHaveBeenCalled();
-    expect(props.onLogout).not.toHaveBeenCalled();
-    await result.rerender(<PreferencesModal {...props} preferences={next} />);
+    expect(props.onChange).toHaveBeenCalledWith({ ...preferences, language: locale.code });
+    await result.rerender(<PreferencesModal {...props} preferences={{ ...preferences, language: locale.code }} />);
     expect(result.getByRole('radio', { name: locale.nativeLabel, checked: true })).toBeTruthy();
+    await fireEvent.press(result.getByRole('button', { name: 'settings.preferences.back' }));
+    expect(result.getByRole('button', { name: 'sidebar.language.label' })).toHaveAccessibilityValue({ text: locale.nativeLabel });
   });
 
-  it('点击关闭按钮仅触发 onClose', async () => {
+  it.each(['theme', 'language'] as const)('系统返回先退出 %s 详情，首页再返回才关闭', async (page) => {
     const props = createProps();
     const result = await render(<PreferencesModal {...props} />);
-
-    await fireEvent.press(result.getByRole('button', { name: 'common.dismiss' }));
-
-    expect(props.onClose).toHaveBeenCalledTimes(1);
-    expect(props.onChange).not.toHaveBeenCalled();
-    expect(props.onLogout).not.toHaveBeenCalled();
-  });
-
-  it('原生 Modal 请求关闭时触发 onClose', async () => {
-    const props = createProps();
-    const result = await render(<PreferencesModal {...props} />);
-
-    // 系统返回键走 onRequestClose，独立于界面上的关闭按钮；
-    // 从标题向上查找事件处理器，使用测试库公开事件 API，避免依赖 renderer 内部查询。
+    const title = page === 'theme' ? 'settings.rows.theme' : 'sidebar.language.label';
+    await fireEvent.press(result.getByRole('button', { name: title }));
+    await fireEvent(result.getByRole('header', { name: title }), 'requestClose');
+    expect(result.getByRole('header', { name: 'sidebar.settings' })).toBeTruthy();
+    expect(props.onClose).not.toHaveBeenCalled();
     await fireEvent(result.getByRole('header', { name: 'sidebar.settings' }), 'requestClose');
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+    expect(props.onChange).not.toHaveBeenCalled();
+  });
 
+  it.each(['home', 'theme', 'language'] as const)('在 %s 页面点击关闭仅触发 onClose', async (page) => {
+    const props = createProps();
+    const result = await render(<PreferencesModal {...props} />);
+    if (page !== 'home') await fireEvent.press(result.getByRole('button', { name: page === 'theme' ? 'settings.rows.theme' : 'sidebar.language.label' }));
+    await fireEvent.press(result.getByRole('button', { name: 'common.dismiss' }));
     expect(props.onClose).toHaveBeenCalledTimes(1);
     expect(props.onChange).not.toHaveBeenCalled();
     expect(props.onLogout).not.toHaveBeenCalled();
   });
 
-  it('点击退出时先关闭弹窗，再调用 onLogout', async () => {
+  it('关闭再打开不保留详情页状态，但保留父层偏好', async () => {
     const props = createProps();
     const result = await render(<PreferencesModal {...props} />);
+    await fireEvent.press(result.getByRole('button', { name: 'sidebar.language.label' }));
+    await result.rerender(<PreferencesModal {...props} visible={false} />);
+    expect(result.toJSON()).toBeNull();
+    await result.rerender(<PreferencesModal {...props} preferences={{ theme: 'dark', language: 'zh-CN' }} />);
+    expect(result.getByRole('header', { name: 'sidebar.settings' })).toBeTruthy();
+    expect(result.queryAllByRole('radio')).toHaveLength(0);
+    expect(result.getByText('简体中文')).toBeTruthy();
+    expect(result.getByText('settings.values.dark')).toBeTruthy();
+  });
 
+  it.each([LIGHT_COLORS, DARK_COLORS])('首页和选择页使用传入的明暗调色板', async (colors) => {
+    const result = await render(<PreferencesModal {...createProps()} colors={colors} />);
+    expect(result.getByRole('header', { name: 'sidebar.settings' })).toHaveStyle({ color: colors.foreground });
+    expect(result.getByText('settings.preferences.note')).toHaveStyle({ color: colors.muted });
+    expect(result.getByText('app.account.logout')).toHaveStyle({ color: colors.errorText });
+    await fireEvent.press(result.getByRole('button', { name: 'sidebar.language.label' }));
+    expect(result.getByText('English')).toHaveStyle({ color: colors.foreground });
+  });
+
+  it('退出先关闭弹窗，再调用 onLogout，不更改偏好', async () => {
+    const props = createProps();
+    const result = await render(<PreferencesModal {...props} />);
     await fireEvent.press(result.getByRole('button', { name: 'app.account.logout' }));
-
     expect(props.onClose).toHaveBeenCalledTimes(1);
     expect(props.onLogout).toHaveBeenCalledTimes(1);
     expect(props.onClose.mock.invocationCallOrder[0]).toBeLessThan(props.onLogout.mock.invocationCallOrder[0]);

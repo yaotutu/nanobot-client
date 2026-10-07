@@ -90,6 +90,14 @@
     "values": {
       "light": "Claro",
       "dark": "Escuro"
+    },
+    "preferences": {
+      "group": "Preferências",
+      "account": "Conta",
+      "note": "Estas preferências se aplicam apenas a este dispositivo, não às suas conversas.",
+      "themeHint": "Escolha a aparência do nanobot neste dispositivo.",
+      "languageHint": "Escolha o idioma da interface do aplicativo.",
+      "back": "Voltar às configurações"
     }
   },
   "chat": {

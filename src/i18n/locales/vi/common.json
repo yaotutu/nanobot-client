@@ -90,6 +90,14 @@
     "values": {
       "light": "Sáng",
       "dark": "Tối"
+    },
+    "preferences": {
+      "group": "Tùy chọn",
+      "account": "Tài khoản",
+      "note": "Các tùy chọn này chỉ áp dụng cho thiết bị này, không thay đổi cài đặt cuộc trò chuyện.",
+      "themeHint": "Chọn giao diện nanobot trên thiết bị này.",
+      "languageHint": "Chọn ngôn ngữ giao diện ứng dụng.",
+      "back": "Quay lại cài đặt"
     }
   },
   "chat": {

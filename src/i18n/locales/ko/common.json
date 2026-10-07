@@ -90,6 +90,14 @@
     "values": {
       "light": "라이트",
       "dark": "다크"
+    },
+    "preferences": {
+      "group": "환경설정",
+      "account": "계정",
+      "note": "이 기기의 표시에만 적용되며 대화 설정은 변경되지 않습니다.",
+      "themeHint": "이 기기에서 nanobot의 테마를 선택하세요.",
+      "languageHint": "앱에서 사용할 언어를 선택하세요.",
+      "back": "설정으로 돌아가기"
     }
   },
   "chat": {
