@@ -12,11 +12,14 @@ import type { SessionGroup } from '@/features/sidebar/chat-groups';
 import type { RenameTarget } from '@/features/sidebar/hooks/use-sidebar-actions';
 import { sessionTitle } from '@/services/text/format';
 import type { ChatSummary, SidebarStatePayload } from '@/types/api/sidebar';
-import { sidebarStyles as styles } from './sidebar-drawer-styles';
+import type { Palette } from '@/ui/palette';
+import type { ConversationStyles } from './conversation-sheet-styles';
 
 type IconComponent = typeof Search;
 
 export function SidebarActionSheets(props: {
+  colors: Palette;
+  styles: ConversationStyles;
   bottomInset: number;
   state: SidebarStatePayload;
   actionSession: ChatSummary | null;
@@ -36,6 +39,8 @@ export function SidebarActionSheets(props: {
 }) {
   const { t } = useTranslation();
   const {
+    colors,
+    styles,
     bottomInset,
     state,
     actionSession,
@@ -57,13 +62,13 @@ export function SidebarActionSheets(props: {
   return (
     <>
       {actionSession ? (
-        <View style={styles.actionOverlay}>
+        <View accessibilityViewIsModal style={styles.actionOverlay}>
           <Pressable accessibilityLabel={t('deleteConfirm.cancel')} onPress={() => onSetActionSession(null)} style={styles.actionBackdrop} />
           <View style={[styles.actionSheet, { paddingBottom: Math.max(bottomInset, 12) }]}>
             <Text numberOfLines={1} style={styles.actionTitle}>
               {state.title_overrides[actionSession.key] || sessionTitle(actionSession)}
             </Text>
-            <SheetAction
+            <SheetAction colors={colors} styles={styles}
               icon={state.pinned_keys.includes(actionSession.key) ? PinOff : Pin}
               label={state.pinned_keys.includes(actionSession.key) ? t('chat.unpin') : t('chat.pin')}
               onPress={() => {
@@ -72,8 +77,8 @@ export function SidebarActionSheets(props: {
                 void onTogglePinned(key);
               }}
             />
-            <SheetAction icon={Pencil} label={t('chat.rename')} onPress={() => onBeginSessionRename(actionSession)} />
-            <SheetAction
+            <SheetAction colors={colors} styles={styles} icon={Pencil} label={t('chat.rename')} onPress={() => onBeginSessionRename(actionSession)} />
+            <SheetAction colors={colors} styles={styles}
               icon={state.archived_keys.includes(actionSession.key) ? ArchiveRestore : Archive}
               label={state.archived_keys.includes(actionSession.key) ? t('chat.unarchive') : t('chat.archive')}
               onPress={() => {
@@ -82,23 +87,23 @@ export function SidebarActionSheets(props: {
                 void onToggleArchived(key);
               }}
             />
-            <SheetAction destructive icon={Trash2} label={t('chat.delete')} onPress={() => void onRequestDelete(actionSession)} />
+            <SheetAction colors={colors} styles={styles} destructive icon={Trash2} label={t('chat.delete')} onPress={() => void onRequestDelete(actionSession)} />
           </View>
         </View>
       ) : null}
 
       {actionProject ? (
-        <View style={styles.actionOverlay}>
+        <View accessibilityViewIsModal style={styles.actionOverlay}>
           <Pressable accessibilityLabel={t('deleteConfirm.cancel')} onPress={() => onSetActionProject(null)} style={styles.actionBackdrop} />
           <View style={[styles.actionSheet, { paddingBottom: Math.max(bottomInset, 12) }]}>
             <Text numberOfLines={1} style={styles.actionTitle}>{actionProject.label}</Text>
-            <SheetAction icon={Pencil} label={t('chat.renameProjectTitle')} onPress={() => onBeginProjectRename(actionProject)} />
+            <SheetAction colors={colors} styles={styles} icon={Pencil} label={t('chat.renameProjectTitle')} onPress={() => onBeginProjectRename(actionProject)} />
           </View>
         </View>
       ) : null}
 
       {renameTarget ? (
-        <View style={styles.renameOverlay}>
+        <View accessibilityViewIsModal style={styles.renameOverlay}>
           <Pressable accessibilityLabel={t('deleteConfirm.cancel')} onPress={() => onSetRenameTarget(null)} style={styles.actionBackdrop} />
           <View style={styles.renameCard}>
             <Text style={styles.renameTitle}>
@@ -116,10 +121,10 @@ export function SidebarActionSheets(props: {
               value={renameValue}
             />
             <View style={styles.renameActions}>
-              <Pressable onPress={() => onSetRenameTarget(null)} style={styles.renameButton}>
+              <Pressable accessibilityRole="button" onPress={() => onSetRenameTarget(null)} style={styles.renameButton}>
                 <Text style={styles.renameCancelText}>{t('deleteConfirm.cancel')}</Text>
               </Pressable>
-              <Pressable onPress={onSubmitRename} style={[styles.renameButton, styles.renamePrimary]}>
+              <Pressable accessibilityRole="button" onPress={onSubmitRename} style={[styles.renameButton, styles.renamePrimary]}>
                 <Text style={styles.renamePrimaryText}>{t('chat.renameSave')}</Text>
               </Pressable>
             </View>
@@ -131,17 +136,21 @@ export function SidebarActionSheets(props: {
 }
 
 function SheetAction({
+  colors,
+  styles,
   destructive = false,
   icon: Icon,
   label,
   onPress,
 }: {
+  colors: Palette;
+  styles: ConversationStyles;
   destructive?: boolean;
   icon: IconComponent;
   label: string;
   onPress: () => void;
 }) {
-  const color = destructive ? '#B7443B' : '#44433F';
+  const color = destructive ? colors.errorText : colors.foreground;
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.sheetAction, pressed && styles.rowPressed]}>
       <Icon color={color} size={18} strokeWidth={1.8} />

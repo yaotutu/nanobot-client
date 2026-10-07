@@ -1,4 +1,4 @@
-export { SidebarDrawer } from './components/SidebarDrawer';
+export { ConversationSheet } from './components/ConversationSheet';
 export {
   selectSessions,
   selectSidebarState,

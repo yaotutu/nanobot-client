@@ -43,8 +43,6 @@
     }
   },
   "sidebar": {
-    "navigation": "Navigasi bilah samping",
-    "collapse": "Ciutkan sidebar",
     "newChat": "Topik baru",
     "searchAria": "Cari",
     "searchPlaceholder": "Cari",
@@ -55,7 +53,9 @@
     "language": {
       "label": "Bahasa",
       "ariaLabel": "Ganti bahasa"
-    }
+    },
+    "conversations": "Percakapan",
+    "closeConversations": "Tutup percakapan"
   },
   "settings": {
     "actions": {
@@ -158,11 +158,11 @@
       "subtitle": "Mulai dengan pertanyaan, ide, atau berkas."
     },
     "header": {
-      "toggleSidebar": "Tampilkan atau sembunyikan sidebar",
       "newChat": "Mulai topik baru",
       "settings": "Buka pengaturan",
       "sessionInfo": "Detail sesi",
-      "subtitle": "Ada saat kamu membutuhkan"
+      "subtitle": "Ada saat kamu membutuhkan",
+      "openConversations": "Buka percakapan"
     },
     "sessionInfo": {
       "title": "Sesi",

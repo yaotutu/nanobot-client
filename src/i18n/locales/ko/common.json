@@ -43,8 +43,6 @@
     }
   },
   "sidebar": {
-    "navigation": "사이드바 탐색",
-    "collapse": "사이드바 접기",
     "newChat": "새 주제",
     "searchAria": "검색",
     "searchPlaceholder": "검색",
@@ -55,7 +53,9 @@
     "language": {
       "label": "언어",
       "ariaLabel": "언어 변경"
-    }
+    },
+    "conversations": "대화 목록",
+    "closeConversations": "대화 목록 닫기"
   },
   "settings": {
     "actions": {
@@ -158,11 +158,11 @@
       "subtitle": "질문, 아이디어 또는 파일로 시작해 보세요."
     },
     "header": {
-      "toggleSidebar": "사이드바 전환",
       "newChat": "새 주제 시작",
       "settings": "설정 열기",
       "sessionInfo": "세션 세부 정보",
-      "subtitle": "필요할 때 언제나 곁에"
+      "subtitle": "필요할 때 언제나 곁에",
+      "openConversations": "대화 목록 열기"
     },
     "sessionInfo": {
       "title": "세션",

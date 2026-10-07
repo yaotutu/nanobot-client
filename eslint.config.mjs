@@ -27,7 +27,7 @@ const nonAppFeaturePatterns = [
   },
   {
     group: [
-      '@/features/sidebar/components/SidebarDrawer',
+      '@/features/sidebar/components/ConversationSheet',
     ],
     message: 'Top-level feature screens must be composed by features/app.',
   },

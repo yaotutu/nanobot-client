@@ -43,8 +43,6 @@
     }
   },
   "sidebar": {
-    "navigation": "Điều hướng thanh bên",
-    "collapse": "Thu gọn thanh bên",
     "newChat": "Chủ đề mới",
     "searchAria": "Tìm kiếm",
     "searchPlaceholder": "Tìm kiếm",
@@ -55,7 +53,9 @@
     "language": {
       "label": "Ngôn ngữ",
       "ariaLabel": "Đổi ngôn ngữ"
-    }
+    },
+    "conversations": "Danh sách hội thoại",
+    "closeConversations": "Đóng danh sách hội thoại"
   },
   "settings": {
     "actions": {
@@ -158,11 +158,11 @@
       "subtitle": "Bắt đầu bằng một câu hỏi, ý tưởng hoặc tệp."
     },
     "header": {
-      "toggleSidebar": "Bật/tắt thanh bên",
       "newChat": "Bắt đầu chủ đề mới",
       "settings": "Mở cài đặt",
       "sessionInfo": "Chi tiết phiên",
-      "subtitle": "Luôn ở đây khi bạn cần"
+      "subtitle": "Luôn ở đây khi bạn cần",
+      "openConversations": "Mở danh sách hội thoại"
     },
     "sessionInfo": {
       "title": "Phiên",

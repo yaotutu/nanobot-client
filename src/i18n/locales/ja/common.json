@@ -43,8 +43,6 @@
     }
   },
   "sidebar": {
-    "navigation": "サイドバーのナビゲーション",
-    "collapse": "サイドバーを閉じる",
     "newChat": "新しいトピック",
     "searchAria": "検索",
     "searchPlaceholder": "検索",
@@ -55,7 +53,9 @@
     "language": {
       "label": "言語",
       "ariaLabel": "言語を変更"
-    }
+    },
+    "conversations": "会話一覧",
+    "closeConversations": "会話一覧を閉じる"
   },
   "settings": {
     "actions": {
@@ -158,11 +158,11 @@
       "subtitle": "質問やアイデア、ファイルから始めましょう。"
     },
     "header": {
-      "toggleSidebar": "サイドバーを切り替える",
       "newChat": "新しいトピックを開始",
       "settings": "設定を開く",
       "sessionInfo": "セッション詳細",
-      "subtitle": "いつでも、そばに"
+      "subtitle": "いつでも、そばに",
+      "openConversations": "会話一覧を開く"
     },
     "sessionInfo": {
       "title": "セッション",

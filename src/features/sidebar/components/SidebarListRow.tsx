@@ -1,5 +1,6 @@
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import Folder from 'lucide-react-native/icons/folder';
+import MessageCircle from 'lucide-react-native/icons/message-circle';
 import MoreHorizontal from 'lucide-react-native/icons/ellipsis';
 import Pin from 'lucide-react-native/icons/pin';
 import Plus from 'lucide-react-native/icons/plus';
@@ -10,9 +11,12 @@ import type { SessionGroup } from '@/features/sidebar/chat-groups';
 import type { SidebarListItem } from '@/features/sidebar/sidebar-list-model';
 import { relativeTime, sessionTitle, visibleSessionPreview } from '@/services/text/format';
 import type { ChatSummary, SidebarStatePayload } from '@/types/api/sidebar';
-import { sidebarStyles as styles } from './sidebar-drawer-styles';
+import type { Palette } from '@/ui/palette';
+import type { ConversationStyles } from './conversation-sheet-styles';
 
 interface SidebarListRowProps {
+  colors: Palette;
+  styles: ConversationStyles;
   item: SidebarListItem;
   state: SidebarStatePayload;
   activeKey: string | null;
@@ -26,6 +30,8 @@ interface SidebarListRowProps {
 }
 
 export function SidebarListRow({
+  colors,
+  styles,
   item,
   state,
   activeKey,
@@ -48,6 +54,7 @@ export function SidebarListRow({
     return (
       <View style={styles.projectHeader}>
         <Pressable
+          accessibilityRole="button"
           accessibilityLabel={`${t('chat.groups.projects')}: ${item.group.label}`}
           accessibilityState={{ expanded: !collapsed }}
           onLongPress={() => onShowProjectActions(item.group)}
@@ -55,26 +62,28 @@ export function SidebarListRow({
           style={({ pressed }) => [styles.projectMain, pressed && styles.rowPressed]}
         >
           <ChevronRight
-            color="#87857F"
+            color={colors.muted}
             size={14}
             style={{ transform: [{ rotate: collapsed ? '0deg' : '90deg' }] }}
           />
-          <Folder color="#777570" size={14} strokeWidth={1.7} />
+          <Folder color={colors.muted} size={14} strokeWidth={1.7} />
           <Text numberOfLines={1} style={styles.projectName}>{item.group.label}</Text>
           {state.view.show_timestamps && item.group.updatedAt ? (
             <Text style={styles.projectTime}>{relativeTime(item.group.updatedAt)}</Text>
           ) : null}
         </Pressable>
         <Pressable
+          accessibilityRole="button"
           accessibilityLabel={`${t('chat.renameProjectTitle')}: ${item.group.label}`}
           hitSlop={5}
           onPress={() => onShowProjectActions(item.group)}
           style={({ pressed }) => [styles.projectAction, pressed && styles.rowPressed]}
         >
-          <MoreHorizontal color="#85837E" size={15} />
+          <MoreHorizontal color={colors.muted} size={15} />
         </Pressable>
         {item.group.projectPath ? (
           <Pressable
+            accessibilityRole="button"
             accessibilityLabel={t('chat.newInProject', { project: item.group.label })}
             hitSlop={5}
             onPress={() => {
@@ -83,7 +92,7 @@ export function SidebarListRow({
             }}
             style={({ pressed }) => [styles.projectAction, pressed && styles.rowPressed]}
           >
-            <Plus color="#85837E" size={15} />
+            <Plus color={colors.muted} size={15} />
           </Pressable>
         ) : null}
       </View>
@@ -125,7 +134,8 @@ export function SidebarListRow({
     : '';
   return (
     <Pressable
-      accessibilityLabel={selected ? `${title} · ${t('connection.open')}` : title}
+      accessibilityRole="button"
+      accessibilityLabel={title}
       accessibilityState={{ selected }}
       onLongPress={() => onShowSessionActions(session)}
       onPress={() => {
@@ -139,10 +149,11 @@ export function SidebarListRow({
         pressed && styles.rowPressed,
       ]}
     >
+      <MessageCircle color={colors.muted} size={19} strokeWidth={1.7} />
       <View style={styles.sessionCopy}>
         <View style={styles.sessionTitleRow}>
           <Text numberOfLines={1} style={styles.sessionTitle}>{title}</Text>
-          {pinned ? <Pin color="#8A8984" size={12} strokeWidth={1.8} /> : null}
+          {pinned ? <Pin color={colors.muted} size={12} strokeWidth={1.8} /> : null}
           {projectMode && timestamp ? <Text style={styles.time}>{timestamp}</Text> : null}
         </View>
         {state.view.show_previews && preview && preview !== title ? (
@@ -151,12 +162,13 @@ export function SidebarListRow({
         {!projectMode && timestamp ? <Text style={styles.time}>{timestamp}</Text> : null}
       </View>
       <Pressable
+        accessibilityRole="button"
         accessibilityLabel={t('chat.actions', { title })}
         hitSlop={7}
         onPress={() => onShowSessionActions(session)}
         style={({ pressed }) => [styles.moreButton, pressed && styles.rowPressed]}
       >
-        <MoreHorizontal color="#85837E" size={16} />
+        <MoreHorizontal color={colors.muted} size={16} />
       </Pressable>
     </Pressable>
   );

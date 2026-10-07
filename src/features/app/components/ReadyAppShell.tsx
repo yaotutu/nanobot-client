@@ -6,7 +6,7 @@ import { useAppController } from '@/features/app/hooks/use-app-controller';
 import { useAppModelSelection } from '@/features/app/hooks/use-app-model-selection';
 import { useAppNavigation } from '@/features/app/hooks/use-app-navigation';
 import { useAppPreferences } from '@/features/app/hooks/use-app-preferences';
-import { NanobotScreen } from '@/features/chat/screen';
+import { chatPaletteForTheme, NanobotScreen } from '@/features/chat/screen';
 import { PreferencesModal } from '@/features/settings';
 import { markStartup } from '@/services/runtime/startup-performance';
 import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
@@ -14,7 +14,7 @@ import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
 /**
  * 已完成鉴权后的完整工作区。
  *
- * 这个组件会引入聊天编辑器、消息渲染以及侧边栏等较大的 UI 依赖，因此必须与启动壳分离。
+ * 这个组件会引入聊天编辑器、消息渲染以及会话面板等较大的 UI 依赖，因此必须与启动壳分离。
  * AppShell 先完成鉴权和连接状态渲染，再按需加载这里，避免低性能 Android 设备在首帧前
  * 同步执行整棵业务组件树。
  */
@@ -63,7 +63,7 @@ export function ReadyAppShell() {
         chatOptionsOpen={navigation.chatOptionsOpen}
         onCloseChatOptions={() => navigation.setChatOptionsOpen(false)}
         navigationRevision={navigation.chatResetRevision}
-        onOpenDrawer={() => navigation.setDrawerOpen(true)}
+        onOpenConversations={navigation.openConversations}
         onOpenChatOptions={navigation.openChatOptions}
       />
       <PreferencesModal
@@ -76,9 +76,9 @@ export function ReadyAppShell() {
       />
       <AppModals
         app={app}
-        colors={colors}
-        drawerOpen={navigation.drawerOpen}
-        onCloseDrawer={() => navigation.setDrawerOpen(false)}
+        colors={chatPaletteForTheme(dark)}
+        conversationsOpen={navigation.conversationsOpen}
+        onCloseConversations={() => navigation.setConversationsOpen(false)}
         onCloseSessionSearch={() => navigation.setSessionSearchOpen(false)}
         onOpenSearch={navigation.openSearch}
         onOpenPreferences={navigation.openPreferences}

@@ -43,8 +43,6 @@
     }
   },
   "sidebar": {
-    "navigation": "侧边栏导航",
-    "collapse": "收起侧边栏",
     "newChat": "新建话题",
     "searchAria": "搜索",
     "searchPlaceholder": "搜索",
@@ -55,7 +53,9 @@
     "language": {
       "label": "语言",
       "ariaLabel": "切换语言"
-    }
+    },
+    "conversations": "会话列表",
+    "closeConversations": "关闭会话列表"
   },
   "settings": {
     "actions": {
@@ -158,11 +158,11 @@
       "subtitle": "从一个问题、一个想法，或一份文件开始。"
     },
     "header": {
-      "toggleSidebar": "切换侧边栏",
       "newChat": "从顶部新建话题",
       "settings": "打开设置",
       "sessionInfo": "会话详情",
-      "subtitle": "需要时，我就在这里"
+      "subtitle": "需要时，我就在这里",
+      "openConversations": "打开会话列表"
     },
     "sessionInfo": {
       "title": "会话",

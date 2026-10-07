@@ -15,20 +15,20 @@ export interface ChatHeaderProps {
   colors: Palette;
   chatTitle: string;
   hasUserPrompts: boolean;
-  onOpenDrawer: () => void;
+  onOpenConversations: () => void;
   onOpenPromptNavigator: () => void;
   onOpenChatOptions: () => void;
 }
 
 /** 仅还原参考 UI 的品牌层级；形象与操作仍属于 nanobot，不引入参考项目的通知或电脑业务。 */
-export function ChatHeader({ colors, chatTitle, hasUserPrompts, onOpenDrawer, onOpenPromptNavigator, onOpenChatOptions }: ChatHeaderProps) {
+export function ChatHeader({ colors, chatTitle, hasUserPrompts, onOpenConversations, onOpenPromptNavigator, onOpenChatOptions }: ChatHeaderProps) {
   const { t } = useTranslation();
   return (
     <View style={styles.header}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={t('thread.header.toggleSidebar')}
-        onPress={onOpenDrawer}
+        accessibilityLabel={t('thread.header.openConversations')}
+        onPress={onOpenConversations}
         style={({ pressed }) => [styles.button, styles.menuButton, { backgroundColor: pressed ? colors.pressed : colors.card }]}
       >
         <Menu color={colors.foreground} size={19} strokeWidth={1.7} />
@@ -50,7 +50,7 @@ export function ChatHeader({ colors, chatTitle, hasUserPrompts, onOpenDrawer, on
           <Text numberOfLines={1} style={[styles.topicText, { color: colors.muted }]}>{hasUserPrompts ? chatTitle : t('sidebar.newChat')}</Text>
         </Pressable>
       </View>
-      {/* 模型、工作区和权限属于当前会话，入口与会话标题同层；新建会话保留在侧栏。 */}
+      {/* 模型、工作区和权限属于当前会话，入口与会话标题同层；新建会话保留在会话面板。 */}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t('thread.composer.options')}

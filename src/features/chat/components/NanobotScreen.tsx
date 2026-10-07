@@ -35,7 +35,7 @@ interface NanobotScreenProps {
   navigationRevision: number;
   chatOptionsOpen: boolean;
   onCloseChatOptions: () => void;
-  onOpenDrawer: () => void;
+  onOpenConversations: () => void;
   onOpenChatOptions: () => void;
 }
 
@@ -148,7 +148,7 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
         colors={colors}
         chatTitle={chatTitle}
         hasUserPrompts={hasUserPrompts}
-        onOpenDrawer={shell.onOpenDrawer}
+        onOpenConversations={shell.onOpenConversations}
         onOpenPromptNavigator={() => setPromptNavigatorOpen(true)}
         onOpenChatOptions={shell.onOpenChatOptions}
       />

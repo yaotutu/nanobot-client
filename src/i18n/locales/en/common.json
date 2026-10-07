@@ -43,8 +43,6 @@
     }
   },
   "sidebar": {
-    "navigation": "Sidebar navigation",
-    "collapse": "Collapse sidebar",
     "newChat": "New topic",
     "searchAria": "Search",
     "searchPlaceholder": "Search",
@@ -55,7 +53,9 @@
     "language": {
       "label": "Language",
       "ariaLabel": "Change language"
-    }
+    },
+    "conversations": "Conversations",
+    "closeConversations": "Close conversations"
   },
   "settings": {
     "actions": {
@@ -158,11 +158,11 @@
       "subtitle": "Start with a question, an idea, or a file."
     },
     "header": {
-      "toggleSidebar": "Toggle sidebar",
       "newChat": "Start a new topic",
       "settings": "Open settings",
       "sessionInfo": "Session details",
-      "subtitle": "Here when you need me"
+      "subtitle": "Here when you need me",
+      "openConversations": "Open conversations"
     },
     "sessionInfo": {
       "title": "Session",

@@ -100,7 +100,8 @@ android/ ios/      Expo Prebuild 产物（已 git ignore）
 
 ### 消息页结构
 
-- `NanobotScreen` 组装控制器、键盘避让、连接状态与弹窗；`ChatHeader` 展示 nanobot 品牌形象、副标题与会话胶囊，保留侧栏、提示导航操作；右上角打开当前会话的聊天选项，新建会话入口保留在侧栏。
+- `NanobotScreen` 组装控制器、键盘避让、连接状态与弹窗；`ChatHeader` 展示 nanobot 品牌形象、副标题与会话胶囊，左上角打开底部会话面板，保留提示导航操作；右上角打开当前会话的聊天选项，新建会话入口保留在会话面板。
+- `ConversationSheet` 从手机底部弹出（宽屏居中），沿用 nanobot 会话分组与操作；列表独立滚动，返回键优先关闭操作／重命名子层，再关闭面板。全局设置与连接状态固定在面板底部；右上角聊天选项只管理当前会话。面板开关不重置聊天草稿。
 - `ChatSurface` 切换空会话／加载／消息列表的内容区域，底部 composer 始终只挂载一次，避免首条消息发送时丢失输入焦点。
 - `ComposerInputRow` 只负责附件、输入和发送／停止；主界面不显示配置底栏。顶栏右上角「聊天选项」打开 `ChatOptionsModal`，模型、工作区和权限共用一个弹窗，列表／路径表单在弹窗内展开；已有会话的工作区只读，工作区错误在弹窗内外均可见。
 - `fetchThread` 仅接收 `schemaVersion: 3 / projection: events`，经 `model/thread-events.ts` 回放成领域消息；不接受旧 `messages` 线上快照。
@@ -110,7 +111,7 @@ android/ ios/      Expo Prebuild 产物（已 git ignore）
 
 - TypeScript strict；`tsconfig.json` 中定义了 `@/*` → `src/*`、`@/assets/*` → `assets/*` 的路径别名。
 - ESLint：flat config（`eslint.config.mjs`），启用 `@typescript-eslint` 推荐规则 + `eslint-plugin-react-hooks`。`android/`、`dist/`、`ios/` 被忽略。
-- 认证／侧栏沿用共享调色板；聊天页使用 `src/features/chat/ui/chat-theme.ts` 独立定义的浅色／深色调色板。不要把旧聊天密度、活动模式、代码换行等显示偏好加回来。
+- 认证／设置沿用共享调色板；聊天页与会话面板使用 `src/features/chat/ui/chat-theme.ts` 独立定义的浅色／深色调色板。不要把旧聊天密度、活动模式、代码换行等显示偏好加回来。
 - i18n：所有面向用户文本必须走 i18next；新增 key 时同步更新所有 `src/i18n/locales/*/common.json`。
 - 不要提交 `android/`、`ios/`、`dist/`、`expo-env.d.ts`、`src/services/credentials/dev-secret.ts`（参见 `.gitignore`）。
 - 修改包名 / 原生配置后必须重新 `npm run android`，仅 `npm start` 不会反映原生变更。

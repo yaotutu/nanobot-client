@@ -94,12 +94,12 @@ describe('聊天页唯一布局', () => {
   });
 
   it('顶部菜单、会话选项、标题导航可操作，不再提供主题快捷按钮', async () => {
-    const props = { colors: chatPaletteForTheme(false), chatTitle: 'demo', hasUserPrompts: true, onOpenDrawer: jest.fn(), onOpenPromptNavigator: jest.fn(), onOpenChatOptions: jest.fn() };
+    const props = { colors: chatPaletteForTheme(false), chatTitle: 'demo', hasUserPrompts: true, onOpenConversations: jest.fn(), onOpenPromptNavigator: jest.fn(), onOpenChatOptions: jest.fn() };
     const result = await render(<ChatHeader {...props} />);
-    await fireEvent.press(result.getByRole('button', { name: 'thread.header.toggleSidebar' }));
+    await fireEvent.press(result.getByRole('button', { name: 'thread.header.openConversations' }));
     await fireEvent.press(result.getByRole('button', { name: 'thread.composer.options' }));
     await fireEvent.press(result.getByRole('button', { name: 'thread.promptNavigator.open' }));
-    expect(props.onOpenDrawer).toHaveBeenCalledTimes(1);
+    expect(props.onOpenConversations).toHaveBeenCalledTimes(1);
     expect(props.onOpenChatOptions).toHaveBeenCalledTimes(1);
     expect(props.onOpenPromptNavigator).toHaveBeenCalledTimes(1);
     expect(result.getAllByRole('button')).toHaveLength(3);
@@ -113,7 +113,7 @@ describe('聊天页唯一布局', () => {
   it.each([false, true])('空会话也可从右上角打开选项（深色主题：%s）', async (dark) => {
     const onOpenChatOptions = jest.fn();
     const result = await render(<ChatHeader colors={chatPaletteForTheme(dark)} chatTitle="" hasUserPrompts={false}
-      onOpenDrawer={jest.fn()} onOpenPromptNavigator={jest.fn()} onOpenChatOptions={onOpenChatOptions} />);
+      onOpenConversations={jest.fn()} onOpenPromptNavigator={jest.fn()} onOpenChatOptions={onOpenChatOptions} />);
     // 空会话的标题胶囊只读，但配置入口仍可使用，便于发出第一条消息前选择模型和工作区。
     await fireEvent.press(result.getByRole('button', { name: 'thread.composer.options' }));
     expect(onOpenChatOptions).toHaveBeenCalledTimes(1);

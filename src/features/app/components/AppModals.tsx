@@ -3,22 +3,22 @@ import { createDeferredComponent } from '@/hooks/use-deferred-component';
 import type { Palette } from '@/ui/palette';
 
 /**
- * 抽屉和搜索弹窗只有在用户主动打开时才加载。显式 loader 保留按需分包，
+ * 会话面板和搜索弹窗只有在用户主动打开时才加载。显式 loader 保留按需分包，
  * 同时避开 React.lazy/Suspense 在旧 Android Fabric 上的原生崩溃路径。
  */
 const DeferredSessionSearchModal = createDeferredComponent(() => import(
   '@/features/chat/components/modals/session-search-modal'
 ).then(({ SessionSearchModal }) => SessionSearchModal));
-const DeferredSidebarDrawer = createDeferredComponent(() => import(
-  '@/features/sidebar/components/SidebarDrawer'
-).then(({ SidebarDrawer }) => SidebarDrawer));
+const DeferredConversationSheet = createDeferredComponent(() => import(
+  '@/features/sidebar/components/ConversationSheet'
+).then(({ ConversationSheet }) => ConversationSheet));
 
 interface AppModalsProps {
   app: AppController;
   colors: Palette;
-  drawerOpen: boolean;
+  conversationsOpen: boolean;
   sessionSearchOpen: boolean;
-  onCloseDrawer: () => void;
+  onCloseConversations: () => void;
   onCloseSessionSearch: () => void;
   onOpenSearch: () => void;
   onOpenPreferences: () => void;
@@ -32,15 +32,16 @@ export function AppModals(props: AppModalsProps) {
 
   return (
     <>
-      {props.drawerOpen ? (
-        <DeferredSidebarDrawer
+      {props.conversationsOpen ? (
+        <DeferredConversationSheet
           componentProps={{
+            colors,
             activeKey: app.chat?.session.activeKey ?? null,
             connectionStatus: app.connection.status,
             networkAvailable: app.connection.networkAvailable,
             defaultWorkspacePath: app.workspace.catalog?.default_scope.project_path ?? null,
             loading: app.sidebar.loading,
-            onClose: props.onCloseDrawer,
+            onClose: props.onCloseConversations,
             onNewChat: props.onStartNewChat,
             onReconnect: app.connection.reconnect,
             onNewChatInProject: props.onStartNewChatInProject,
