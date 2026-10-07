@@ -41,6 +41,8 @@ npm run web                # 启动 Web 开发服务（发布脚本不导出 Web
 npm run release              # 使用现有依赖，构建并发布 Android Release APK
 ```
 
+GitHub Actions：`.github/workflows/android-development-release.yml` 监听 `main` 推送，完整检查后发布 Android 开发版 Prerelease；云端临时版本不回写仓库。
+
 Android Release 打包与 GitHub Release 发布的完整说明见 [`docs/android-release.md`](docs/android-release.md)。
 
 辅助检查：

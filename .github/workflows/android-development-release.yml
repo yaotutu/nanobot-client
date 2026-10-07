@@ -1,0 +1,123 @@
+name: Android Development Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 默认权限只读，构建发布 job 额外申请 Release 写权限；不使用 PAT 或本机凭据。
+permissions:
+  contents: read
+
+# 不取消旧构建，也不设置会合并等待任务的 concurrency，保留每次 main 推送的独立开发包。
+jobs:
+  android:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      CI: 'true'
+      EXPO_NO_TELEMETRY: '1'
+      # 明确使用项目现有网关；云端仅打包，不需要访问这个局域网服务器。
+      EXPO_PUBLIC_NANOBOT_SERVER_URL: http://192.168.55.201:8765
+      # 限制 Gradle 并发，避免云端 runner 在原生编译时耗尽内存。
+      GRADLE_OPTS: -Dorg.gradle.workers.max=2 -Dorg.gradle.parallel=false -Dorg.gradle.caching=true
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # ubuntu-24.04 已包含 Android SDK，补齐项目指定的平台并确认许可证。
+      # 仅配置云端环境；不要把本机 Android/JDK 路径硬编码进工作流。
+      - name: Prepare Android SDK
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          "$SDKMANAGER" --licenses > /dev/null < <(yes)
+          # NDK / CMake 版本来自当前 Expo 原生工程，不依赖 runner 的默认 NDK。
+          "$SDKMANAGER" 'platform-tools' 'platforms;android-36' 'build-tools;36.0.0' \
+            'ndk;27.1.12297006' 'cmake;3.22.1'
+
+      - name: Cache Gradle dependencies
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-provider: basic
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 完整校验只跑一次；之后复用 release.sh 时才允许传 --skip-check。
+      - name: Run all checks
+        run: npm run check
+
+      - name: Prepare development version
+        id: metadata
+        run: node scripts/prepare-ci-release.mjs
+
+      - name: Build Android Release APK
+        run: npm run release -- --no-version --local-only --skip-check
+
+      # 即使 Release 上传失败，APK 仍保留在本次 Actions 的 Artifacts 中。
+      - name: Save APK and checksums
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nanobot-${{ steps.metadata.outputs.tag }}
+          path: ${{ steps.metadata.outputs.artifact_dir }}/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Publish development prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+          APP_VERSION: ${{ steps.metadata.outputs.version }}
+          VERSION_CODE: ${{ steps.metadata.outputs.version_code }}
+          ARTIFACT_DIR: ${{ steps.metadata.outputs.artifact_dir }}
+          APK_NAME: ${{ steps.metadata.outputs.apk_name }}
+        run: |
+          cat > release-notes.md <<EOF
+          main 分支自动构建的 Android 开发版，仅用于开发测试。
+
+          - 应用版本：$APP_VERSION（versionCode: $VERSION_CODE）
+          - 源码提交：$GITHUB_SHA
+          - 构建记录：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          - 网关地址：http://192.168.55.201:8765（需在可访问网关的网络中使用）
+          - 使用现有开发签名，不是应用商店正式签名；登录密码不会打包到 APK。
+
+          下载 APK 安装；checksums.txt 包含 APK 的 SHA-256 校验值。
+          EOF
+          # 先建立草稿，完整上传 APK 和校验文件后再公开，避免用户下载到半成品。
+          # 重跑时 run_attempt 递增，生成新 tag，不覆盖此前的开发包或正式版。
+          gh release create "$RELEASE_TAG" \
+            "$ARTIFACT_DIR/$APK_NAME" "$ARTIFACT_DIR/checksums.txt" \
+            --target "$GITHUB_SHA" \
+            --title "nanobot $APP_VERSION" \
+            --notes-file release-notes.md \
+            --prerelease --draft --latest=false
+          gh release edit "$RELEASE_TAG" --draft=false --latest=false
+          RELEASE_URL="$(gh release view "$RELEASE_TAG" --json url --jq .url)"
+          {
+            echo '## Android 开发版已发布'
+            echo "- 版本：$APP_VERSION（versionCode: $VERSION_CODE）"
+            echo "- 提交：$GITHUB_SHA"
+            echo "- 下载：$RELEASE_URL"
+          } >> "$GITHUB_STEP_SUMMARY"

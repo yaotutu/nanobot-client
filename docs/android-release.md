@@ -1,6 +1,46 @@
 # Android Release 打包与发布
 
-本文记录 `nanobot-client` 的 Android 本地打包和 GitHub Release 发布流程。
+本文记录 `nanobot-client` 的 GitHub Actions 开发版自动发布，以及 Android 本地打包发布流程。
+
+## GitHub Actions 开发版自动发布
+
+工作流：`android-development-release.yml`（`.github/workflows/`）。
+
+### 触发与执行流程
+
+- 推送到 `main` 自动运行，包括合并 PR 后产生的推送；其他分支和 tag 不触发发布。
+- 可在 GitHub → Actions → **Android Development Release** → **Run workflow** 手动触发，分支需选择 `main`；选其他分支会跳过任务。
+- 每次推送独立构建，不取消较早的构建。发布失败可用 **Re-run jobs** 重试。
+- 云端使用 Ubuntu 24.04、Node.js 24、JDK 17、Android SDK 36、NDK 27.1.12297006 和 CMake 3.22.1，缓存 npm / Gradle 依赖；不修改本机开发环境。
+- 依次执行 `npm ci` → `npm run check` → 生成临时开发版元数据 → 复用 `release.sh --no-version --local-only --skip-check` 构建 APK → 上传 Actions Artifact → 发布 GitHub **Prerelease**。
+- lint、类型检查、单元测试、Native 测试或 Android bundle smoke 任意一项失败，都不会发布。
+- APK 和 `checksums.txt` 先上传至 Release 草稿，再公开；发布失败时已成功上传的 Actions Artifact 仍可下载，保留 14 天。
+
+### 版本与源码追踪
+
+例如仓库基础版本 `1.0.6`，工作流第 42 次运行、第一次尝试：
+
+```text
+应用版本：1.0.6-dev.42.1
+Android versionCode：4201
+Release tag：dev-42.1-<提交 SHA 前 7 位>
+APK：nanobot-v1.0.6-dev.42.1.apk
+```
+
+- `scripts/prepare-ci-release.mjs` 只修改 runner 的临时 `package.json`、`app.json`、`package-lock.json`；不提交版本、不推送代码，不形成触发循环。
+- tag 明确指向该次构建的完整 `github.sha`，即使构建期间 main 又有新提交，也不会指错源码。
+- 同一次运行重试时版本后缀变为 `dev.42.2`，版本码变为 4202；新运行的版本码更大。尝试编号支持 1–99。
+- 不覆盖正式版 `vX.Y.Z` tag，不将开发版设为正式版的 **Latest**；从仓库 **Releases** 列表或对应 Actions 的 Summary 下载。
+- 工作流运行编号用于覆盖安装，避免删除工作流后重建导致编号重置。旧构建重跑仍是旧编号，不能当作更新包覆盖安装到更高版本码的 APK。
+
+### 权限、签名与登录
+
+- 仅使用 GitHub 提供的 `GITHUB_TOKEN`；工作流已声明 `contents: write`，不需要新增 PAT、EAS 账号或登录 GitHub CLI。
+- 将工作流提交并推送到 main 即可启用；如果仓库或组织禁用了 Actions／限制 token 写权限，需要在 GitHub 对应设置中允许。首次云端构建仍需以实际 Actions 日志为准。
+- 继续使用当前 Expo Android 模板的开发 keystore，为 **Release 模式构建 + 开发签名**，仅适合开发测试，不作为应用商店正式签名方案。覆盖安装要求包名和签名一致，并且版本码不低于设备上已有版本；本地脚本默认版本码与 CI 不同步，混用本地包时需注意。
+- APK 默认连接 `http://192.168.55.201:8765`；云端不尝试访问局域网。安装后需处于可访问该网关的网络中，在登录页面输入密码。
+- 现有打包脚本会清空开发凭据，不会将本机 `dev-secret.ts` 或网关密码打包。
+- 本次仅自动发布 Android APK，不包含 iOS 或 Web。
 
 ## 打包范围
 
