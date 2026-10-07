@@ -187,6 +187,7 @@ export function AgentActivityCluster({
         accessibilityLabel={label}
         accessibilityRole="button"
         accessibilityState={{ expanded }}
+        hitSlop={10}
         onPress={toggleExpanded}
         style={({ pressed }) => [styles.header, pressed && { backgroundColor: colors.pressed }]}
       >
@@ -241,10 +242,12 @@ export function AgentActivityCluster({
 }
 
 const styles = StyleSheet.create({
-  container: { width: '100%', maxWidth: 720 },
-  withBodyBelow: { marginBottom: 8 },
+  // 对齐助手卡片的宽度，仅收紧活动区与正文之间的留白，不改变活动展开、自动跟随或完成折叠规则。
+  container: { width: '95%', maxWidth: 720 },
+  withBodyBelow: { marginBottom: 4 },
   header: {
-    minHeight: 28,
+    // 24px 可视高度配合 10px hitSlop，尽量扩展折叠入口的触摸范围，但不额外撑高活动布局。
+    minHeight: 24,
     alignSelf: 'flex-start',
     borderRadius: 7,
     paddingHorizontal: 3,
@@ -252,7 +255,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
   },
-  headerLabel: { maxWidth: 270, fontSize: 13, lineHeight: 18, fontWeight: '500' },
-  timeline: { maxHeight: 180, marginTop: 6 },
-  timelineContent: { paddingRight: 3, paddingBottom: 4 },
+  headerLabel: { maxWidth: 270, flexShrink: 1, fontSize: 13, lineHeight: 18, fontWeight: '500' },
+  // 流式期间仍自动展开并完整保留活动项；只缩短可滚动视口，让正文在小屏上有更多空间。
+  timeline: { maxHeight: 144, marginTop: 2 },
+  timelineContent: { paddingRight: 3, paddingBottom: 2 },
 });

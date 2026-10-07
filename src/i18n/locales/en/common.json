@@ -161,7 +161,8 @@
       "toggleSidebar": "Toggle sidebar",
       "newChat": "Start a new topic",
       "settings": "Open settings",
-      "sessionInfo": "Session details"
+      "sessionInfo": "Session details",
+      "subtitle": "Here when you need me"
     },
     "sessionInfo": {
       "title": "Session",
@@ -344,7 +345,8 @@
         "full": "Full Access",
         "fullShort": "Full"
       },
-      "placeholder": "Type your message…"
+      "placeholder": "Message…",
+      "options": "Chat options"
     },
     "scrollToBottom": "Scroll to bottom",
     "loadEarlier": "Load earlier messages",
@@ -355,6 +357,12 @@
       "search": "Search prompts",
       "noResults": "No matching prompts.",
       "jumpTo": "Jump to prompt: {{label}}"
+    },
+    "latestMessages": "Latest messages",
+    "options": {
+      "description": "Model, workspace and access for this chat.",
+      "projectLocked": "The workspace cannot be changed in this chat.",
+      "unavailable": "Unavailable"
     }
   },
   "message": {

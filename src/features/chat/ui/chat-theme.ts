@@ -13,7 +13,7 @@ const dark: Palette = {
   pressed: '#242E36', errorBackground: '#3B272A', errorText: '#F3AAA4',
 };
 
-export const chatLayout = { maxWidth: 760, horizontalInset: 18, controlSize: 44 } as const;
+export const chatLayout = { maxWidth: 760, horizontalInset: 17, controlSize: 44 } as const;
 
 export function chatPaletteForTheme(isDark: boolean): Palette {
   return isDark ? dark : light;

@@ -20,7 +20,8 @@ interface ComposerInputRowProps {
 /** 主输入行只负责附件、文本和发送；模型与工作区控件不挤占输入空间。 */
 export function ComposerInputRow({ children, appearance, attachments, canSend, runtime, stopButton }: ComposerInputRowProps) {
   const { t } = useTranslation();
-  const { colors } = appearance;
+  const { colors, dark } = appearance;
+  const sendActive = stopButton || canSend;
   const attachmentsDisabled = runtime.disabled || attachments.full || attachments.busy;
   return (
     <View style={styles.inputRow}>
@@ -32,7 +33,7 @@ export function ComposerInputRow({ children, appearance, attachments, canSend, r
         onPress={attachments.onAdd}
         style={({ pressed }) => [styles.roundIconButton, pressed && { backgroundColor: colors.pressed }, attachmentsDisabled && styles.sendButtonDisabled]}
       >
-        <Plus color={colors.muted} size={22} strokeWidth={1.8} />
+        <Plus color={colors.foreground} size={23} strokeWidth={1.5} />
       </Pressable>
       {children}
       <Pressable
@@ -41,13 +42,13 @@ export function ComposerInputRow({ children, appearance, attachments, canSend, r
         accessibilityState={{ busy: runtime.disabled || attachments.busy, disabled: !stopButton && !canSend }}
         disabled={!stopButton && !canSend}
         onPress={stopButton ? runtime.onStop : runtime.onSend}
-        style={({ pressed }) => [styles.sendButton, { backgroundColor: colors.userBubble }, pressed && { opacity: 0.72 }, !stopButton && !canSend && styles.sendButtonDisabled]}
+        style={({ pressed }) => [styles.sendButton, { backgroundColor: sendActive ? colors.userBubble : (dark ? colors.pressed : '#F3F5F6') }, pressed && { transform: [{ scale: 0.94 }] }]}
       >
         {stopButton
           ? <Square color={colors.userText} fill={colors.userText} size={14} />
           : runtime.disabled || attachments.busy
             ? <ActivityIndicator color={colors.userText} size="small" />
-            : <ArrowUp color={colors.userText} size={22} strokeWidth={2} />}
+            : <ArrowUp color={sendActive ? colors.foreground : (dark ? colors.subtle : '#9CB5C5')} size={25} strokeWidth={1.8} />}
       </Pressable>
     </View>
   );

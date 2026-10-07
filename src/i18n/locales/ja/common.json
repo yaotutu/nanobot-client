@@ -161,7 +161,8 @@
       "toggleSidebar": "サイドバーを切り替える",
       "newChat": "新しいトピックを開始",
       "settings": "設定を開く",
-      "sessionInfo": "セッション詳細"
+      "sessionInfo": "セッション詳細",
+      "subtitle": "いつでも、そばに"
     },
     "sessionInfo": {
       "title": "セッション",
@@ -344,7 +345,8 @@
         "full": "フルアクセス",
         "fullShort": "フル"
       },
-      "placeholder": "メッセージを入力…"
+      "placeholder": "メッセージ…",
+      "options": "チャットの設定"
     },
     "scrollToBottom": "一番下へスクロール",
     "loadEarlier": "以前のメッセージを読み込む",
@@ -355,6 +357,12 @@
       "search": "プロンプトを検索",
       "noResults": "一致するプロンプトがありません。",
       "jumpTo": "プロンプトへ移動: {{label}}"
+    },
+    "latestMessages": "最新のメッセージ",
+    "options": {
+      "description": "このチャットのモデル、ワークスペース、アクセス権。",
+      "projectLocked": "このチャットではワークスペースを変更できません。",
+      "unavailable": "利用できません"
     }
   },
   "message": {

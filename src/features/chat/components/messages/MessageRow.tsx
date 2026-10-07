@@ -120,15 +120,17 @@ export function MessageRow({
       ) : null}
       {hasContent ? (
         assistant ? (
-          <View style={[styles.assistantBubble, { backgroundColor: colors.pressed }]}><MarkdownText
-            colors={colors}
-            dark={dark}
-            onOpenFilePreview={onOpenFilePreview}
-            resolveFilePreviewAvailability={resolveFilePreviewAvailability}
-            streaming={Boolean(message.isStreaming)}
-          >
-            {visibleContent}
-          </MarkdownText></View>
+          <View style={[styles.assistantBubble, { backgroundColor: colors.pressed }]}>
+            <MarkdownText
+              colors={colors}
+              dark={dark}
+              onOpenFilePreview={onOpenFilePreview}
+              resolveFilePreviewAvailability={resolveFilePreviewAvailability}
+              streaming={Boolean(message.isStreaming)}
+            >
+              {visibleContent}
+            </MarkdownText>
+          </View>
         ) : (
           <View style={[styles.userBubble, { backgroundColor: colors.userBubble }]}>
             <UserMessageBody
@@ -226,19 +228,23 @@ const styles = StyleSheet.create({
   row: { width: '100%', marginVertical: 3 },
   assistantRow: { alignItems: 'flex-start' },
   userRow: { alignItems: 'flex-end' },
-  userBubble: { maxWidth: '86%', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 13 },
-  // 助手回复保持整行可用宽度，给代码、表格和文件引用留足空间。
-  assistantBubble: { width: '100%', borderRadius: 22, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 2 },
+  // 沿用原版 openmuse/chat.tsx 的视觉：22px 圆角、用户右下角 7px、最大宽度 85%；正文仍为 16/24。
+  userBubble: { maxWidth: '85%', borderRadius: 22, borderBottomRightRadius: 7, paddingHorizontal: 16, paddingVertical: 13 },
+  // 沿用原版的助手左下角 7px、最大宽度 95% 和灰卡；在上限内保持稳定宽度，给代码与表格留足空间。
+  // Markdown 段落自带 6px 底边距，这里补 7px，普通正文的上下实际留白均为 13px。
+  assistantBubble: { width: '100%', maxWidth: '95%', borderRadius: 22, borderBottomLeftRadius: 7, paddingHorizontal: 16, paddingTop: 13, paddingBottom: 7 },
   quotedContext: { width: '100%', marginBottom: 7, borderLeftWidth: 2, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   quotedContextHeader: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 },
   quotedContextLabel: { fontSize: 10, fontWeight: '700' },
   quotedContextText: { fontSize: 12, lineHeight: 17 },
   automationBadge: { alignSelf: 'flex-start', marginBottom: 7, borderWidth: StyleSheet.hairlineWidth, borderRadius: 9, paddingHorizontal: 8, paddingVertical: 4 },
   automationBadgeText: { fontSize: 10.5, fontWeight: '600' },
-  messageActions: { minHeight: 44, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 2 },
-  userMessageActions: { minHeight: 32, alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center' },
+  // 操作始终可见；压缩辅助行高度而非正文，保留原有 7px hitSlop（扩展触摸范围仍受父容器边界限制）。
+  messageActions: { minHeight: 30, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 4 },
+  userMessageActions: { minHeight: 30, alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center' },
   completedAt: { marginLeft: 4, fontSize: 10.5, fontVariant: ['tabular-nums'] },
-  messageActionButton: { width: 40, height: 44, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  streamingDots: { minHeight: 48, borderRadius: 22, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  messageActionButton: { width: 36, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  // 空回复占位也沿用助手卡片的底角，避免等待正文时撑出一整块空白。
+  streamingDots: { minHeight: 36, borderRadius: 18, borderBottomLeftRadius: 7, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 6 },
   streamingDot: { width: 5, height: 5, borderRadius: 3 },
 });

@@ -161,7 +161,8 @@
       "toggleSidebar": "Alternar barra lateral",
       "newChat": "Iniciar um novo tópico",
       "settings": "Abrir configurações",
-      "sessionInfo": "Detalhes da sessão"
+      "sessionInfo": "Detalhes da sessão",
+      "subtitle": "Aqui quando precisar"
     },
     "sessionInfo": {
       "title": "Sessão",
@@ -344,7 +345,8 @@
         "full": "Acesso total",
         "fullShort": "Total"
       },
-      "placeholder": "Digite sua mensagem…"
+      "placeholder": "Mensagem…",
+      "options": "Opções da conversa"
     },
     "scrollToBottom": "Rolar para o final",
     "loadEarlier": "Carregar mensagens anteriores",
@@ -355,6 +357,12 @@
       "search": "Buscar prompts",
       "noResults": "Nenhum prompt correspondente.",
       "jumpTo": "Ir para o prompt: {{label}}"
+    },
+    "latestMessages": "Mensagens recentes",
+    "options": {
+      "description": "Modelo, espaço de trabalho e acesso deste chat.",
+      "projectLocked": "O espaço de trabalho não pode ser alterado neste chat.",
+      "unavailable": "Indisponível"
     }
   },
   "message": {

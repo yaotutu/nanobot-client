@@ -161,7 +161,8 @@
       "toggleSidebar": "切換側邊欄",
       "newChat": "開始新話題",
       "settings": "開啟設定",
-      "sessionInfo": "對話詳細資料"
+      "sessionInfo": "對話詳細資料",
+      "subtitle": "需要時，我就在這裡"
     },
     "sessionInfo": {
       "title": "對話",
@@ -344,7 +345,8 @@
         "full": "完整存取權",
         "fullShort": "完整"
       },
-      "placeholder": "輸入訊息…"
+      "placeholder": "輸入訊息…",
+      "options": "聊天選項"
     },
     "scrollToBottom": "捲動到底部",
     "loadEarlier": "載入更早訊息",
@@ -355,6 +357,12 @@
       "search": "搜尋提示詞",
       "noResults": "找不到符合的提示詞。",
       "jumpTo": "跳到提示詞：{{label}}"
+    },
+    "latestMessages": "最新訊息",
+    "options": {
+      "description": "目前聊天的模型、工作區和存取權限。",
+      "projectLocked": "目前聊天中無法變更工作區。",
+      "unavailable": "暫不可用"
     }
   },
   "message": {

@@ -67,16 +67,17 @@ export function MarkdownText({
   const { t } = useTranslation();
   const styles = useMemo<Partial<MarkdownStyles>>(() => ({
     body: { width: '100%', color: colors.foreground },
-    // 正文与用户消息统一为 16/24；标题用留白分层，避免默认下划线打断阅读。
+    // 仅对齐参考 UI 的正文与紧凑标题比例，不改变 Markdown 解析、文件链接或媒体规则。
+    // 段落/列表间隔为 6px，标题上下为 8/4px，避免短回复被大号标题和留白撑开。
     text: { color: colors.foreground, fontSize: 16, lineHeight: 24 },
-    paragraph: { marginTop: 0, marginBottom: 12 },
-    headingContainer: { marginTop: 16, marginBottom: 8 },
+    paragraph: { marginTop: 0, marginBottom: 6 },
+    headingContainer: { marginTop: 8, marginBottom: 4 },
     heading1Container: { paddingBottom: 0, borderBottomWidth: 0 },
     heading2Container: { paddingBottom: 0, borderBottomWidth: 0 },
-    heading1: { color: colors.foreground, fontSize: 26, lineHeight: 34, fontWeight: '600' },
-    heading2: { color: colors.foreground, fontSize: 22, lineHeight: 30, fontWeight: '600' },
-    heading3: { color: colors.foreground, fontSize: 19, lineHeight: 28, fontWeight: '600' },
-    heading4: { color: colors.foreground, fontSize: 17, lineHeight: 26, fontWeight: '600' },
+    heading1: { color: colors.foreground, fontSize: 21, lineHeight: 27, fontWeight: '600' },
+    heading2: { color: colors.foreground, fontSize: 19, lineHeight: 25, fontWeight: '600' },
+    heading3: { color: colors.foreground, fontSize: 17, lineHeight: 23, fontWeight: '600' },
+    heading4: { color: colors.foreground, fontSize: 16, lineHeight: 24, fontWeight: '600' },
     heading5: { color: colors.foreground, fontSize: 16, lineHeight: 24, fontWeight: '600' },
     heading6: { color: colors.muted, fontSize: 16, lineHeight: 24, fontWeight: '600' },
     strong: { color: colors.foreground, fontWeight: '600' },
@@ -106,7 +107,7 @@ export function MarkdownText({
       paddingHorizontal: 6,
       paddingVertical: 2,
     },
-    list: { width: '100%', marginBottom: 12 },
+    list: { width: '100%', marginBottom: 6 },
     listItem: { minWidth: 0, flex: 1, paddingLeft: 4 },
     listUnorderedItem: { flexDirection: 'row', marginTop: 0, marginBottom: 6 },
     listUnorderedItemIcon: { color: colors.muted, fontSize: 20, lineHeight: 24, marginRight: 8 },

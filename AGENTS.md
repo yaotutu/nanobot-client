@@ -100,9 +100,9 @@ android/ ios/      Expo Prebuild 产物（已 git ignore）
 
 ### 消息页结构
 
-- `NanobotScreen` 组装控制器、键盘避让、连接状态与弹窗；`ChatHeader` 只包含侧栏、标题／提示导航、新会话。
+- `NanobotScreen` 组装控制器、键盘避让、连接状态与弹窗；`ChatHeader` 展示 nanobot 品牌形象、副标题与会话胶囊，保留侧栏、提示导航操作；右上角打开当前会话的聊天选项，新建会话入口保留在侧栏。
 - `ChatSurface` 切换空会话／加载／消息列表的内容区域，底部 composer 始终只挂载一次，避免首条消息发送时丢失输入焦点。
-- `ComposerInputRow` 只负责附件、输入和发送／停止；模型、权限与项目选择统一放在输入框下方。
+- `ComposerInputRow` 只负责附件、输入和发送／停止；主界面不显示配置底栏。顶栏右上角「聊天选项」打开 `ChatOptionsModal`，模型、工作区和权限共用一个弹窗，列表／路径表单在弹窗内展开；已有会话的工作区只读，工作区错误在弹窗内外均可见。
 - `fetchThread` 仅接收 `schemaVersion: 3 / projection: events`，经 `model/thread-events.ts` 回放成领域消息；不接受旧 `messages` 线上快照。
 - 历史回放与实时消息共用 `stream-fold`；`model/thread-messages.ts` 统一过滤控制命令与计算展示时间，不包含历史文本兼容清洗。
 

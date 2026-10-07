@@ -161,7 +161,8 @@
       "toggleSidebar": "Tampilkan atau sembunyikan sidebar",
       "newChat": "Mulai topik baru",
       "settings": "Buka pengaturan",
-      "sessionInfo": "Detail sesi"
+      "sessionInfo": "Detail sesi",
+      "subtitle": "Ada saat kamu membutuhkan"
     },
     "sessionInfo": {
       "title": "Sesi",
@@ -344,7 +345,8 @@
         "full": "Akses penuh",
         "fullShort": "Penuh"
       },
-      "placeholder": "Ketik pesan Anda…"
+      "placeholder": "Pesan…",
+      "options": "Opsi percakapan"
     },
     "scrollToBottom": "Gulir ke bawah",
     "loadEarlier": "Muat pesan sebelumnya",
@@ -355,6 +357,12 @@
       "search": "Cari prompt",
       "noResults": "Tidak ada prompt yang cocok.",
       "jumpTo": "Lompat ke prompt: {{label}}"
+    },
+    "latestMessages": "Pesan terbaru",
+    "options": {
+      "description": "Model, ruang kerja, dan akses untuk obrolan ini.",
+      "projectLocked": "Ruang kerja tidak dapat diubah dalam obrolan ini.",
+      "unavailable": "Tidak tersedia"
     }
   },
   "message": {

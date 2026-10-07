@@ -60,9 +60,11 @@ export function ReadyAppShell() {
         controller={chatController}
         dark={dark}
         model={model}
+        chatOptionsOpen={navigation.chatOptionsOpen}
+        onCloseChatOptions={() => navigation.setChatOptionsOpen(false)}
         navigationRevision={navigation.chatResetRevision}
         onOpenDrawer={() => navigation.setDrawerOpen(true)}
-        onStartNewChat={startNewChat}
+        onOpenChatOptions={navigation.openChatOptions}
       />
       <PreferencesModal
         colors={colors}

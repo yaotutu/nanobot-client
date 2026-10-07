@@ -161,7 +161,8 @@
       "toggleSidebar": "Bật/tắt thanh bên",
       "newChat": "Bắt đầu chủ đề mới",
       "settings": "Mở cài đặt",
-      "sessionInfo": "Chi tiết phiên"
+      "sessionInfo": "Chi tiết phiên",
+      "subtitle": "Luôn ở đây khi bạn cần"
     },
     "sessionInfo": {
       "title": "Phiên",
@@ -344,7 +345,8 @@
         "full": "Toàn quyền truy cập",
         "fullShort": "Toàn quyền"
       },
-      "placeholder": "Nhập tin nhắn…"
+      "placeholder": "Tin nhắn…",
+      "options": "Tùy chọn trò chuyện"
     },
     "scrollToBottom": "Cuộn xuống cuối",
     "loadEarlier": "Tải tin nhắn trước đó",
@@ -355,6 +357,12 @@
       "search": "Tìm prompt",
       "noResults": "Không có prompt phù hợp.",
       "jumpTo": "Nhảy tới prompt: {{label}}"
+    },
+    "latestMessages": "Tin nhắn mới nhất",
+    "options": {
+      "description": "Mô hình, không gian làm việc và quyền truy cập cho cuộc trò chuyện này.",
+      "projectLocked": "Không thể thay đổi không gian làm việc trong cuộc trò chuyện này.",
+      "unavailable": "Không khả dụng"
     }
   },
   "message": {

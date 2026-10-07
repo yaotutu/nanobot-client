@@ -33,8 +33,10 @@ interface NanobotScreenProps {
   dark: boolean;
   model: ChatModelSelection;
   navigationRevision: number;
+  chatOptionsOpen: boolean;
+  onCloseChatOptions: () => void;
   onOpenDrawer: () => void;
-  onStartNewChat: () => void;
+  onOpenChatOptions: () => void;
 }
 
 export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
@@ -129,6 +131,8 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
       controller={controller}
       dark={dark}
       model={shell.model}
+      optionsOpen={shell.chatOptionsOpen}
+      onCloseOptions={shell.onCloseChatOptions}
     />
   );
 
@@ -146,7 +150,7 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
         hasUserPrompts={hasUserPrompts}
         onOpenDrawer={shell.onOpenDrawer}
         onOpenPromptNavigator={() => setPromptNavigatorOpen(true)}
-        onStartNewChat={shell.onStartNewChat}
+        onOpenChatOptions={shell.onOpenChatOptions}
       />
 
       {!runtime.networkAvailable || runtime.connectionStatus !== 'open' || runtime.connectionSyncing ? (

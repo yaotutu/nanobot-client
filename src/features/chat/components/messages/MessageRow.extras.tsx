@@ -52,5 +52,6 @@ const styles = StyleSheet.create({
   forkBoundary: { marginVertical: 13, flexDirection: 'row', alignItems: 'center', gap: 10 },
   forkBoundaryLine: { height: StyleSheet.hairlineWidth, flex: 1 },
   forkBoundaryText: { fontSize: 11 },
-  messageActionButton: { width: 40, height: 44, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  // 与引用、重试、分支按钮保持同一紧凑尺寸和 7px hitSlop；扩展触摸范围仍受父容器边界限制。
+  messageActionButton: { width: 36, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
 });

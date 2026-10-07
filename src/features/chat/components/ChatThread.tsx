@@ -107,12 +107,13 @@ export function ChatThread({
     <View style={styles.threadListArea}>
       <FlatList
         ref={listRef}
+        style={styles.list}
         contentContainerStyle={[
           styles.messagesContent,
           {
-            paddingBottom: 18,
+            paddingBottom: 12,
             backgroundColor: colors.background,
-            rowGap: 18,
+            rowGap: 12,
           },
         ]}
         data={units}
@@ -196,18 +197,19 @@ export function ChatThread({
       />
       {!atBottom ? (
         <Pressable
+          accessibilityRole="button"
           accessibilityLabel={t('thread.scrollToBottom')}
           onPress={() => scrollToBottom(true, true)}
           style={({ pressed }) => [
             styles.scrollToBottomButton,
             {
-              backgroundColor: colors.card,
-              borderColor: colors.border,
+              backgroundColor: colors.pressed,
               opacity: pressed ? 0.72 : 1,
             },
           ]}
         >
-          <ArrowDown color={colors.muted} size={18} strokeWidth={2} />
+          <ArrowDown color={colors.foreground} size={14} strokeWidth={1.7} />
+          <Text style={[styles.latestLabel, { color: colors.foreground }]}>{t('thread.latestMessages')}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -216,24 +218,23 @@ export function ChatThread({
 
 const styles = StyleSheet.create({
   threadListArea: { minHeight: 0, flex: 1 },
-  messagesContent: { flexGrow: 1, paddingHorizontal: 18, paddingTop: 14 },
+  list: { flex: 1 },
+  messagesContent: { flexGrow: 1, paddingHorizontal: 17, paddingTop: 8 },
+  // 单独占据列表与输入框之间的一行，避免浮在消息内容上遮住代码或表格。
   scrollToBottomButton: {
-    position: 'absolute',
-    right: 16,
-    bottom: 10,
-    width: 44,
-    height: 44,
-    borderWidth: StyleSheet.hairlineWidth,
+    alignSelf: 'center',
+    minHeight: 36,
+    marginTop: 2,
+    marginBottom: 10,
+    paddingHorizontal: 14,
     borderRadius: 22,
+    flexDirection: 'row',
+    gap: 7,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.14,
-    shadowRadius: 9,
-    elevation: 5,
   },
+  latestLabel: { fontSize: 12, fontWeight: '500' },
   loadOlderButton: { minHeight: 42, alignItems: 'center', justifyContent: 'center' },
   loadOlderText: { fontSize: 13, fontWeight: '500' },
-  activityRow: { width: '100%', marginVertical: 3, paddingHorizontal: 2 },
+  activityRow: { width: '100%' },
 });

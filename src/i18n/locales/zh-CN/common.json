@@ -161,7 +161,8 @@
       "toggleSidebar": "切换侧边栏",
       "newChat": "从顶部新建话题",
       "settings": "打开设置",
-      "sessionInfo": "会话详情"
+      "sessionInfo": "会话详情",
+      "subtitle": "需要时，我就在这里"
     },
     "sessionInfo": {
       "title": "会话",
@@ -344,7 +345,8 @@
         "full": "完全访问权限",
         "fullShort": "完全"
       },
-      "placeholder": "输入消息…"
+      "placeholder": "输入消息…",
+      "options": "聊天选项"
     },
     "scrollToBottom": "滚动到底部",
     "loadEarlier": "加载更早消息",
@@ -355,6 +357,12 @@
       "search": "搜索输入",
       "noResults": "没有匹配的输入。",
       "jumpTo": "跳转到输入：{{label}}"
+    },
+    "latestMessages": "最新消息",
+    "options": {
+      "description": "当前聊天的模型、工作区和访问权限。",
+      "projectLocked": "当前聊天中无法更改工作区。",
+      "unavailable": "暂不可用"
     }
   },
   "message": {

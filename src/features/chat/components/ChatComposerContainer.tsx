@@ -1,4 +1,7 @@
+import { StyleSheet, Text } from 'react-native';
+
 import { Composer } from '@/features/chat/components/Composer';
+import { ChatOptionsModal } from '@/features/chat/components/modals/ChatOptionsModal';
 import { StreamErrorNotice } from '@/features/chat/components/widgets/stream-error-notice';
 import type { ComposerController } from '@/features/chat/hooks/use-composer-controller';
 import type {
@@ -13,6 +16,8 @@ interface ChatComposerContainerProps {
   dark: boolean;
   model: ChatModelSelection;
   composer: ComposerController;
+  optionsOpen: boolean;
+  onCloseOptions: () => void;
 }
 
 export function ChatComposerContainer({
@@ -21,7 +26,14 @@ export function ChatComposerContainer({
   controller,
   dark,
   model,
+  optionsOpen,
+  onCloseOptions,
 }: ChatComposerContainerProps) {
+  // 所有配置沿用原来的连接／发送禁用规则；权限和工作区另外禁止在回合执行中修改。
+  const disabled = composer.sending
+    || controller.runtime.connectionSyncing
+    || !controller.runtime.networkAvailable
+    || controller.runtime.connectionStatus !== 'open';
   return (
     <>
       {controller.errors.stream ? (
@@ -53,17 +65,8 @@ export function ChatComposerContainer({
           onClearQuote: () => composer.setQuotedContext(null),
           onCursorChange: composer.onCursorChange,
         }}
-        model={{
-          activePreset: model.activeModelPreset,
-          displayName: model.modelDisplayLabel,
-          presets: model.orderedModelPresets,
-          onChange: model.changeModelPreset,
-        }}
         runtime={{
-          disabled: composer.sending
-            || controller.runtime.connectionSyncing
-            || !controller.runtime.networkAvailable
-            || controller.runtime.connectionStatus !== 'open',
+          disabled,
           goalState: controller.runtime.goalState,
           queuedPrompts: composer.queuedPrompts,
           runStartedAt: controller.runtime.runStartedAt,
@@ -80,16 +83,28 @@ export function ChatComposerContainer({
           onSkillSelect: composer.selectSkillCandidate,
           onSlashCommandSelect: composer.selectSlashCommand,
         }}
-        workspace={{
-          canChangeProject: !controller.session.activeKey,
-          controls: controller.workspace.catalog?.controls ?? null,
-          defaultScope: controller.workspace.catalog?.default_scope ?? null,
-          disabled: controller.runtime.turnActive,
-          error: controller.workspace.error,
-          scope: controller.workspace.activeScope,
-          onChange: controller.workspace.updateScope,
-        }}
       />
+      {controller.workspace.error ? (
+        <Text accessibilityRole="alert" style={[styles.workspaceError, { color: colors.errorText }]}>
+          {controller.workspace.error}
+        </Text>
+      ) : null}
+      {/* 弹窗独立挂载，开关配置不会卸载输入区，也不会丢失草稿或附件。 */}
+      {optionsOpen ? (
+        <ChatOptionsModal
+          canChangeProject={!controller.session.activeKey}
+          colors={colors}
+          disabled={disabled}
+          model={model}
+          onClose={onCloseOptions}
+          turnActive={controller.runtime.turnActive}
+          workspace={controller.workspace}
+        />
+      ) : null}
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  workspaceError: { marginTop: 8, paddingHorizontal: 12, fontSize: 12, lineHeight: 18 },
+});

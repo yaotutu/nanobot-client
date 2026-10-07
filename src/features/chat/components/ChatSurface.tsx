@@ -38,9 +38,6 @@ export function ChatSurface({ colors, composer, hasMessages, threadLoading, thre
           <ThreadLoading colors={colors} label={t('thread.loadingConversation')} />
         ) : (
           <ScrollView contentContainerStyle={styles.emptyContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <View style={[styles.welcomeMark, { backgroundColor: colors.userBubble }]}>
-              <Text style={[styles.welcomeLetter, { color: colors.userText }]}>n</Text>
-            </View>
             <Text style={[styles.greeting, { color: colors.foreground }]}>{t('thread.empty.title')}</Text>
             <Text style={[styles.subtitle, { color: colors.muted }]}>{t('thread.empty.subtitle')}</Text>
           </ScrollView>
@@ -64,12 +61,10 @@ function ThreadLoading({ colors, label }: { colors: Palette; label: string }) {
 
 const styles = StyleSheet.create({
   content: { minHeight: 0, flex: 1, width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center' },
-  emptyContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30, paddingVertical: 24, gap: 16 },
-  welcomeMark: { width: 68, height: 68, borderRadius: 25, alignItems: 'center', justifyContent: 'center', marginBottom: 7, transform: [{ rotate: '-6deg' }] },
-  welcomeLetter: { fontSize: 42, fontWeight: '600', lineHeight: 52 },
-  greeting: { maxWidth: 360, fontSize: 28, lineHeight: 38, fontWeight: '500', letterSpacing: -0.8, textAlign: 'center' },
-  subtitle: { maxWidth: 300, fontSize: 15, lineHeight: 24, textAlign: 'center' },
+  emptyContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22, paddingVertical: 34, gap: 15 },
+  greeting: { maxWidth: 350, fontSize: 28, lineHeight: 36, fontWeight: '400', letterSpacing: -1, textAlign: 'center' },
+  subtitle: { maxWidth: 320, fontSize: 14, lineHeight: 23, textAlign: 'center' },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   loadingText: { fontSize: 14 },
-  composerDock: { width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center', paddingHorizontal: 16, paddingTop: 10 },
+  composerDock: { width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center', paddingHorizontal: chatLayout.horizontalInset, paddingTop: 0 },
 });

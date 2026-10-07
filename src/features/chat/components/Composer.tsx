@@ -4,8 +4,6 @@ import { TextInput, View } from 'react-native';
 
 import type { ComposerProps } from '@/features/chat/composer/model/view-contract';
 import { RunGoalStatus } from '@/features/chat/components/widgets/run-goal-status';
-import { ModelPresetMenu } from '@/features/chat/components/widgets/model-preset-menu';
-import { WorkspaceAccessMenu, WorkspaceProjectPicker } from '@/features/workspaces';
 
 import { ComposerContext } from './ComposerContext';
 import { ComposerInputRow } from './ComposerInputRow';
@@ -13,7 +11,7 @@ import { ComposerSuggestions } from './ComposerSuggestions';
 import { composerStyles as styles } from './composer-styles';
 
 /** 全部会话状态使用这一套输入布局；不再维护欢迎页与消息页两份视觉契约。 */
-export function Composer({ appearance, inputRef, attachments, draft, model, runtime, suggestions, workspace }: ComposerProps) {
+export function Composer({ appearance, inputRef, attachments, draft, runtime, suggestions }: ComposerProps) {
   const { t } = useTranslation();
   const { colors, dark } = appearance;
   const [focused, setFocused] = useState(false);
@@ -24,7 +22,7 @@ export function Composer({ appearance, inputRef, attachments, draft, model, runt
   const stopButton = runtime.turnActive && !hasDraft;
   return (
     <View accessibilityState={{ busy: runtime.disabled || attachments.busy }}>
-      <View style={[styles.composer, { borderColor: focused ? colors.userBubble : colors.border, backgroundColor: colors.card }]}>
+      <View style={[styles.composer, { borderColor: focused ? (dark ? colors.userBubble : '#C7E4F9') : colors.border, backgroundColor: colors.card }]}>
         <RunGoalStatus colors={colors} dark={dark} goalState={runtime.goalState} runStartedAt={runtime.runStartedAt} />
         <ComposerSuggestions
           colors={colors}
@@ -59,16 +57,12 @@ export function Composer({ appearance, inputRef, attachments, draft, model, runt
             onSelectionChange={(event) => draft.onCursorChange(event.nativeEvent.selection.start)}
             placeholder={t(runtime.turnActive ? 'thread.composer.placeholderStreaming' : 'thread.composer.placeholder')}
             placeholderTextColor={colors.subtle}
+            selectionColor={dark ? colors.userBubble : '#1473C8'}
             style={[styles.composerInput, { color: colors.foreground, height: draft.value ? inputHeight : 44 }]}
             textAlignVertical="top"
             value={draft.value}
           />
         </ComposerInputRow>
-      </View>
-      <View style={styles.composerFooter}>
-        <ModelPresetMenu activePreset={model.activePreset} colors={colors} disabled={runtime.disabled} displayLabel={model.displayName} onPresetChange={model.onChange} presets={model.presets} />
-        {workspace.scope ? <WorkspaceAccessMenu canUseFullAccess={workspace.controls?.can_use_full_access !== false} colors={colors} disabled={runtime.disabled || workspace.disabled} onChange={workspace.onChange} scope={workspace.scope} /> : null}
-        <WorkspaceProjectPicker canChangeProject={workspace.canChangeProject} colors={colors} controls={workspace.controls} defaultScope={workspace.defaultScope} disabled={runtime.disabled || workspace.disabled} error={workspace.error} onChange={workspace.onChange} scope={workspace.scope} />
       </View>
     </View>
   );

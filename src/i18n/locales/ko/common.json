@@ -161,7 +161,8 @@
       "toggleSidebar": "사이드바 전환",
       "newChat": "새 주제 시작",
       "settings": "설정 열기",
-      "sessionInfo": "세션 세부 정보"
+      "sessionInfo": "세션 세부 정보",
+      "subtitle": "필요할 때 언제나 곁에"
     },
     "sessionInfo": {
       "title": "세션",
@@ -344,7 +345,8 @@
         "full": "전체 접근 권한",
         "fullShort": "전체"
       },
-      "placeholder": "메시지를 입력하세요…"
+      "placeholder": "메시지…",
+      "options": "채팅 옵션"
     },
     "scrollToBottom": "맨 아래로 스크롤",
     "loadEarlier": "이전 메시지 불러오기",
@@ -355,6 +357,12 @@
       "search": "프롬프트 검색",
       "noResults": "일치하는 프롬프트가 없습니다.",
       "jumpTo": "프롬프트로 이동: {{label}}"
+    },
+    "latestMessages": "최신 메시지",
+    "options": {
+      "description": "이 채팅의 모델, 작업 공간 및 접근 권한입니다.",
+      "projectLocked": "이 채팅에서는 작업 공간을 변경할 수 없습니다.",
+      "unavailable": "사용할 수 없음"
     }
   },
   "message": {
