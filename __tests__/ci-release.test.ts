@@ -101,3 +101,20 @@ describe('Android CI 开发版元数据', () => {
     expect(fixture.read('package-lock.json')).toEqual(fixture.files['package-lock.json']);
   });
 });
+
+// 防止干净 runner 再次在原生工程生成前执行 Gradle 缓存：本地 android/ 会掩盖此问题。
+// 从真实工作流读取步骤位置，不复制一份测试用流程，也不要求提交原生目录。
+describe('Android CI 工作流执行顺序', () => {
+  it('安装依赖、完整检查和版本生成后先 prebuild，再初始化 Gradle 缓存并构建发布', () => {
+    const workflow = readFileSync(resolve('.github/workflows/android-development-release.yml'), 'utf8');
+    const steps = [
+      'Install dependencies', 'Run all checks', 'Prepare development version',
+      'Prepare Android project for Gradle cache', 'Cache Gradle dependencies',
+      'Build Android Release APK', 'Save APK and checksums', 'Publish development prerelease',
+    ].map((name) => workflow.indexOf('- name: ' + name));
+    expect(steps.every((position) => position >= 0)).toBe(true);
+    expect(steps.every((position, index) => index === 0 || position > steps[index - 1])).toBe(true);
+    expect(workflow).toContain('run: npx expo prebuild --platform android --no-install');
+    expect(workflow).toContain('cache-provider: basic');
+  });
+});

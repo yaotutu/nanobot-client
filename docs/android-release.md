@@ -12,7 +12,7 @@
 - 可在 GitHub → Actions → **Android Development Release** → **Run workflow** 手动触发，分支需选择 `main`；选其他分支会跳过任务。
 - 每次推送独立构建，不取消较早的构建。发布失败可用 **Re-run jobs** 重试。
 - 云端使用 Ubuntu 24.04、Node.js 24、JDK 17、Android SDK 36、NDK 27.1.12297006 和 CMake 3.22.1，缓存 npm / Gradle 依赖；不修改本机开发环境。
-- 依次执行 `npm ci` → `npm run check` → 生成临时开发版元数据 → 复用 `release.sh --no-version --local-only --skip-check` 构建 APK → 上传 Actions Artifact → 发布 GitHub **Prerelease**。
+- 依次执行 `npm ci` → `npm run check` → 生成临时开发版元数据 → Expo Prebuild 生成原生工程 → 初始化 Gradle 缓存 → 复用 `release.sh --no-version --local-only --skip-check` 构建 APK → 上传 Actions Artifact → 发布 GitHub **Prerelease**。
 - lint、类型检查、单元测试、Native 测试或 Android bundle smoke 任意一项失败，都不会发布。
 - APK 和 `checksums.txt` 先上传至 Release 草稿，再公开；发布失败时已成功上传的 Actions Artifact 仍可下载，保留 14 天。
 

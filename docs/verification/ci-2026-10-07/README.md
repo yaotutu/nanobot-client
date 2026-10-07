@@ -30,3 +30,11 @@
 - GitHub API 只读核对：当前仓库 Actions 已启用；默认 token 只读，工作流发布 job 显式请求 `contents: write`。
 - 干净安装报告现有依赖有 68 项审计告警（9 moderate、58 high、1 critical）。此次未新增依赖，未混入依赖升级；审计告警应另行处理，不影响本次 `npm ci` 的退出状态。
 - 原始校验／构建日志保存在忽略目录 `.local/verification-raw/ci/`，不提交设备或环境原始日志。
+
+## 首次云端运行发现并修复（2026-10-07）
+
+- main 推送已触发运行 `37578715813`，提交 `34833f5`；Node／Java／Android SDK 初始化成功。
+- Gradle 缓存初始化失败：干净检出没有 `android/`，缓存 Action 无法匹配 Gradle 文件。此轮没有构建或发布 APK。
+- 修复为完整检查和临时版本生成后先执行 Expo Prebuild，再初始化 Gradle 缓存。现有 Release 脚本仍保留原生同步，避免改变本地打包契约。
+- 新增工作流执行顺序回归测试，防止本地已有原生目录掩盖此类干净 runner 的问题。
+- 原始失败日志保存在忽略目录 `.local/verification-raw/ci-cloud-2026-10-07/failed-37578715813.log`；修复后的结果以最新 Actions 运行与公开 Release 为准。

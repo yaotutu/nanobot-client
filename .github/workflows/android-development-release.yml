@@ -55,11 +55,6 @@ jobs:
           "$SDKMANAGER" 'platform-tools' 'platforms;android-36' 'build-tools;36.0.0' \
             'ndk;27.1.12297006' 'cmake;3.22.1'
 
-      - name: Cache Gradle dependencies
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
-        with:
-          cache-provider: basic
-
       - name: Install dependencies
         run: npm ci
 
@@ -70,6 +65,16 @@ jobs:
       - name: Prepare development version
         id: metadata
         run: node scripts/prepare-ci-release.mjs
+
+      # android/ 不提交到仓库；缓存 Action 需要实际 Gradle 文件才能计算缓存键。
+      # 先生成带本次开发版本的原生工程，再初始化缓存；release.sh 会幂等同步该工程。
+      - name: Prepare Android project for Gradle cache
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Cache Gradle dependencies
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-provider: basic
 
       - name: Build Android Release APK
         run: npm run release -- --no-version --local-only --skip-check
