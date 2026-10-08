@@ -14,6 +14,7 @@ import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: { title?: string }) => options?.title ? `${key}: ${options.title}` : key,
+    i18n: { language: 'en' },
   }),
 }));
 jest.mock('react-native-safe-area-context', () => ({
@@ -58,6 +59,7 @@ const createSession = (key: string, title: string): ChatSummary => ({
 });
 const createProps = () => ({
   visible: true,
+  updateAvailable: false,
   colors: LIGHT_COLORS,
   sessions: [createSession('chat-1', '普通会话'), createSession('chat-2', '另一会话')],
   state: createDefaultSidebarState(),
@@ -316,6 +318,32 @@ describe('ConversationSheet 独立 Native 回归', () => {
     expect(props[callback]).toHaveBeenCalledTimes(1);
     expect(props.onNewChat).not.toHaveBeenCalled();
     expect(props.onSelect).not.toHaveBeenCalled();
+  });
+
+  // 更新提示只来自父层布尔值；切换时同步移除徽标与读屏提示，不增加按钮或改变设置入口回调。
+  it.each([false, true])('updateAvailable=%s 时设置入口徽标与无障碍提示保持一致', async (updateAvailable) => {
+    const props = createProps();
+    const result = await render(<ConversationSheet {...props} updateAvailable={updateAvailable} />);
+    const settingsButton = result.getByRole('button', { name: 'sidebar.settings' });
+    const badge = result.queryByTestId('settings-entry-update-badge');
+    if (updateAvailable) {
+      expect(badge).toBeTruthy();
+      expect(settingsButton.props.accessibilityHint).toBe('updates.updateAvailableA11y');
+    } else {
+      expect(badge).toBeNull();
+      expect(settingsButton.props.accessibilityHint).toBeUndefined();
+    }
+    const buttonCount = result.getAllByRole('button').length;
+    await fireEvent.press(settingsButton);
+    expect(props.onOpenSettings).toHaveBeenCalledTimes(1);
+    expect(props.onNewChat).not.toHaveBeenCalled();
+    expect(props.onSelect).not.toHaveBeenCalled();
+    await result.rerender(<ConversationSheet {...props} updateAvailable={!updateAvailable} />);
+    expect(Boolean(result.queryByTestId('settings-entry-update-badge'))).toBe(!updateAvailable);
+    expect(result.getByRole('button', { name: 'sidebar.settings' }).props.accessibilityHint)
+      .toBe(!updateAvailable ? 'updates.updateAvailableA11y' : undefined);
+    expect(result.getAllByRole('button')).toHaveLength(buttonCount);
+    expect(props.onOpenSettings).toHaveBeenCalledTimes(1);
   });
 
   it('归档 toggle 根据真实 state 过滤列表，并支持显示和隐藏两向切换', async () => {

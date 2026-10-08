@@ -15,6 +15,7 @@ const DeferredConversationSheet = createDeferredComponent(() => import(
 
 interface AppModalsProps {
   app: AppController;
+  updateAvailable: boolean;
   colors: Palette;
   conversationsOpen: boolean;
   sessionSearchOpen: boolean;
@@ -36,6 +37,7 @@ export function AppModals(props: AppModalsProps) {
         <DeferredConversationSheet
           componentProps={{
             colors,
+            updateAvailable: props.updateAvailable,
             activeKey: app.chat?.session.activeKey ?? null,
             connectionStatus: app.connection.status,
             networkAvailable: app.connection.networkAvailable,

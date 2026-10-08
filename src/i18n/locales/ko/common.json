@@ -478,5 +478,47 @@
       "usePath": "경로 사용",
       "absolutePathRequired": "이 머신의 절대 폴더 경로를 입력하세요."
     }
+  },
+  "updates": {
+    "title": "업데이트",
+    "appGroup": "애플리케이션",
+    "hint": "새 버전을 확인하고 원할 때 업데이트를 설치하세요.",
+    "currentVersion": "현재 버전",
+    "latestVersion": "사용 가능한 버전",
+    "publishedAt": "출시일",
+    "size": "다운로드 크기",
+    "notes": "새로운 기능",
+    "noNotes": "릴리스 노트가 없습니다.",
+    "lastChecked": "마지막 확인",
+    "never": "아직 확인하지 않음",
+    "check": "업데이트 확인",
+    "checking": "확인 중…",
+    "available": "업데이트 가능",
+    "upToDate": "최신 버전입니다",
+    "unknown": "확인하지 않음",
+    "download": "다운로드 및 설치",
+    "downloading": "다운로드 중…",
+    "verifying": "다운로드 검증 중…",
+    "install": "업데이트 설치",
+    "installing": "설치 프로그램 여는 중…",
+    "installHint": "Android에서 설치 확인을 요청합니다. 업데이트 후에도 계정과 환경설정은 유지됩니다.",
+    "permission": "설치 허용",
+    "permissionHint": "Android가 설치를 차단하면 nanobot의 앱 설치를 허용한 다음, 여기로 돌아와 업데이트 설치를 누르세요.",
+    "downloaded": "설치 준비 완료",
+    "unsupported": "APK 업데이트는 Android에서만 사용할 수 있습니다.",
+    "development": "개발 모드에서는 업데이트 설치가 비활성화됩니다. 업데이트를 테스트하려면 Release APK를 사용하세요.",
+    "updateAvailableA11y": "새 앱 업데이트가 있습니다",
+    "progress": "{{percent}}% · {{downloaded}} / {{total}} MB",
+    "cancel": "다운로드 취소",
+    "noPublished": "아직 호환되는 업데이트가 출시되지 않았습니다.",
+    "errors": {
+      "network": "GitHub에 연결할 수 없습니다. 연결 상태를 확인하고 다시 시도하세요.",
+      "rateLimit": "GitHub 요청 한도에 도달했습니다. 나중에 다시 시도하세요.",
+      "invalid": "릴리스 정보가 불완전하거나 유효하지 않습니다. 나중에 다시 시도하세요.",
+      "download": "다운로드에 실패했습니다. 다시 시도하세요.",
+      "integrity": "다운로드한 파일이 검증을 통과하지 못했습니다. 다시 다운로드하세요.",
+      "installation": "설치 프로그램을 열 수 없습니다. 설치 권한을 확인하고 다시 시도하세요.",
+      "storage": "업데이트를 다운로드할 여유 공간이 부족합니다."
+    }
   }
 }

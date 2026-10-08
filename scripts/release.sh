@@ -224,10 +224,12 @@ fi
 printf '\n==> Publishing GitHub Release %s\n' "$TAG"
 REPOSITORY="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 
+# 手动包不包含 update.json，必须排除 Latest，避免覆盖 CI 的唯一更新入口。
 # Ensure the release exists (this also creates the git tag on the remote).
 if ! gh release view "$TAG" --repo "$REPOSITORY" >/dev/null 2>&1; then
   gh release create "$TAG" \
     --repo "$REPOSITORY" \
+    --latest=false \
     --title "nanobot $TAG" \
     --notes "Android Release APK built from the local workspace." \
     || fail "Unable to create GitHub Release $TAG."

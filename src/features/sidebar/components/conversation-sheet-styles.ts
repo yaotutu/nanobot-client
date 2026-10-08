@@ -58,6 +58,7 @@ export function createConversationStyles(colors: Palette) {
     footer: { minHeight: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: colors.border, paddingHorizontal: 16 },
     statusButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 8, borderRadius: 12 },
     statusLabel: { color: colors.muted, fontSize: 12 },
+    updateBadge: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#208AEF' },
     statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#C5A24A' },
     statusOpen: { backgroundColor: '#4FA86C' },
     statusOffline: { backgroundColor: '#C85B52' },

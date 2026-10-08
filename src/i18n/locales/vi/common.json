@@ -478,5 +478,47 @@
       "usePath": "Dùng đường dẫn",
       "absolutePathRequired": "Nhập đường dẫn thư mục tuyệt đối trên máy này."
     }
+  },
+  "updates": {
+    "title": "Cập nhật",
+    "appGroup": "Ứng dụng",
+    "hint": "Kiểm tra phiên bản mới và cài đặt bản cập nhật khi bạn muốn.",
+    "currentVersion": "Phiên bản hiện tại",
+    "latestVersion": "Phiên bản có sẵn",
+    "publishedAt": "Ngày phát hành",
+    "size": "Kích thước tải xuống",
+    "notes": "Có gì mới",
+    "noNotes": "Không có ghi chú phát hành.",
+    "lastChecked": "Lần kiểm tra gần nhất",
+    "never": "Chưa từng kiểm tra",
+    "check": "Kiểm tra bản cập nhật",
+    "checking": "Đang kiểm tra…",
+    "available": "Có bản cập nhật",
+    "upToDate": "Bạn đang dùng phiên bản mới nhất",
+    "unknown": "Chưa kiểm tra",
+    "download": "Tải xuống và cài đặt",
+    "downloading": "Đang tải xuống…",
+    "verifying": "Đang xác minh tệp tải xuống…",
+    "install": "Cài đặt bản cập nhật",
+    "installing": "Đang mở trình cài đặt…",
+    "installHint": "Android sẽ yêu cầu bạn xác nhận cài đặt. Tài khoản và tùy chọn của bạn sẽ được giữ lại khi cập nhật.",
+    "permission": "Cho phép cài đặt",
+    "permissionHint": "Nếu Android chặn cài đặt, hãy cho phép nanobot cài đặt ứng dụng, sau đó quay lại đây và nhấn Cài đặt bản cập nhật.",
+    "downloaded": "Sẵn sàng cài đặt",
+    "unsupported": "Cập nhật bằng APK chỉ khả dụng trên Android.",
+    "development": "Việc cài đặt bản cập nhật bị tắt trong chế độ phát triển. Hãy dùng APK Release để kiểm thử các bản cập nhật.",
+    "updateAvailableA11y": "Có bản cập nhật ứng dụng mới",
+    "progress": "{{percent}}% · {{downloaded}} / {{total}} MB",
+    "cancel": "Hủy tải xuống",
+    "noPublished": "Chưa có bản cập nhật tương thích nào được phát hành.",
+    "errors": {
+      "network": "Không thể kết nối với GitHub. Hãy kiểm tra kết nối và thử lại.",
+      "rateLimit": "Đã đạt giới hạn yêu cầu của GitHub. Hãy thử lại sau.",
+      "invalid": "Thông tin phát hành không đầy đủ hoặc không hợp lệ. Hãy thử lại sau.",
+      "download": "Tải xuống thất bại. Vui lòng thử lại.",
+      "integrity": "Tệp đã tải xuống không vượt qua bước xác minh. Vui lòng tải lại.",
+      "installation": "Không thể mở trình cài đặt. Hãy kiểm tra quyền cài đặt và thử lại.",
+      "storage": "Không đủ dung lượng trống để tải bản cập nhật."
+    }
   }
 }

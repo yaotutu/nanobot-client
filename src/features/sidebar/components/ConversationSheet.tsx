@@ -34,6 +34,7 @@ const nanobotIcon = require('../../../../assets/images/nanobot-icon.png');
 
 interface ConversationSheetProps {
   visible: boolean;
+  updateAvailable: boolean;
   colors: Palette;
   sessions: ChatSummary[];
   state: SidebarStatePayload;
@@ -268,12 +269,14 @@ export function ConversationSheet(props: ConversationSheetProps) {
               <View style={styles.footer}>
                 <Pressable
                   accessibilityLabel={t('sidebar.settings')}
+                  accessibilityHint={props.updateAvailable ? t('updates.updateAvailableA11y') : undefined}
                   accessibilityRole="button"
                   onPress={onOpenSettings}
                   style={({ pressed }) => [styles.actionButton, pressed && styles.rowPressed]}
                 >
                   <Settings color={colors.muted} size={18} strokeWidth={1.8} />
                   <Text style={styles.actionLabel}>{t('sidebar.settings')}</Text>
+                  {props.updateAvailable ? <View testID="settings-entry-update-badge" style={styles.updateBadge} /> : null}
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"

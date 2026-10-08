@@ -478,5 +478,47 @@
       "usePath": "使用路徑",
       "absolutePathRequired": "請輸入這台機器上的絕對資料夾路徑。"
     }
+  },
+  "updates": {
+    "title": "更新",
+    "appGroup": "應用程式",
+    "hint": "檢查新版本，並在你想更新時下載安裝。",
+    "currentVersion": "目前版本",
+    "latestVersion": "可用版本",
+    "publishedAt": "發佈時間",
+    "size": "下載大小",
+    "notes": "更新內容",
+    "noNotes": "暫無版本說明。",
+    "lastChecked": "上次檢查",
+    "never": "尚未檢查過",
+    "check": "檢查更新",
+    "checking": "正在檢查…",
+    "available": "有可用更新",
+    "upToDate": "已是最新版本",
+    "unknown": "未檢查",
+    "download": "下載並安裝",
+    "downloading": "正在下載…",
+    "verifying": "正在驗證下載檔案…",
+    "install": "安裝更新",
+    "installing": "正在開啟安裝程式…",
+    "installHint": "Android 會請你確認安裝。更新時會保留你的帳戶和偏好設定。",
+    "permission": "允許安裝",
+    "permissionHint": "如果 Android 阻擋安裝，請允許 nanobot 安裝應用程式，然後返回此處，點選「安裝更新」。",
+    "downloaded": "已準備好安裝",
+    "unsupported": "只有 Android 支援透過 APK 更新。",
+    "development": "開發模式下已停用更新安裝。請使用 Release APK 測試更新功能。",
+    "updateAvailableA11y": "有新的應用程式更新可用",
+    "progress": "{{percent}}% · {{downloaded}} / {{total}} MB",
+    "cancel": "取消下載",
+    "noPublished": "尚未發佈相容的更新。",
+    "errors": {
+      "network": "無法連線至 GitHub。請檢查網路連線後再試一次。",
+      "rateLimit": "已達到 GitHub 請求次數上限。請稍後再試。",
+      "invalid": "版本資訊不完整或無效。請稍後再試。",
+      "download": "下載失敗，請再試一次。",
+      "integrity": "下載的檔案未通過驗證，請重新下載。",
+      "installation": "無法開啟安裝程式。請檢查安裝權限後再試一次。",
+      "storage": "可用儲存空間不足，無法下載更新。"
+    }
   }
 }

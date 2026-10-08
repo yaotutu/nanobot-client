@@ -41,7 +41,7 @@ npm run web                # 启动 Web 开发服务（发布脚本不导出 Web
 npm run release              # 使用现有依赖，构建并发布 Android Release APK
 ```
 
-GitHub Actions：`.github/workflows/android-development-release.yml` 监听 `main` 推送，完整检查后发布 Android 开发版 Prerelease；云端临时版本不回写仓库。
+GitHub Actions：`.github/workflows/android-development-release.yml` 监听 `main` 推送，完整检查后发布 Android 开发用途 Latest Release（非 prerelease）；云端临时版本不回写仓库。
 
 Android Release 打包与 GitHub Release 发布的完整说明见 [`docs/android-release.md`](docs/android-release.md)。
 
@@ -94,7 +94,7 @@ android/ ios/      Expo Prebuild 产物（已 git ignore）
 
 ### 聊天精简后的功能边界
 
-- `features/settings` 仅包含本地主题／语言／退出弹窗；不要恢复服务端管理面板。
+- `features/settings` 包含本地主题／语言／应用更新／退出弹窗；不要恢复服务端管理面板。
 - `features/capabilities`、`features/skills` 只保留聊天所需的只读目录，不含 Apps／Skills 页面。
 - 模型目录读取在 `features/chat/api/model-catalog.ts`，不提供 Provider／模型配置写接口。
 - 不发送级联删除自动任务参数；服务端拒绝删除时保留会话并显示提示。
@@ -108,6 +108,13 @@ android/ ios/      Expo Prebuild 产物（已 git ignore）
 - `ComposerInputRow` 只负责附件、输入和发送／停止；主界面不显示配置底栏。顶栏右上角「聊天选项」打开 `ChatOptionsModal`，模型、工作区和权限共用一个弹窗，列表／路径表单在弹窗内展开；已有会话的工作区只读，工作区错误在弹窗内外均可见。
 - `fetchThread` 仅接收 `schemaVersion: 3 / projection: events`，经 `model/thread-events.ts` 回放成领域消息；不接受旧 `messages` 线上快照。
 - 历史回放与实时消息共用 `stream-fold`；`model/thread-messages.ts` 统一过滤控制命令与计算展示时间，不包含历史文本兼容清洗。
+
+### 应用内更新
+
+- `features/updates` 只读取公开 GitHub Latest Release 的一份平铺 `update.json`，不调用 nanobot 更新接口。
+- 只支持 Android Release APK 安装，Metro 开发模式禁安装；原生权限/依赖变更需重新构建。
+- 固定现有包名和开发签名；发布版本码按基数 + GitHub run number 递增，仅按整数 versionCode 比较；不遍历 Release，不兼容旧清单或旧更新缓存。
+- 完整发布约定见 `docs/in-app-updates.md` 与 `docs/android-release.md`。
 
 ## 编码约定
 
@@ -131,6 +138,7 @@ android/ ios/      Expo Prebuild 产物（已 git ignore）
 2. `npx expo-doctor`（建议）
 3. 写清楚改了什么、为什么；UI 截图 / 设备日志写到 `.local/verification-raw/`（默认 git ignore），清洗后提交到 `docs/verification/<kind>-<date>/`。
 4. 不要把原生构建产物（`android/`、`ios/`）提交。
+5. 用户要求“提交代码”时，提交成功后必须自动执行 `git push` 到当前跟踪分支；不要只停留在本地提交。`main` 分支推送后由 GitHub Actions 自动执行云端构建和发布，除非用户当次明确要求“只提交、不推送”。
 
 ## 相关链接
 

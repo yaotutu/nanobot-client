@@ -478,5 +478,47 @@
       "usePath": "Gunakan path",
       "absolutePathRequired": "Masukkan path folder absolut di mesin ini."
     }
+  },
+  "updates": {
+    "title": "Pembaruan",
+    "appGroup": "Aplikasi",
+    "hint": "Periksa versi baru dan instal pembaruan kapan pun Anda mau.",
+    "currentVersion": "Versi saat ini",
+    "latestVersion": "Versi yang tersedia",
+    "publishedAt": "Tanggal rilis",
+    "size": "Ukuran unduhan",
+    "notes": "Yang baru",
+    "noNotes": "Tidak ada catatan rilis.",
+    "lastChecked": "Terakhir diperiksa",
+    "never": "Belum pernah diperiksa",
+    "check": "Periksa pembaruan",
+    "checking": "Memeriksa…",
+    "available": "Pembaruan tersedia",
+    "upToDate": "Anda sudah menggunakan versi terbaru",
+    "unknown": "Belum diperiksa",
+    "download": "Unduh dan instal",
+    "downloading": "Mengunduh…",
+    "verifying": "Memverifikasi unduhan…",
+    "install": "Instal pembaruan",
+    "installing": "Membuka penginstal…",
+    "installHint": "Android akan meminta Anda mengonfirmasi instalasi. Akun dan preferensi Anda tetap tersimpan saat memperbarui.",
+    "permission": "Izinkan instalasi",
+    "permissionHint": "Jika Android memblokir instalasi, izinkan nanobot menginstal aplikasi, lalu kembali ke sini dan ketuk Instal pembaruan.",
+    "downloaded": "Siap diinstal",
+    "unsupported": "Pembaruan melalui APK hanya tersedia di Android.",
+    "development": "Instalasi pembaruan dinonaktifkan dalam mode pengembangan. Gunakan APK Release untuk menguji pembaruan.",
+    "updateAvailableA11y": "Pembaruan aplikasi baru tersedia",
+    "progress": "{{percent}}% · {{downloaded}} / {{total}} MB",
+    "cancel": "Batalkan unduhan",
+    "noPublished": "Belum ada pembaruan yang kompatibel yang dirilis.",
+    "errors": {
+      "network": "Tidak dapat terhubung ke GitHub. Periksa koneksi Anda dan coba lagi.",
+      "rateLimit": "Batas permintaan GitHub telah tercapai. Coba lagi nanti.",
+      "invalid": "Informasi rilis tidak lengkap atau tidak valid. Coba lagi nanti.",
+      "download": "Unduhan gagal. Silakan coba lagi.",
+      "integrity": "File yang diunduh gagal diverifikasi. Silakan unduh kembali.",
+      "installation": "Tidak dapat membuka penginstal. Periksa izin instalasi dan coba lagi.",
+      "storage": "Ruang kosong tidak cukup untuk mengunduh pembaruan."
+    }
   }
 }

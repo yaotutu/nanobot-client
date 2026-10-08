@@ -478,5 +478,47 @@
       "usePath": "Usar caminho",
       "absolutePathRequired": "Informe um caminho absoluto de pasta nesta máquina."
     }
+  },
+  "updates": {
+    "title": "Atualizações",
+    "appGroup": "Aplicativo",
+    "hint": "Verifique se há novas versões e instale as atualizações quando quiser.",
+    "currentVersion": "Versão atual",
+    "latestVersion": "Versão disponível",
+    "publishedAt": "Data de publicação",
+    "size": "Tamanho do download",
+    "notes": "Novidades",
+    "noNotes": "Não há notas da versão.",
+    "lastChecked": "Última verificação",
+    "never": "Ainda não verificado",
+    "check": "Verificar atualizações",
+    "checking": "Verificando…",
+    "available": "Atualização disponível",
+    "upToDate": "Você está na versão mais recente",
+    "unknown": "Não verificado",
+    "download": "Baixar e instalar",
+    "downloading": "Baixando…",
+    "verifying": "Verificando o download…",
+    "install": "Instalar atualização",
+    "installing": "Abrindo o instalador…",
+    "installHint": "O Android pedirá que você confirme a instalação. Sua conta e suas preferências serão mantidas durante a atualização.",
+    "permission": "Permitir instalação",
+    "permissionHint": "Se o Android bloquear a instalação, permita que o nanobot instale aplicativos. Depois, volte aqui e toque em Instalar atualização.",
+    "downloaded": "Pronta para instalar",
+    "unsupported": "As atualizações por APK estão disponíveis apenas no Android.",
+    "development": "A instalação de atualizações está desativada no modo de desenvolvimento. Use um APK de Release para testar as atualizações.",
+    "updateAvailableA11y": "Há uma nova atualização do aplicativo disponível",
+    "progress": "{{percent}}% · {{downloaded}} / {{total}} MB",
+    "cancel": "Cancelar download",
+    "noPublished": "Nenhuma atualização compatível foi publicada ainda.",
+    "errors": {
+      "network": "Não foi possível conectar ao GitHub. Verifique sua conexão e tente novamente.",
+      "rateLimit": "O limite de solicitações do GitHub foi atingido. Tente novamente mais tarde.",
+      "invalid": "As informações da versão estão incompletas ou são inválidas. Tente novamente mais tarde.",
+      "download": "O download falhou. Tente novamente.",
+      "integrity": "O arquivo baixado não passou na verificação. Baixe-o novamente.",
+      "installation": "Não foi possível abrir o instalador. Verifique a permissão de instalação e tente novamente.",
+      "storage": "Não há espaço livre suficiente para baixar a atualização."
+    }
   }
 }

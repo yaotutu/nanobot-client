@@ -478,5 +478,47 @@
       "usePath": "Utiliser le chemin",
       "absolutePathRequired": "Saisissez un chemin absolu de dossier sur cette machine."
     }
+  },
+  "updates": {
+    "title": "Mises à jour",
+    "appGroup": "Application",
+    "hint": "Recherchez de nouvelles versions et installez les mises à jour quand vous le souhaitez.",
+    "currentVersion": "Version actuelle",
+    "latestVersion": "Version disponible",
+    "publishedAt": "Date de publication",
+    "size": "Taille du téléchargement",
+    "notes": "Nouveautés",
+    "noNotes": "Aucune note de version.",
+    "lastChecked": "Dernière vérification",
+    "never": "Aucune vérification pour le moment",
+    "check": "Rechercher des mises à jour",
+    "checking": "Recherche en cours…",
+    "available": "Mise à jour disponible",
+    "upToDate": "Vous disposez de la dernière version",
+    "unknown": "Non vérifié",
+    "download": "Télécharger et installer",
+    "downloading": "Téléchargement en cours…",
+    "verifying": "Vérification du téléchargement…",
+    "install": "Installer la mise à jour",
+    "installing": "Ouverture du programme d’installation…",
+    "installHint": "Android vous demandera de confirmer l’installation. Votre compte et vos préférences seront conservés lors de la mise à jour.",
+    "permission": "Autoriser l’installation",
+    "permissionHint": "Si Android bloque l’installation, autorisez nanobot à installer des applications, puis revenez ici et appuyez sur Installer la mise à jour.",
+    "downloaded": "Prête à être installée",
+    "unsupported": "Les mises à jour par APK sont uniquement disponibles sur Android.",
+    "development": "L’installation des mises à jour est désactivée en mode développement. Utilisez un APK Release pour tester les mises à jour.",
+    "updateAvailableA11y": "Une nouvelle mise à jour de l’application est disponible",
+    "progress": "{{percent}}% · {{downloaded}} / {{total}} MB",
+    "cancel": "Annuler le téléchargement",
+    "noPublished": "Aucune mise à jour compatible n’a encore été publiée.",
+    "errors": {
+      "network": "Impossible de se connecter à GitHub. Vérifiez votre connexion et réessayez.",
+      "rateLimit": "La limite de requêtes GitHub a été atteinte. Réessayez plus tard.",
+      "invalid": "Les informations de la version sont incomplètes ou invalides. Réessayez plus tard.",
+      "download": "Le téléchargement a échoué. Veuillez réessayer.",
+      "integrity": "Le fichier téléchargé n’a pas passé la vérification. Téléchargez-le à nouveau.",
+      "installation": "Impossible d’ouvrir le programme d’installation. Vérifiez l’autorisation d’installation et réessayez.",
+      "storage": "L’espace libre est insuffisant pour télécharger la mise à jour."
+    }
   }
 }

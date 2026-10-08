@@ -42,6 +42,7 @@ const featureNames = [
   'sidebar',
   'skills',
   'workspaces',
+  'updates',
 ];
 
 const privateCrossFeaturePatterns = (feature) => featureNames

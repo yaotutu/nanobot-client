@@ -9,10 +9,13 @@ on:
 permissions:
   contents: read
 
-# 不取消旧构建，也不设置会合并等待任务的 concurrency，保留每次 main 推送的独立开发包。
 jobs:
   android:
     if: github.ref == 'refs/heads/main'
+    # 固定 main 发布组，只保留最新运行；放在 job 内，非 main 手动运行不会取消 main 发布。
+    concurrency:
+      group: android-development-release-main
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
@@ -79,7 +82,22 @@ jobs:
       - name: Build Android Release APK
         run: npm run release -- --no-version --local-only --skip-check
 
-      # 即使 Release 上传失败，APK 仍保留在本次 Actions 的 Artifacts 中。
+      # 从本次实际 APK 提取并验证身份后才生成更新清单；失败时不能上传或发布。
+      # 固定当前包名与开发签名，不生成或更换密钥；清单只包含客户端更新所需字段。
+      - name: Prepare verified update manifest
+        env:
+          ARTIFACT_DIR: ${{ steps.metadata.outputs.artifact_dir }}
+          APK_NAME: ${{ steps.metadata.outputs.apk_name }}
+          APP_VERSION: ${{ steps.metadata.outputs.version }}
+          VERSION_CODE: ${{ steps.metadata.outputs.version_code }}
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          export AAPT_PATH="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          export APKSIGNER_PATH="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          node scripts/prepare-update-manifest.mjs
+
+      # 即使 Release 上传失败，APK、校验文件和更新清单仍保留在本次 Actions 的 Artifacts 中。
       - name: Save APK and checksums
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -89,7 +107,7 @@ jobs:
           retention-days: 14
           compression-level: 0
 
-      - name: Publish development prerelease
+      - name: Publish development release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -99,6 +117,31 @@ jobs:
           ARTIFACT_DIR: ${{ steps.metadata.outputs.artifact_dir }}
           APK_NAME: ${{ steps.metadata.outputs.apk_name }}
         run: |
+          # 发布前必须仍是 main 头提交，防止旧运行或手动重跑抢占 Latest；查询失败则直接停止。
+          MAIN_SHA="$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq '.object.sha')"
+          if [[ "$MAIN_SHA" != "$GITHUB_SHA" ]]; then
+            echo 'main 已有新提交，跳过旧构建发布。' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # 重跑沿用同一整数 tag：公开版本不可覆盖，只允许删除此前失败留下的草稿。
+          # 仅明确的不存在错误允许新建；鉴权、限流或网络失败不能误判成不存在。
+          if gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft' > release-state.txt 2> release-error.txt; then
+            if [[ "$(cat release-state.txt)" == 'false' ]]; then
+              echo '同 tag Release 已公开，跳过重复发布。' >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            if [[ "$(cat release-state.txt)" != 'true' ]]; then
+              echo '无法识别 Release 草稿状态。' >&2
+              exit 1
+            fi
+            # 不传 --cleanup-tag：仅删除草稿及其半成品资产，保留已存在的源码 tag。
+            gh release delete "$RELEASE_TAG" --yes
+          elif ! grep -Eq 'release not found|HTTP 404' release-error.txt; then
+            cat release-error.txt >&2
+            exit 1
+          fi
+
           cat > release-notes.md <<EOF
           main 分支自动构建的 Android 开发版，仅用于开发测试。
 
@@ -108,17 +151,24 @@ jobs:
           - 网关地址：http://192.168.55.201:8765（需在可访问网关的网络中使用）
           - 使用现有开发签名，不是应用商店正式签名；登录密码不会打包到 APK。
 
-          下载 APK 安装；checksums.txt 包含 APK 的 SHA-256 校验值。
+          下载 APK 安装；checksums.txt 包含 APK 的 SHA-256 校验值，update.json 提供已验证的开发版更新元数据。
           EOF
-          # 先建立草稿，完整上传 APK 和校验文件后再公开，避免用户下载到半成品。
-          # 重跑时 run_attempt 递增，生成新 tag，不覆盖此前的开发包或正式版。
+          # latest/download 需要普通 Release；开发用途写入备注，不以 prerelease 标志表达。
+          # 先创建草稿，再完整上传三个资产；任何上传失败都保留草稿，客户端看不到半成品。
           gh release create "$RELEASE_TAG" \
-            "$ARTIFACT_DIR/$APK_NAME" "$ARTIFACT_DIR/checksums.txt" \
             --target "$GITHUB_SHA" \
             --title "nanobot $APP_VERSION" \
             --notes-file release-notes.md \
-            --prerelease --draft --latest=false
-          gh release edit "$RELEASE_TAG" --draft=false --latest=false
+            --prerelease=false --draft --latest=false
+          gh release upload "$RELEASE_TAG" \
+            "$ARTIFACT_DIR/$APK_NAME" "$ARTIFACT_DIR/checksums.txt" "$ARTIFACT_DIR/update.json"
+          # 上传可能较久，公开前再次检查 main；不再是头提交时让草稿保持不可见。
+          MAIN_SHA="$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq '.object.sha')"
+          if [[ "$MAIN_SHA" != "$GITHUB_SHA" ]]; then
+            echo '资产上传期间 main 已更新，保留草稿并跳过公开。' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh release edit "$RELEASE_TAG" --draft=false --latest=true
           RELEASE_URL="$(gh release view "$RELEASE_TAG" --json url --jq .url)"
           {
             echo '## Android 开发版已发布'

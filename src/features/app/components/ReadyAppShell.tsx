@@ -7,6 +7,7 @@ import { useAppModelSelection } from '@/features/app/hooks/use-app-model-selecti
 import { useAppNavigation } from '@/features/app/hooks/use-app-navigation';
 import { useAppPreferences } from '@/features/app/hooks/use-app-preferences';
 import { chatPaletteForTheme, NanobotScreen } from '@/features/chat/screen';
+import { useUpdates, hasUpdate } from '@/features/updates';
 import { PreferencesModal } from '@/features/settings';
 import { markStartup } from '@/services/runtime/startup-performance';
 import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
@@ -19,6 +20,7 @@ import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
  * 同步执行整棵业务组件树。
  */
 export function ReadyAppShell() {
+  const updates = useUpdates();
   const app = useAppController();
   const navigation = useAppNavigation();
   useEffect(() => {
@@ -67,6 +69,7 @@ export function ReadyAppShell() {
         onOpenChatOptions={navigation.openChatOptions}
       />
       <PreferencesModal
+        updates={updates}
         colors={colors}
         preferences={preferences}
         visible={navigation.preferencesOpen}
@@ -75,6 +78,7 @@ export function ReadyAppShell() {
         onLogout={app.runtime.logout}
       />
       <AppModals
+        updateAvailable={hasUpdate(updates)}
         app={app}
         colors={chatPaletteForTheme(dark)}
         conversationsOpen={navigation.conversationsOpen}

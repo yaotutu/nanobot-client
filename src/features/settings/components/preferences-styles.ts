@@ -23,6 +23,7 @@ export function createPreferencesStyles(colors: Palette) {
     iconTile: { width: 29, height: 29, borderRadius: 7, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
     rowLabel: { flex: 1, fontSize: 15, lineHeight: 23, color: colors.foreground },
     value: { maxWidth: '44%', flexShrink: 1, fontSize: 13, lineHeight: 21, textAlign: 'right', color: colors.muted },
+    updateBadge: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#208AEF' },
     divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
     pressed: { backgroundColor: colors.userBubble },
   });

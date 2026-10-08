@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppBootstrapController } from '@/features/app/hooks/use-app-bootstrap-controller';
+import { useUpdateLifecycle } from '@/features/updates';
 import { AuthScreen } from '@/features/auth/screen';
 import { createDeferredComponent } from '@/hooks/use-deferred-component';
 import { markStartup, measureStartup } from '@/services/runtime/startup-performance';
@@ -25,6 +26,7 @@ const DeferredReadyAppShell = createDeferredComponent<ReadyAppShellProps>(() => 
 });
 
 export function AppShell() {
+  useUpdateLifecycle();
   const auth = useAppBootstrapController();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();

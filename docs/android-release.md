@@ -9,29 +9,74 @@
 ### 触发与执行流程
 
 - 推送到 `main` 自动运行，包括合并 PR 后产生的推送；其他分支和 tag 不触发发布。
-- 可在 GitHub → Actions → **Android Development Release** → **Run workflow** 手动触发，分支需选择 `main`；选其他分支会跳过任务。
-- 每次推送独立构建，不取消较早的构建。发布失败可用 **Re-run jobs** 重试。
+- 可在 GitHub → Actions → **Android Development Release** → **Run workflow** 手动触发，分支需选择 `main`；其他分支会跳过任务。
+- main 发布 job 使用固定并发组 `android-development-release-main`，`cancel-in-progress: true` 取消旧运行，只保留最新运行。非 main 手动运行不进入这个 job，不会取消正在执行的 main 发布。
 - 云端使用 Ubuntu 24.04、Node.js 24、JDK 17、Android SDK 36、NDK 27.1.12297006 和 CMake 3.22.1，缓存 npm / Gradle 依赖；不修改本机开发环境。
-- 依次执行 `npm ci` → `npm run check` → 生成临时开发版元数据 → Expo Prebuild 生成原生工程 → 初始化 Gradle 缓存 → 复用 `release.sh --no-version --local-only --skip-check` 构建 APK → 上传 Actions Artifact → 发布 GitHub **Prerelease**。
-- lint、类型检查、单元测试、Native 测试或 Android bundle smoke 任意一项失败，都不会发布。
-- APK 和 `checksums.txt` 先上传至 Release 草稿，再公开；发布失败时已成功上传的 Actions Artifact 仍可下载，保留 14 天。
+- 依次执行 `npm ci` → `npm run check` → 生成临时版本 → Expo Prebuild → 初始化 Gradle 缓存 → 复用 `release.sh --no-version --local-only --skip-check` 构建 APK → 验证实际 APK 并生成 `update.json` → 上传 Actions Artifact → 检查 main 与同 tag Release → 创建草稿、上传三个资产 → 复查 main → 公开并设为 **Latest**。
+- lint、类型检查、单元测试、Native 测试、Android bundle smoke 或 APK 验证任意一项失败，都不会公开 Release。Actions Artifact 保留 14 天，发布失败后仍可下载已保存的构建产物。
+- Release 使用 **普通 Release**（`prerelease: false`），不是 Prerelease：固定 `latest/download/update.json` 入口需要 Latest 的普通 Release。标题、Release 备注和清单 notes 仍明确这是使用开发签名、仅供开发测试的 Android 包，不能据此视为商店正式版本。
 
-### 版本与源码追踪
+### 整数版本与重跑恢复
 
-例如仓库基础版本 `1.0.6`，工作流第 42 次运行、第一次尝试：
+仓库 `app.json` 的 `expo.android.versionCode` 为发布基数 **201**：
 
 ```text
-应用版本：1.0.6-dev.42.1
-Android versionCode：4201
-Release tag：dev-42.1-<提交 SHA 前 7 位>
-APK：nanobot-v1.0.6-dev.42.1.apk
+versionCode = app.json 中的基数 + GITHUB_RUN_NUMBER
+version = 基础版本-dev.versionCode
+tag = dev-versionCode
 ```
 
-- `scripts/prepare-ci-release.mjs` 只修改 runner 的临时 `package.json`、`app.json`、`package-lock.json`；不提交版本、不推送代码，不形成触发循环。
-- tag 明确指向该次构建的完整 `github.sha`，即使构建期间 main 又有新提交，也不会指错源码。
-- 同一次运行重试时版本后缀变为 `dev.42.2`，版本码变为 4202；新运行的版本码更大。尝试编号支持 1–99。
-- 不覆盖正式版 `vX.Y.Z` tag，不将开发版设为正式版的 **Latest**；从仓库 **Releases** 列表或对应 Actions 的 Summary 下载。
-- 工作流运行编号用于覆盖安装，避免删除工作流后重建导致编号重置。旧构建重跑仍是旧编号，不能当作更新包覆盖安装到更高版本码的 APK。
+例如基础版本 `1.0.6`，工作流第 42 次运行：
+
+```text
+应用版本：1.0.6-dev.243
+Android versionCode：243
+Release tag：dev-243
+APK：nanobot-v1.0.6-dev.243.apk
+```
+
+- 下一次新运行（run number 43）版本码为 244，仅增加 1；失败或被取消的 run 仍占用编号，因此已发布版本允许跳号，不保证连续。
+- `GITHUB_RUN_ATTEMPT` 不进入版本；第 42 次运行无论重跑多少次都仍是 `dev-243`，重跑只恢复同一版本，不生成新的版本。
+- `scripts/prepare-ci-release.mjs` 从 checkout 的基础配置计算，只修改 runner 临时 `package.json`、`app.json`、`package-lock.json` 的版本；保留应用权限和其他配置，不提交、不推送，不触发循环。
+- 基础版本要求三个配置一致且为 `X.Y.Z`；发布基数与 run number 必须是正整数，相加不得超过 Android `versionCode` 上限 **2100000000**，所有输入校验通过后才写文件。
+- 不要删除并重建工作流或降低基数，以免运行编号重置或版本码倒退。版本 tag 不包含 SHA 或 attempt；源码仍通过 Release 的 target 指向完整 `GITHUB_SHA`，并记入 Release 备注。
+- 开始操作 Release 前检查远端当前 main SHA 等于 `GITHUB_SHA`；不相等则跳过。资产上传后、公开前再次检查，避免构建或上传期间 main 更新后旧版本抢占 Latest。
+- 同 tag Release 已公开时直接跳过，不覆盖资产、不重复设 Latest；查询失败（权限、网络等）会停止，不能当作 Release 不存在。
+- 上一次失败留下的同 tag **草稿**可删除后重建；只删除草稿及其资产，不删除源码 tag。先上传 APK、`checksums.txt`、`update.json` 三个资产，全部成功后才以 `draft=false`、`latest=true` 公开；上传失败保持草稿。
+- 旧 SHA 的重跑不会发布；即使源码仍在 main，已公开的同版本也不能通过重跑替换。需要修复时提交新变更，获得新的整数版本码。
+- 不恢复旧的 SHA／attempt tag 或版本格式，也不兼容旧的嵌套更新清单。设备若曾安装版本码更高的旧实验包，新整数版本码不会绕过 Android 的降级限制；须自行确认设备当前版本码。
+
+### 开发版更新资产与验证
+
+每次 CI Release 和 Actions Artifact 包含 APK、`checksums.txt`、`update.json`。客户端仅 GET：
+
+```text
+https://github.com/yaotutu/nanobot-client/releases/latest/download/update.json
+```
+
+客户端不遍历历史 Release、不解析 tag、不从资产列表推测版本或下载地址；只按清单中的数值 `versionCode` 判断更新。新的清单仅包含以下七个平铺字段：
+
+```json
+{
+  "version": "1.0.6-dev.243",
+  "versionCode": 243,
+  "apkUrl": "https://github.com/yaotutu/nanobot-client/releases/download/dev-243/nanobot-v1.0.6-dev.243.apk",
+  "size": 123456789,
+  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "publishedAt": "2026-10-08T00:00:00.000Z",
+  "notes": "main 分支自动构建的 Android 开发版 1.0.6-dev.243，仅用于开发测试；使用现有开发签名，不是应用商店正式签名。"
+}
+```
+
+大小、hash 和时间仅为格式示例。`apkUrl` 由 `GITHUB_REPOSITORY`、`RELEASE_TAG`、`APK_NAME` 构造，固定指向这一次整数 tag 的 APK，而不是随 Latest 变化的 APK 地址。`publishedAt` 为验证通过后的清单生成时间（公开之前），使用 ISO UTC 字符串；notes 由脚本生成并说明开发用途。
+
+- `scripts/prepare-update-manifest.mjs` 使用 Build-Tools 36.0.0 的 `aapt dump badging` 从实际 APK 读取包名、versionName、versionCode，验证固定包名 `com.anonymous.nanobotclient` 与本次 CI 版本一致，不从配置推测实际 APK 的元数据。
+- 使用 `apksigner verify --print-certs` 验证签名，只接受唯一签名者的证书 SHA-256。当前证书固定为 `fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`，脚本内固定现有身份，**不会生成或更换密钥**，不可通过环境变量绕过。
+- 签名变化、多签名者、包元数据缺失、工具验证失败或版本不一致都停止生成清单；只有全部成功才写出 `update.json`。包名与签名用于构建时验证，不作为旧协议字段输出。
+- APK SHA-256 从实际文件流式计算，不把整个安装包载入内存；size 由同一文件的 `stat` 读取，不复用声明值或 `checksums.txt`。
+- CLI 无位置参数，必需环境变量仅为 `ARTIFACT_DIR`、`APK_NAME`、`APP_VERSION`、`VERSION_CODE`、`RELEASE_TAG`、`GITHUB_REPOSITORY`、`AAPT_PATH`、`APKSIGNER_PATH`；输出到 `$ARTIFACT_DIR/update.json`。工具路径指向 `$ANDROID_HOME/build-tools/36.0.0/`。
+- 清单不再包含 schema、channel、commit、minSdk、签名字段或嵌套 `apk` 对象；旧格式、无清单 Release 和老 tag 不作兼容回退。
+- **应用内更新仅适用于 CI 发布**。下述本地 `npm run release` 保持原有行为，仅生成和上传 APK 与 `checksums.txt`，不生成 `update.json`，不是整数版本自动更新入口。本地脚本创建 Release 时显式传入 `--latest=false`，防止无清单手动包抢占 CI 的更新入口。手动包不参与应用内更新，不另建旧协议或备用更新通道。
 
 ### 权限、签名与登录
 

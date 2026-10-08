@@ -478,5 +478,47 @@
       "usePath": "Usar ruta",
       "absolutePathRequired": "Introduce una ruta absoluta de carpeta en esta máquina."
     }
+  },
+  "updates": {
+    "title": "Actualizaciones",
+    "appGroup": "Aplicación",
+    "hint": "Busca nuevas versiones e instala las actualizaciones cuando quieras.",
+    "currentVersion": "Versión actual",
+    "latestVersion": "Versión disponible",
+    "publishedAt": "Fecha de publicación",
+    "size": "Tamaño de la descarga",
+    "notes": "Novedades",
+    "noNotes": "No hay notas de la versión.",
+    "lastChecked": "Última comprobación",
+    "never": "Aún no se ha comprobado",
+    "check": "Buscar actualizaciones",
+    "checking": "Buscando…",
+    "available": "Actualización disponible",
+    "upToDate": "Ya tienes la última versión",
+    "unknown": "Sin comprobar",
+    "download": "Descargar e instalar",
+    "downloading": "Descargando…",
+    "verifying": "Verificando la descarga…",
+    "install": "Instalar actualización",
+    "installing": "Abriendo el instalador…",
+    "installHint": "Android te pedirá que confirmes la instalación. Tu cuenta y tus preferencias se conservarán al actualizar.",
+    "permission": "Permitir instalación",
+    "permissionHint": "Si Android bloquea la instalación, permite que nanobot instale aplicaciones. Después, vuelve aquí y pulsa Instalar actualización.",
+    "downloaded": "Lista para instalar",
+    "unsupported": "Las actualizaciones mediante APK solo están disponibles en Android.",
+    "development": "La instalación de actualizaciones está desactivada en el modo de desarrollo. Usa un APK de Release para probar las actualizaciones.",
+    "updateAvailableA11y": "Hay una nueva actualización de la aplicación",
+    "progress": "{{percent}}% · {{downloaded}} / {{total}} MB",
+    "cancel": "Cancelar descarga",
+    "noPublished": "Todavía no se ha publicado ninguna actualización compatible.",
+    "errors": {
+      "network": "No se pudo conectar con GitHub. Comprueba tu conexión e inténtalo de nuevo.",
+      "rateLimit": "Se ha alcanzado el límite de solicitudes de GitHub. Inténtalo más tarde.",
+      "invalid": "La información de la versión está incompleta o no es válida. Inténtalo más tarde.",
+      "download": "La descarga ha fallado. Inténtalo de nuevo.",
+      "integrity": "El archivo descargado no ha superado la verificación. Descárgalo de nuevo.",
+      "installation": "No se pudo abrir el instalador. Comprueba el permiso de instalación e inténtalo de nuevo.",
+      "storage": "No hay suficiente espacio libre para descargar la actualización."
+    }
   }
 }
