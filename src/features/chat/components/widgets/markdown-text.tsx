@@ -101,7 +101,7 @@ export function MarkdownText({
       color: colors.foreground,
       backgroundColor: colors.pressed,
       borderRadius: 6,
-      fontFamily: process.env.EXPO_OS === 'ios' ? 'Menlo' : 'monospace',
+      fontFamily: 'monospace',
       fontSize: 14,
       lineHeight: 24,
       paddingHorizontal: 6,
@@ -299,7 +299,7 @@ const nativeStyles = StyleSheet.create({
   },
   image: { width: '100%', height: '100%' },
   htmlFallback: {
-    fontFamily: process.env.EXPO_OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: 'monospace',
     fontSize: 12,
     lineHeight: 18,
   },

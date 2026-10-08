@@ -94,14 +94,12 @@ export function useChatCommands({
   activeKey,
   activeWorkspaceScope,
   bootstrap,
-  messages,
   onChatCreated,
   socketRef,
 }: {
   activeKey: string | null;
   activeWorkspaceScope: WorkspaceScopePayload | null;
   bootstrap: BootstrapResponse | null;
-  messages: UIMessage[];
   onChatCreated: (chatId: string, workspaceScope: WorkspaceScopePayload | null) => void;
   socketRef: RefObject<NanobotSocket | null>;
 }) {
@@ -214,9 +212,10 @@ export function useChatCommands({
 
   const retryFromMessage = useCallback(async (messageId: string) => {
     if (!socketRef.current || !chatIdFromKey(activeKey)) return;
-    const message = messages.find((item) => item.id === messageId);
+    // 重试只读当前 store 快照：命令层不需要订阅高频 messages，避免流式输出时重渲染应用壳。
+    const message = useChatStore.getState().messages.find((item) => item.id === messageId);
     await sendMessage(message?.content ?? '', [], { continueActiveTurn: false });
-  }, [activeKey, messages, sendMessage, socketRef]);
+  }, [activeKey, sendMessage, socketRef]);
 
   return {
     changeModelPreset,

@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import { fireEvent, render } from '@testing-library/react-native';
 
 import { PreferencesModal } from '@/features/settings/components/PreferencesModal';
+import { UpdateDetails, updateSummaryKey } from '@/features/updates';
+import type { Palette } from '@/ui/palette';
 import type { UpdateState } from '@/features/updates/store';
 import { supportedLocales } from '@/i18n/config';
 import { apiClient } from '@/services/api/api';
@@ -84,16 +86,41 @@ const expectNoUpdateActions = (updates: UpdateState) => {
     .forEach((callback) => expect(callback).not.toHaveBeenCalled());
 };
 
-const createProps = () => ({
+const createUpdateSection = (updates: UpdateState) => ({
+  sectionLabelKey: 'updates.appGroup',
+  titleKey: 'updates.title',
+  hintKey: 'updates.hint',
+  summaryKey: updateSummaryKey(updates),
+  available: updates.candidate !== null && updates.candidate.versionCode > updates.runtime.versionCode,
+  availableA11yKey: 'updates.updateAvailableA11y',
+  renderDetails: (colors: Palette) => <UpdateDetails colors={colors} updates={updates} />,
+});
+
+const createProps = (updates: UpdateState = createUpdates()) => ({
   colors: LIGHT_COLORS,
   preferences,
-  updates: createUpdates(),
+  updates,
+  updateSection: createUpdateSection(updates),
   visible: true,
   onChange: jest.fn<(next: LocalPreferences) => void>(),
   onServerChange: jest.fn(async () => undefined),
   onClose: jest.fn<() => void>(),
   onLogout: jest.fn(async () => undefined),
 });
+
+// 测试对象额外保存 updates 便于断言；渲染时只把组件真实契约传给 PreferencesModal。
+const preferencesElement = (props: ReturnType<typeof createProps>, overrides: Partial<ReturnType<typeof createProps>> = {}) => (
+  <PreferencesModal
+    colors={overrides.colors ?? props.colors}
+    updateSection={overrides.updateSection ?? props.updateSection}
+    preferences={overrides.preferences ?? props.preferences}
+    visible={overrides.visible ?? props.visible}
+    onChange={props.onChange}
+    onServerChange={props.onServerChange}
+    onClose={props.onClose}
+    onLogout={props.onLogout}
+  />
+);
 
 // 当前进度条是带 role/value 的普通 View，而非可聚焦的 accessible 节点；
 // 直接检查真实宿主属性与数值，不改生产组件，也不把 getByRole 查询失败误判为进度未渲染。
@@ -117,7 +144,7 @@ describe('PreferencesModal', () => {
 
   it('隐藏时不渲染内容，也不触发业务回调', async () => {
     const props = createProps();
-    const result = await render(<PreferencesModal {...props} visible={false} />);
+    const result = await render(preferencesElement(props, { visible: false }));
     expect(result.toJSON()).toBeNull();
     expect(props.onChange).not.toHaveBeenCalled();
     expect(props.onClose).not.toHaveBeenCalled();
@@ -127,7 +154,7 @@ describe('PreferencesModal', () => {
   });
 
   it('首页展示主题、语言和应用更新摘要，退出单独分组，不平铺全部选项', async () => {
-    const result = await render(<PreferencesModal {...createProps()} />);
+    const result = await render(preferencesElement(createProps()));
     expect(result.getAllByText(/.+/).map((node) => node.props.children)).toEqual([
       'sidebar.settings', 'settings.preferences.note', 'settings.preferences.group',
       'settings.rows.theme', 'settings.values.light', 'sidebar.language.label', 'English',
@@ -146,7 +173,7 @@ describe('PreferencesModal', () => {
 
   it('服务器地址只提交规范化结果，非法输入阻止保存', async () => {
     const props = createProps();
-    const result = await render(<PreferencesModal {...props} />);
+    const result = await render(preferencesElement(props));
     await fireEvent.press(result.getByRole('button', { name: 'settings.rows.server' }));
     expect(result.getByRole('header', { name: 'settings.rows.server' })).toBeTruthy();
     expect(result.getByDisplayValue(serverUrl)).toBeTruthy();
@@ -165,7 +192,7 @@ describe('PreferencesModal', () => {
 
   it('展示及本地操作均不调用服务端', async () => {
     const props = createProps();
-    const result = await render(<PreferencesModal {...props} />);
+    const result = await render(preferencesElement(props));
     await fireEvent.press(result.getByRole('button', { name: 'settings.rows.theme' }));
     await fireEvent.press(result.getByRole('radio', { name: 'settings.values.dark' }));
     await fireEvent.press(result.getByRole('button', { name: 'settings.preferences.back' }));
@@ -182,14 +209,14 @@ describe('PreferencesModal', () => {
 
   it.each(['light', 'dark'] as const)('主题详情只显示两个选项，选择 %s 时仅变更 theme', async (theme) => {
     const props = createProps();
-    const result = await render(<PreferencesModal {...props} />);
+    const result = await render(preferencesElement(props));
     await fireEvent.press(result.getByRole('button', { name: 'settings.rows.theme' }));
     expect(result.getAllByRole('radio')).toHaveLength(2);
     expect(result.queryByText('English')).toBeNull();
     await fireEvent.press(result.getByRole('radio', { name: 'settings.values.' + theme }));
     expect(props.onChange).toHaveBeenCalledWith({ ...preferences, theme });
     const next = { ...preferences, theme };
-    await result.rerender(<PreferencesModal {...props} preferences={next} />);
+    await result.rerender(preferencesElement(props, { preferences: next }));
     expect(result.getByRole('radio', { name: 'settings.values.' + theme, checked: true })).toBeTruthy();
     await fireEvent.press(result.getByRole('button', { name: 'settings.preferences.back' }));
     expect(result.getByRole('button', { name: 'settings.rows.theme' })).toHaveAccessibilityValue({ text: 'settings.values.' + theme });
@@ -197,13 +224,13 @@ describe('PreferencesModal', () => {
 
   it.each(supportedLocales)('语言详情选择 $code 时只变更 language，并立即更新勾选与首页摘要', async (locale) => {
     const props = createProps();
-    const result = await render(<PreferencesModal {...props} />);
+    const result = await render(preferencesElement(props));
     await fireEvent.press(result.getByRole('button', { name: 'sidebar.language.label' }));
     expect(result.getAllByRole('radio')).toHaveLength(supportedLocales.length);
     expect(result.queryByText('settings.values.light')).toBeNull();
     await fireEvent.press(result.getByRole('radio', { name: locale.nativeLabel }));
     expect(props.onChange).toHaveBeenCalledWith({ ...preferences, language: locale.code });
-    await result.rerender(<PreferencesModal {...props} preferences={{ ...preferences, language: locale.code }} />);
+    await result.rerender(preferencesElement(props, { preferences: { ...preferences, language: locale.code } }));
     expect(result.getByRole('radio', { name: locale.nativeLabel, checked: true })).toBeTruthy();
     await fireEvent.press(result.getByRole('button', { name: 'settings.preferences.back' }));
     expect(result.getByRole('button', { name: 'sidebar.language.label' })).toHaveAccessibilityValue({ text: locale.nativeLabel });
@@ -211,7 +238,7 @@ describe('PreferencesModal', () => {
 
   it.each(['theme', 'language', 'server', 'updates'] as const)('系统返回先退出 %s 详情，首页再返回才关闭', async (page) => {
     const props = createProps();
-    const result = await render(<PreferencesModal {...props} />);
+    const result = await render(preferencesElement(props));
     const title = page === 'updates'
       ? 'updates.title'
       : page === 'theme'
@@ -230,7 +257,7 @@ describe('PreferencesModal', () => {
 
   it.each(['home', 'theme', 'language', 'server', 'updates'] as const)('在 %s 页面点击关闭仅触发 onClose', async (page) => {
     const props = createProps();
-    const result = await render(<PreferencesModal {...props} />);
+    const result = await render(preferencesElement(props));
     if (page === 'theme') await fireEvent.press(result.getByRole('button', { name: 'settings.rows.theme' }));
     if (page === 'language') await fireEvent.press(result.getByRole('button', { name: 'sidebar.language.label' }));
     if (page === 'server') await fireEvent.press(result.getByRole('button', { name: 'settings.rows.server' }));
@@ -243,11 +270,11 @@ describe('PreferencesModal', () => {
 
   it('关闭再打开不保留详情页状态，但保留父层偏好', async () => {
     const props = createProps();
-    const result = await render(<PreferencesModal {...props} />);
+    const result = await render(preferencesElement(props));
     await fireEvent.press(result.getByRole('button', { name: 'sidebar.language.label' }));
-    await result.rerender(<PreferencesModal {...props} visible={false} />);
+    await result.rerender(preferencesElement(props, { visible: false }));
     expect(result.toJSON()).toBeNull();
-    await result.rerender(<PreferencesModal {...props} preferences={{ ...preferences, theme: 'dark', language: 'zh-CN' }} />);
+    await result.rerender(preferencesElement(props, { preferences: { ...preferences, theme: 'dark', language: 'zh-CN' } }));
     expect(result.getByRole('header', { name: 'sidebar.settings' })).toBeTruthy();
     expect(result.queryAllByRole('radio')).toHaveLength(0);
     expect(result.getByText('简体中文')).toBeTruthy();
@@ -255,7 +282,7 @@ describe('PreferencesModal', () => {
   });
 
   it.each([LIGHT_COLORS, DARK_COLORS])('首页和选择页使用传入的明暗调色板', async (colors) => {
-    const result = await render(<PreferencesModal {...createProps()} colors={colors} />);
+    const result = await render(preferencesElement(createProps(), { colors }));
     expect(result.getByRole('header', { name: 'sidebar.settings' })).toHaveStyle({ color: colors.foreground });
     expect(result.getByText('settings.preferences.note')).toHaveStyle({ color: colors.muted });
     expect(result.getByText('app.account.logout')).toHaveStyle({ color: colors.errorText });
@@ -271,14 +298,14 @@ describe('PreferencesModal', () => {
     { summary: 'updates.unsupported', overrides: { runtime: { ...createUpdates().runtime, supported: false } } },
   ] satisfies { summary: string; overrides: Partial<UpdateState> }[])('首页更新行使用 controller 摘要 $summary，不自动检查', async ({ summary, overrides }) => {
     const updates = createUpdates(overrides);
-    const result = await render(<PreferencesModal {...createProps()} updates={updates} />);
+    const result = await render(preferencesElement(createProps(updates)));
     expect(result.getByRole('button', { name: 'updates.title' })).toHaveAccessibilityValue({ text: summary });
     expectNoUpdateActions(updates);
   });
 
   it('有更新时显示徽标，点击更新行进入真实详情并展示候选版本、日期和说明', async () => {
     const updates = createUpdates({ candidate: createCandidate(), checkStatus: 'checked', lastCheckedAt: Date.parse('2026-10-07T09:00:00Z') });
-    const result = await render(<PreferencesModal {...createProps()} updates={updates} />);
+    const result = await render(preferencesElement(createProps(updates)));
     expect(result.getByRole('button', { name: 'updates.title' })).toHaveAccessibilityValue({ text: 'updates.available' });
     expect(result.getByTestId('settings-update-badge').props.accessibilityLabel).toBe('updates.updateAvailableA11y');
     await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));
@@ -295,7 +322,7 @@ describe('PreferencesModal', () => {
   it('返回和关闭只重置详情导航，重新打开保留 controller 的候选更新与下载进度', async () => {
     const props = createProps();
     const updates = createUpdates({ candidate: createCandidate(), stage: 'downloading', downloadedBytes: 1048576 });
-    const result = await render(<PreferencesModal {...props} updates={updates} />);
+    const result = await render(preferencesElement({ ...props, updateSection: createUpdateSection(updates) }));
     await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));
     expect(progressNode(result)).toHaveAccessibilityValue({ min: 0, max: 100, now: 50 });
     await fireEvent.press(result.getByRole('button', { name: 'settings.preferences.back' }));
@@ -303,9 +330,9 @@ describe('PreferencesModal', () => {
     await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));
     await fireEvent.press(result.getByRole('button', { name: 'common.dismiss' }));
     expect(props.onClose).toHaveBeenCalledTimes(1);
-    await result.rerender(<PreferencesModal {...props} updates={updates} visible={false} />);
+    await result.rerender(preferencesElement({ ...props, updateSection: createUpdateSection(updates) }, { visible: false }));
     expect(result.toJSON()).toBeNull();
-    await result.rerender(<PreferencesModal {...props} updates={updates} />);
+    await result.rerender(preferencesElement({ ...props, updateSection: createUpdateSection(updates) }));
     expect(result.getByRole('header', { name: 'sidebar.settings' })).toBeTruthy();
     expect(result.getByTestId('settings-update-badge')).toBeTruthy();
     await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));
@@ -317,14 +344,15 @@ describe('PreferencesModal', () => {
 
   it('只有手动点击检查更新才调用 check(true)，检查期间按钮不可重复触发', async () => {
     const props = createProps();
-    const result = await render(<PreferencesModal {...props} />);
+    const result = await render(preferencesElement(props));
     await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));
     expectNoUpdateActions(props.updates);
     await fireEvent.press(result.getByRole('button', { name: 'updates.check' }));
     expect(props.updates.check).toHaveBeenCalledTimes(1);
     expect(props.updates.check).toHaveBeenCalledWith(true);
     // 检查结果由父层传回；不 mock 详情组件，也不让测试 fixture 自行改变状态。
-    await result.rerender(<PreferencesModal {...props} updates={{ ...props.updates, checkStatus: 'checking' }} />);
+    const checkingUpdates = { ...props.updates, checkStatus: 'checking' as const };
+    await result.rerender(preferencesElement(props, { updateSection: createUpdateSection(checkingUpdates) }));
     expect(result.getByRole('button', { name: 'updates.checking' })).toBeDisabled();
     await fireEvent.press(result.getByRole('button', { name: 'updates.checking' }));
     expect(props.updates.check).toHaveBeenCalledTimes(1);
@@ -339,7 +367,7 @@ describe('PreferencesModal', () => {
   ] as const)('$label 仅委派给对应 controller 动作，不关闭弹窗或修改偏好', async ({ stage, label, callback }) => {
     const props = createProps();
     const updates = createUpdates({ candidate: createCandidate(), stage, verifiedUri: stage === 'ready' ? 'file:///verified-update.apk' : null });
-    const result = await render(<PreferencesModal {...props} updates={updates} />);
+    const result = await render(preferencesElement({ ...props, updateSection: createUpdateSection(updates) }));
     await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));
     expectNoUpdateActions(updates);
     await fireEvent.press(result.getByRole('button', { name: label }));
@@ -355,7 +383,7 @@ describe('PreferencesModal', () => {
 
   it.each(['downloading', 'verifying'] as const)('%s 阶段显示进度并禁用检查，取消按钮只调用 cancel', async (stage) => {
     const updates = createUpdates({ candidate: createCandidate(), stage, downloadedBytes: 1048576 });
-    const result = await render(<PreferencesModal {...createProps()} updates={updates} />);
+    const result = await render(preferencesElement(createProps(updates)));
     await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));
     expect(result.getByText('updates.' + stage)).toBeTruthy();
     expect(progressNode(result)).toHaveAccessibilityValue({ min: 0, max: 100, now: 50 });
@@ -372,7 +400,7 @@ describe('PreferencesModal', () => {
 
   it.each(['idle', 'ready'] as const)('开发模式的 %s 状态不提供下载、安装或安装权限按钮，但允许手动检查', async (stage) => {
     const updates = createUpdates({ candidate: createCandidate(), stage, runtime: { ...createUpdates().runtime, development: true } });
-    const result = await render(<PreferencesModal {...createProps()} updates={updates} />);
+    const result = await render(preferencesElement(createProps(updates)));
     await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));
     expect(result.getByText('updates.development')).toBeTruthy();
     ['updates.download', 'updates.install', 'updates.permission'].forEach((name) => {
@@ -388,7 +416,7 @@ describe('PreferencesModal', () => {
 
   it('退出先关闭弹窗，再调用 onLogout，不更改偏好', async () => {
     const props = createProps();
-    const result = await render(<PreferencesModal {...props} />);
+    const result = await render(preferencesElement(props));
     await fireEvent.press(result.getByRole('button', { name: 'app.account.logout' }));
     expect(props.onClose).toHaveBeenCalledTimes(1);
     expect(props.onLogout).toHaveBeenCalledTimes(1);

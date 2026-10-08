@@ -71,7 +71,7 @@ export function AuthScreen({
 
   return (
     <KeyboardAvoidingView
-      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
+      behavior="height"
       style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
     >
       <View style={styles.card}>

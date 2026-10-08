@@ -1,5 +1,5 @@
 import { useAuthBootstrapLifecycle } from '@/features/app/hooks/use-auth-bootstrap-lifecycle';
-import { selectAuthPhase, selectBootstrap, useAuthStore } from '@/features/auth/store';
+import { selectAuthPhase, selectBootstrap, useAuthStore } from '@/features/auth/state';
 
 /**
  * 启动壳只订阅鉴权阶段所需的最小状态。

@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   pathText: {
     minWidth: 0,
     flexShrink: 1,
-    fontFamily: process.env.EXPO_OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: 'monospace',
     fontSize: 13.5,
     lineHeight: 20,
   },

@@ -54,6 +54,13 @@ export function debugLog(tag: string, msg: string): void {
   scheduleNotify();
 }
 
+/**
+ * 通知调试订阅者刷新。日志数据没有变化时也允许通知，用于刷新浮层的外部显示开关。
+ */
+export function notifyDebug(): void {
+  scheduleNotify();
+}
+
 export function getDebugEntries(): DebugEntry[] {
   return entries.slice();
 }

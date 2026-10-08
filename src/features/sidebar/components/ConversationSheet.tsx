@@ -9,7 +9,6 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   Text,
   View,
@@ -139,7 +138,7 @@ export function ConversationSheet(props: ConversationSheetProps) {
     >
       {/* 先避让键盘，再测量内部剩余空间；确保重命名标题、输入框和按钮完整可见。 */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="height"
         style={styles.keyboardRoot}
       >
         <View

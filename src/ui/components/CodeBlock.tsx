@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   noWrap: { minWidth: '100%' },
   code: {
-    fontFamily: process.env.EXPO_OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: 'monospace',
     fontSize: 12.5,
     lineHeight: 20,
   },

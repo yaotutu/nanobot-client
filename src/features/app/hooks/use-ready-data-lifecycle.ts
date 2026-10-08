@@ -7,12 +7,12 @@ import {
   selectBootstrap,
   selectTokenGeneration,
   useAuthStore,
-} from '@/features/auth/store';
-import { useCapabilitiesStore } from '@/features/capabilities/store';
-import { useConnectionStore } from '@/features/connection/store';
-import { useSidebarStore } from '@/features/sidebar/store';
-import { useSkillsStore } from '@/features/skills/store';
-import { useWorkspacesStore } from '@/features/workspaces/store';
+} from '@/features/auth/state';
+import { useCapabilitiesStore } from '@/features/capabilities/state';
+import { useConnectionStore } from '@/features/connection/state';
+import { useSidebarStore } from '@/features/sidebar/state';
+import { useSkillsStore } from '@/features/skills/state';
+import { useWorkspacesStore } from '@/features/workspaces/state';
 import { markStartup } from '@/services/runtime/startup-performance';
 
 const REFRESH_RETRY_DELAYS_MS = [5_000, 15_000, 60_000] as const;

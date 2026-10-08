@@ -1,5 +1,3 @@
-const LAN_SERVER_URL = 'http://192.168.55.201:8765';
-
 /**
  * 规范化用户输入的网关地址。
  *
@@ -21,19 +19,18 @@ export function normalizeServerUrl(value: string): string | null {
 }
 
 /**
- * 默认连接指定的局域网网关，开发版和发布版保持一致，避免开发时意外连接 USB 反向代理或模拟器地址。
- * 构建时仍可通过 EXPO_PUBLIC_NANOBOT_SERVER_URL 改变初始默认值。
+ * 默认不绑定任何服务器地址。客户端面向连接自建 nanobot 网关的用户，首次启动先填写服务器。
+ * 本地开发如需默认地址，通过 EXPO_PUBLIC_NANOBOT_SERVER_URL 注入；发布构建保持为空。
  */
 function resolveDefaultServerUrl(): string {
-  const override = normalizeServerUrl(process.env.EXPO_PUBLIC_NANOBOT_SERVER_URL ?? '');
-  return override ?? LAN_SERVER_URL;
+  return normalizeServerUrl(process.env.EXPO_PUBLIC_NANOBOT_SERVER_URL ?? '') ?? '';
 }
 
 export const DEFAULT_SERVER_URL = resolveDefaultServerUrl();
 
 let currentServerUrl = DEFAULT_SERVER_URL;
 
-/** 读取当前进程内的网关地址。 */
+/** 读取当前进程内的网关地址；未配置时为空字符串，认证流程会在发起请求前拦截。 */
 export function getServerUrl(): string {
   return currentServerUrl;
 }

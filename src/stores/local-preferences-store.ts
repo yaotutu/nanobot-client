@@ -9,7 +9,7 @@ import type { AppLanguage, AppTheme } from '@/types/domain';
 export interface LocalPreferences {
   theme: AppTheme;
   language: AppLanguage;
-  /** 用户选择的服务器地址；默认值来自构建配置，运行时可修改。 */
+  /** 用户选择的服务器地址；未配置时为空，完整地址只在认证前由用户确认。 */
   serverUrl: string;
   /** 是否已经由用户确认过地址；首次安装时先进入服务器配置，不默认要求输入密码。 */
   serverConfigured: boolean;
@@ -31,8 +31,9 @@ function normalize(raw: unknown): LocalPreferences {
   return {
     theme: value.theme === 'dark' ? 'dark' : 'light',
     language: normalizeLocale(value.language),
-    serverUrl: serverUrl ?? DEFAULT_SERVER_URL,
-    serverConfigured: value.serverConfigured === true,
+    serverUrl: serverUrl ?? '',
+    // 只有存在合法地址时才允许已配置状态，避免损坏的持久化数据跳过服务器配置页。
+    serverConfigured: value.serverConfigured === true && serverUrl !== null,
   };
 }
 

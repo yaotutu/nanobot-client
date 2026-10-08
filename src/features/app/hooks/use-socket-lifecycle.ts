@@ -1,14 +1,14 @@
 import { useEffect, useRef } from 'react';
 
-import { useAuthStore, selectAuthPhase, selectBootstrap } from '@/features/auth/store';
-import { useChatStore } from '@/features/chat/store';
-import { useWorkspacesStore } from '@/features/workspaces/store';
+import { useAuthStore, selectAuthPhase, selectBootstrap } from '@/features/auth/state';
+import { useChatStore } from '@/features/chat/state';
+import { useWorkspacesStore } from '@/features/workspaces/state';
 import i18n from '@/i18n';
 import { deriveWsUrl } from '@/services/api/bootstrap';
 import { getServerUrl } from '@/services/api/config';
 
-import { createNanobotSocket, type NanobotSocket } from '@/features/connection/socket-transport';
-import { useConnectionStore } from '@/features/connection/store';
+import { createNanobotSocket, type NanobotSocket } from '@/features/connection/transport';
+import { useConnectionStore } from '@/features/connection/state';
 
 export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
   const phase = useAuthStore(selectAuthPhase);

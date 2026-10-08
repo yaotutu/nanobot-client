@@ -7,7 +7,7 @@ import { useAppModelSelection } from '@/features/app/hooks/use-app-model-selecti
 import { useAppNavigation } from '@/features/app/hooks/use-app-navigation';
 import { useAppPreferences } from '@/features/app/hooks/use-app-preferences';
 import { chatPaletteForTheme, NanobotScreen } from '@/features/chat/screen';
-import { useUpdates, hasUpdate } from '@/features/updates';
+import { useUpdates, hasUpdate, UpdateDetails, updateSummaryKey } from '@/features/updates';
 import { PreferencesModal } from '@/features/settings';
 import { markStartup } from '@/services/runtime/startup-performance';
 import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
@@ -41,6 +41,17 @@ export function ReadyAppShell() {
 
   const chatController = app.chat!;
   const { logout } = app.runtime;
+
+  // 设置页只接收展示契约；更新状态与用户操作仍由 updates feature 封装。
+  const updateSection = {
+    sectionLabelKey: 'updates.appGroup',
+    titleKey: 'updates.title',
+    hintKey: 'updates.hint',
+    summaryKey: updateSummaryKey(updates),
+    available: hasUpdate(updates),
+    availableA11yKey: 'updates.updateAvailableA11y',
+    renderDetails: (sectionColors: typeof colors) => <UpdateDetails colors={sectionColors} updates={updates} />,
+  };
 
   const selectSession = useCallback((key: string | null) => {
     navigation.resetChat();
@@ -77,7 +88,7 @@ export function ReadyAppShell() {
         onOpenChatOptions={navigation.openChatOptions}
       />
       <PreferencesModal
-        updates={updates}
+        updateSection={updateSection}
         colors={colors}
         preferences={preferences}
         visible={navigation.preferencesOpen}

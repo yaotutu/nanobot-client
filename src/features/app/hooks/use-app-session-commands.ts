@@ -1,12 +1,12 @@
 import { useCallback, type RefObject } from 'react';
 
-import { useAuthStore } from '@/features/auth/store';
-import { useCapabilitiesStore } from '@/features/capabilities/store';
-import { useChatStore } from '@/features/chat/store';
-import type { NanobotSocket } from '@/features/connection/socket-transport';
-import { useSidebarStore } from '@/features/sidebar/store';
-import { useSkillsStore } from '@/features/skills/store';
-import { useWorkspacesStore } from '@/features/workspaces/store';
+import { useAuthStore } from '@/features/auth/state';
+import { useCapabilitiesStore } from '@/features/capabilities/state';
+import { useChatStore } from '@/features/chat/state';
+import type { NanobotSocket } from '@/features/connection/transport';
+import { useSidebarStore } from '@/features/sidebar/state';
+import { useSkillsStore } from '@/features/skills/state';
+import { useWorkspacesStore } from '@/features/workspaces/state';
 import i18n from '@/i18n';
 import {
   normalizeWorkspaceScope,
@@ -20,7 +20,7 @@ import type {
   WorkspacesPayload,
 } from '@/types/api/workspaces';
 
-import { chatIdFromKey } from '@/features/chat/model/chat-key';
+import { chatIdFromKey } from '@/features/chat/model';
 
 export function useAppSessionCommands({
   activeKey,

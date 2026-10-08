@@ -28,7 +28,7 @@ function useCommands(activeKey: string | null = null) {
   return useChatCommands({
     activeKey, activeWorkspaceScope: null,
     bootstrap: { api_token: 'token' } as BootstrapResponse,
-    messages: [], onChatCreated: mockOnChatCreated, socketRef: { current: socket },
+    onChatCreated: mockOnChatCreated, socketRef: { current: socket },
   });
 }
 

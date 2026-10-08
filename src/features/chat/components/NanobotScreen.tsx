@@ -25,6 +25,7 @@ import type {
   ChatModelSelection,
   ChatScreenController,
 } from '@/features/chat/model/chat-screen-contract';
+import { useChatStore } from '@/features/chat/store';
 import { sessionTitle } from '@/services/text/format';
 import { chatPaletteForTheme } from '@/features/chat/ui/chat-theme';
 
@@ -41,6 +42,8 @@ interface NanobotScreenProps {
 
 export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
   const { session, capabilities, thread, runtime, errors } = controller;
+  // 消息属于聊天页内部的高频状态；在这里订阅可以避免 ReadyAppShell 随每个流式片段重建。
+  const messages = useChatStore((state) => state.messages);
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const {
@@ -67,11 +70,11 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
   });
   const { reset: resetComposer, setQuotedContext } = composerController;
 
-  const hasMessages = thread.messages.length > 0;
-  const hasUserPrompts = thread.messages.some((message) => message.role === 'user');
+  const hasMessages = messages.length > 0;
+  const hasUserPrompts = messages.some((message) => message.role === 'user');
   const threadModel = useChatThreadModel({
     forkBoundaryMessageCount: thread.forkBoundaryMessageCount,
-    messages: thread.messages,
+    messages,
     turnActive: runtime.turnActive,
     userMessageOffset: thread.userMessageOffset,
   });
@@ -84,7 +87,7 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
   const resolveFilePreviewAvailability = useFilePreviewAvailability({
     activeKey: session.activeKey,
     apiToken: capabilities.bootstrap.api_token,
-    revision: thread.messages.length,
+    revision: messages.length,
   });
 
   const chatTitle = session.activeSession
@@ -117,7 +120,7 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
   } = useChatScroll({
     activeKey: session.activeKey,
     hasMessages,
-    messages: thread.messages,
+    messages,
     units: threadModel.units,
     loadingOlder: thread.loadingOlder,
     hasMoreBefore: thread.hasMoreBefore,
@@ -138,7 +141,7 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
 
   return (
     <KeyboardAvoidingView
-      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
+      behavior="height"
       style={[styles.root, { backgroundColor: colors.background }]}
     >
       {/* 显式跟随应用主题，不能让系统浅色模式把暗色页面的状态栏文字变成黑色。 */}
@@ -230,7 +233,7 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
         activeKey={session.activeKey}
         colors={colors}
         dark={dark}
-        messages={thread.messages}
+        messages={messages}
         promptNavigatorOpen={promptNavigatorOpen}
         assistantQuoteSource={assistantQuoteSource}
         filePreviewPath={filePreviewPath}

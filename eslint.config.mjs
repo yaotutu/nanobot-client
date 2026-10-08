@@ -45,6 +45,37 @@ const featureNames = [
   'updates',
 ];
 
+// app 是唯一的组合层，可以访问各 feature 的“轻量公开入口”。
+// 不恢复大 barrel：这些入口按依赖图拆分，避免启动时引入无关 UI、API 或 store。
+const appFeatureEntryPaths = {
+  auth: ['@/features/auth/screen', '@/features/auth/state'],
+  capabilities: ['@/features/capabilities/state'],
+  chat: [
+    '@/features/chat/commands',
+    '@/features/chat/controller',
+    '@/features/chat/model',
+    '@/features/chat/screen',
+    '@/features/chat/state',
+    '@/features/chat/thread-lifecycle',
+  ],
+  connection: [
+    '@/features/connection/recovery',
+    '@/features/connection/state',
+    '@/features/connection/transport',
+  ],
+  settings: ['@/features/settings'],
+  sidebar: ['@/features/sidebar/state'],
+  skills: ['@/features/skills/state'],
+  updates: ['@/features/updates'],
+  workspaces: ['@/features/workspaces/state'],
+};
+
+// 应用层只能深层导入上面声明的轻量入口，不能直接碰 store/hook/model 实现文件。
+const appCrossFeaturePatterns = featureNames.map((feature) => ({
+  group: [`@/features/${feature}/*`, ...(appFeatureEntryPaths[feature] ?? []).map((path) => `!${path}`)],
+  message: `Application composition must use a declared public entrypoint for ${feature}.`,
+}));
+
 const privateCrossFeaturePatterns = (feature) => featureNames
   .filter((candidate) => candidate !== feature)
   .map((candidate) => ({
@@ -149,15 +180,7 @@ export default tseslint.config(
     files: ['src/features/app/**/*.{ts,tsx}'],
     rules: restrictedLayerImports([
       ...featureLayerPatterns,
-      ...featureNames.map((feature) => ({
-        group: [
-          `@/features/${feature}/*`,
-          // 大型首屏组件拥有独立的公开入口，避免 barrel 把无关 store、API 和弹窗带入启动依赖图。
-          ...(feature === 'auth' ? ['!@/features/auth/screen'] : []),
-          ...(feature === 'chat' ? ['!@/features/chat/screen'] : []),
-        ],
-        message: `Application composition must import ${feature} through its public feature entrypoint.`,
-      })),
+      ...appCrossFeaturePatterns,
     ]),
   },
   {
@@ -182,6 +205,7 @@ export default tseslint.config(
     rules: restrictedLayerImports([
       ...featureLayerPatterns,
       ...featureLogicPatterns,
+      ...appCrossFeaturePatterns,
     ]),
   },
   {

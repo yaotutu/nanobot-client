@@ -1,1 +1,1 @@
-export { useWorkspacesStore } from './store';
+export * from './state';

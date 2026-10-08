@@ -80,7 +80,7 @@ export function AssistantQuoteModal({
       visible={visible}
     >
       <KeyboardAvoidingView
-        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
+        behavior="height"
         style={styles.root}
       >
         <Pressable accessibilityLabel={t('common.dismiss')} onPress={onClose} style={styles.backdrop} />

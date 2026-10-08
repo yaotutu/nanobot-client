@@ -1,1 +1,1 @@
-export { useSkillsStore } from './store';
+export * from './state';

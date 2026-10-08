@@ -5,9 +5,9 @@ import { AppState, type AppStateStatus } from 'react-native';
 import {
   shouldReconnectOnForeground,
   type ReconnectReason,
-} from '@/features/connection/connection-recovery-policy';
-import type { NanobotSocket } from '@/features/connection/socket-transport';
-import { useConnectionStore } from '@/features/connection/store';
+} from '@/features/connection/recovery';
+import type { NanobotSocket } from '@/features/connection/transport';
+import { useConnectionStore } from '@/features/connection/state';
 
 function networkIsAvailable(state: NetInfoState): boolean {
   return state.isConnected !== false && state.isInternetReachable !== false;

@@ -161,18 +161,15 @@ describe('ConversationSheet 独立 Native 回归', () => {
     }
   });
 
-  it.each([
-    { platform: 'android', behavior: 'height' },
-    { platform: 'ios', behavior: 'padding' },
-  ] as const)('$platform 的 KAV behavior 为 $behavior，并由内部容器测量剩余高度', async ({ platform, behavior }) => {
+  it.each(['android', 'ios'] as const)('%s 与其他平台共用同一套 UI，键盘避让 behavior 固定为 height', async (platform) => {
     // 只切换平台并观察真实 KAV 的 render 实例，保留原始渲染，不模拟键盘事件或 Yoga。
-    // 最终方案恢复 Android height、iOS padding，面板高度另由内部 onLayout 的可用空间限制。
+    // 项目不再维护 Android/iOS 两套 UI；键盘避让策略统一，剩余空间仍由内部 onLayout 测量。
     jest.replaceProperty(ReactNative.Platform, 'OS', platform);
     const kavRender = jest.spyOn(ReactNative.KeyboardAvoidingView.prototype, 'render');
     await render(<ConversationSheet {...createProps()} />);
     expect(kavRender).toHaveBeenCalled();
     const kav = kavRender.mock.contexts[0] as ReactNative.KeyboardAvoidingView;
-    expect(kav.props.behavior).toBe(behavior);
+    expect(kav.props.behavior).toBe('height');
   });
 
   it.each([

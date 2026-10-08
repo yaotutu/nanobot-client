@@ -73,6 +73,11 @@ android/ ios/      Expo Prebuild 产物（已 git ignore）
 
 `src/features/`、`src/stores/` 等业务目录已启用；`src/services/` 按职责分组（`api/`、`credentials/`、`text/`、`links/`、`runtime/`），新增文件先归入对应分组，避免在根目录平铺。
 
+## UI 策略
+
+- Android、iOS 和 Web 共用同一套 React Native UI；只按窗口尺寸做响应式布局，不用 `Platform.OS` / `Platform.select` 拆分组件、样式或交互。
+- 平台判断只允许出现在能力开关或原生能力封装中（例如 Android APK 安装），不得扩散到业务 UI。
+
 ## 路由与启动流程
 
 - `app.json` → `expo-router/entry`

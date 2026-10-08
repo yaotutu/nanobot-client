@@ -9,7 +9,6 @@ import type {
   SlashCommand,
 } from '@/types/api/chat/commands';
 import type { StreamError } from '@/types/api/chat/errors';
-import type { UIMessage } from '@/types/api/chat/messages';
 import type { BootstrapResponse, ConnectionStatus, GoalStateWsPayload } from '@/types/api/runtime';
 import type { ModelPresetInfo } from '@/types/api/chat/models';
 import type { ChatSummary, SidebarStatePayload } from '@/types/api/sidebar';
@@ -32,7 +31,6 @@ export interface ChatScreenController {
     slashCommands: SlashCommand[];
   };
   thread: {
-    messages: UIMessage[];
     loading: boolean;
     loadingOlder: boolean;
     hasMoreBefore: boolean;

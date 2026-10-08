@@ -8,7 +8,7 @@ import Moon from 'lucide-react-native/icons/moon';
 import Server from 'lucide-react-native/icons/server';
 import Sun from 'lucide-react-native/icons/sun';
 import X from 'lucide-react-native/icons/x';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -21,16 +21,30 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { hasUpdate, UpdateDetails, updateSummaryKey, type UpdateState } from '@/features/updates';
 import { localeOption, normalizeLocale, supportedLocales } from '@/i18n/config';
 import { normalizeServerUrl } from '@/services/api/config';
 import type { LocalPreferences } from '@/stores/local-preferences-store';
 import type { Palette } from '@/ui/palette';
 import { createPreferencesStyles } from './preferences-styles';
 
+
+/**
+ * 设置页不感知更新业务内部类型；应用编排层负责把更新状态转换成可展示的窄契约。
+ * 这样设置页保持容器职责，更新页仍由 updates feature 自己维护操作逻辑。
+ */
+interface PreferencesUpdateSection {
+  sectionLabelKey: string;
+  titleKey: string;
+  hintKey: string;
+  summaryKey: string;
+  available: boolean;
+  availableA11yKey: string;
+  renderDetails: (colors: Palette) => ReactNode;
+}
+
 interface PreferencesModalProps {
   colors: Palette;
-  updates: UpdateState;
+  updateSection: PreferencesUpdateSection;
   preferences: LocalPreferences;
   visible: boolean;
   onChange: (next: LocalPreferences) => void;
@@ -52,7 +66,7 @@ export function PreferencesModal(props: PreferencesModalProps) {
 function PreferencesContent({
   colors,
   preferences,
-  updates,
+  updateSection,
   onChange,
   onServerChange,
   onClose,
@@ -68,7 +82,7 @@ function PreferencesContent({
   const ThemeIcon = preferences.theme === 'light' ? Sun : Moon;
 
   const title = page === 'updates'
-    ? t('updates.title')
+    ? t(updateSection.titleKey)
     : page === 'home'
       ? t('sidebar.settings')
       : page === 'theme'
@@ -77,7 +91,7 @@ function PreferencesContent({
           ? t('settings.rows.server')
           : t('sidebar.language.label');
   const hint = page === 'updates'
-    ? t('updates.hint')
+    ? t(updateSection.hintKey)
     : page === 'home'
       ? t('settings.preferences.note')
       : page === 'theme'
@@ -148,13 +162,13 @@ function PreferencesContent({
                   </View>
                 </View>
                 <View style={styles.section}>
-                  <Text style={styles.sectionLabel}>{t('updates.appGroup')}</Text>
+                  <Text style={styles.sectionLabel}>{t(updateSection.sectionLabelKey)}</Text>
                   <View style={styles.group}>
-                    <Pressable accessibilityRole="button" accessibilityLabel={t('updates.title')} accessibilityValue={{ text: t(updateSummaryKey(updates)) }} onPress={() => setPage('updates')} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+                    <Pressable accessibilityRole="button" accessibilityLabel={t(updateSection.titleKey)} accessibilityValue={{ text: t(updateSection.summaryKey) }} onPress={() => setPage('updates')} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
                       <View style={styles.iconTile}><Download size={20} color={colors.foreground} /></View>
-                      <Text style={styles.rowLabel}>{t('updates.title')}</Text>
-                      {hasUpdate(updates) ? <View testID="settings-update-badge" accessibilityLabel={t('updates.updateAvailableA11y')} style={styles.updateBadge} /> : null}
-                      <Text numberOfLines={1} style={styles.value}>{t(updateSummaryKey(updates))}</Text>
+                      <Text style={styles.rowLabel}>{t(updateSection.titleKey)}</Text>
+                      {updateSection.available ? <View testID="settings-update-badge" accessibilityLabel={t(updateSection.availableA11yKey)} style={styles.updateBadge} /> : null}
+                      <Text numberOfLines={1} style={styles.value}>{t(updateSection.summaryKey)}</Text>
                       <ChevronRight size={18} color={colors.subtle} />
                     </Pressable>
                   </View>
@@ -169,7 +183,7 @@ function PreferencesContent({
                   </View>
                 </View>
               </>
-            ) : page === 'updates' ? <UpdateDetails colors={colors} updates={updates} /> : page === 'server' ? (
+            ) : page === 'updates' ? updateSection.renderDetails(colors) : page === 'server' ? (
               <View style={styles.group}>
                 <TextInput
                   autoCapitalize="none"

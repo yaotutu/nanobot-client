@@ -23,8 +23,6 @@ jobs:
     env:
       CI: 'true'
       EXPO_NO_TELEMETRY: '1'
-      # 明确使用项目现有网关；云端仅打包，不需要访问这个局域网服务器。
-      EXPO_PUBLIC_NANOBOT_SERVER_URL: http://192.168.55.201:8765
       # 限制 Gradle 并发，避免云端 runner 在原生编译时耗尽内存。
       GRADLE_OPTS: -Dorg.gradle.workers.max=2 -Dorg.gradle.parallel=false -Dorg.gradle.caching=true
     defaults:
@@ -148,7 +146,7 @@ jobs:
           - 应用版本：$APP_VERSION（versionCode: $VERSION_CODE）
           - 源码提交：$GITHUB_SHA
           - 构建记录：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
-          - 网关地址：http://192.168.55.201:8765（需在可访问网关的网络中使用）
+          - 首次启动请填写自己的 nanobot 网关地址；本 APK 不内置服务器地址。
           - 使用现有开发签名，不是应用商店正式签名；登录密码不会打包到 APK。
 
           下载 APK 安装；checksums.txt 包含 APK 的 SHA-256 校验值，update.json 提供已验证的开发版更新元数据。

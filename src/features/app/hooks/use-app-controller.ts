@@ -4,20 +4,20 @@ import { useReadyDataLifecycle } from '@/features/app/hooks/use-ready-data-lifec
 import { useAppSessionCommands } from '@/features/app/hooks/use-app-session-commands';
 import { useConnectionRecoveryLifecycle } from '@/features/app/hooks/use-connection-recovery-lifecycle';
 import { useSocketLifecycle } from '@/features/app/hooks/use-socket-lifecycle';
-import { selectAuthPhase, selectBootstrap, useAuthStore } from '@/features/auth/store';
-import { useCapabilitiesStore } from '@/features/capabilities/store';
-import { useChatCommands } from '@/features/chat/hooks/use-chat-commands';
+import { selectAuthPhase, selectBootstrap, useAuthStore } from '@/features/auth/state';
+import { useCapabilitiesStore } from '@/features/capabilities/state';
+import { useChatCommands } from '@/features/chat/commands';
 import {
   useCanonicalRefresh,
   useThreadLifecycle,
-} from '@/features/chat/hooks/use-thread-lifecycle';
-import { chatIdFromKey } from '@/features/chat/model/chat-key';
-import type { ChatScreenController } from '@/features/chat/model/chat-screen-contract';
-import { useChatStore } from '@/features/chat/store';
-import { useConnectionStore } from '@/features/connection/store';
-import { selectSessions, selectSidebarState, useSidebarStore } from '@/features/sidebar/store';
-import { useSkillsStore } from '@/features/skills/store';
-import { useWorkspacesStore } from '@/features/workspaces/store';
+} from '@/features/chat/thread-lifecycle';
+import { chatIdFromKey } from '@/features/chat/model';
+import type { ChatScreenController } from '@/features/chat/controller';
+import { useChatStore } from '@/features/chat/state';
+import { useConnectionStore } from '@/features/connection/state';
+import { selectSessions, selectSidebarState, useSidebarStore } from '@/features/sidebar/state';
+import { useSkillsStore } from '@/features/skills/state';
+import { useWorkspacesStore } from '@/features/workspaces/state';
 import { normalizeWorkspaceScope } from '@/services/runtime/workspace-paths';
 import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 
@@ -42,7 +42,6 @@ export function useAppController() {
   const setShowArchived = useSidebarStore((state) => state.setShowArchived);
 
   const activeKey = useChatStore((state) => state.activeKey);
-  const messages = useChatStore((state) => state.messages);
   const threadLoading = useChatStore((state) => state.threadLoading);
   const loadingOlder = useChatStore((state) => state.loadingOlder);
   const hasMoreBefore = useChatStore((state) => state.hasMoreBefore);
@@ -106,7 +105,6 @@ export function useAppController() {
     activeKey,
     activeWorkspaceScope,
     bootstrap,
-    messages,
     onChatCreated: sessionCommands.selectCreatedChat,
     socketRef,
   });
@@ -125,7 +123,6 @@ export function useAppController() {
     session: { activeKey, activeSession, sidebarState },
     capabilities: { bootstrap, cliApps, mcpPresets, skills, slashCommands },
     thread: {
-      messages,
       loading: threadLoading,
       loadingOlder,
       hasMoreBefore,

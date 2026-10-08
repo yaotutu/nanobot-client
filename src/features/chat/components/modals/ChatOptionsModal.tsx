@@ -103,7 +103,7 @@ export function ChatOptionsModal({
 
   return (
     <Modal testID="chat-options-modal" animationType="slide" onRequestClose={onClose} transparent visible>
-      <KeyboardAvoidingView behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
+      <KeyboardAvoidingView behavior="height" style={styles.root}>
         <Pressable accessibilityLabel={t('common.dismiss')} accessibilityRole="button" onPress={onClose} style={styles.backdrop} />
         <View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: colors.card, paddingBottom: Math.max(insets.bottom, 16) }]}>
           <View style={styles.header}>

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { useAuthStore } from '@/features/auth/store';
+import { useAuthStore } from '@/features/auth/state';
 import {
   selectPreferencesHydrated,
   useLocalPreferencesStore,
