@@ -48,6 +48,7 @@ const preferences = Object.freeze<LocalPreferences>({
   theme: 'light',
   language: 'en',
   serverUrl,
+  serverConfigured: true,
 });
 
 // 只导入状态类型，不加载原生 runtime 或真实 store；每次构造独立 controller，

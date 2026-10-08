@@ -18,7 +18,11 @@
       "submit": "연결",
       "invalid": "비밀번호가 올바르지 않습니다. 다시 시도하세요.",
       "serverPlaceholder": "http://192.168.1.10:8765",
-      "serverInvalid": "유효한 http:// 또는 https:// 서버 주소를 입력하세요."
+      "serverInvalid": "유효한 http:// 또는 https:// 서버 주소를 입력하세요.",
+      "serverTitle": "서버 설정",
+      "serverHint": "로그인하기 전에 nanobot Gateway 주소를 설정하세요.",
+      "serverContinue": "계속",
+      "changeServer": "서버 변경"
     },
     "account": {
       "section": "계정",

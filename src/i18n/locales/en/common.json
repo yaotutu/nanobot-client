@@ -18,7 +18,11 @@
       "submit": "Connect",
       "invalid": "Invalid password. Try again.",
       "serverPlaceholder": "http://192.168.1.10:8765",
-      "serverInvalid": "Enter a valid http:// or https:// server address."
+      "serverInvalid": "Enter a valid http:// or https:// server address.",
+      "serverTitle": "Configure server",
+      "serverHint": "Set your nanobot Gateway address before signing in.",
+      "serverContinue": "Continue",
+      "changeServer": "Change server"
     },
     "account": {
       "section": "Account",

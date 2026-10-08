@@ -56,6 +56,7 @@ export function AppShell() {
         failed={auth.authenticationFailed}
         onServerUrlChange={changeServerUrl}
         onSubmit={auth.authenticate}
+        serverConfigured={preferences.serverConfigured}
         serverUrl={preferences.serverUrl}
       />
     );

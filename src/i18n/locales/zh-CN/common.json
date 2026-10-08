@@ -18,7 +18,11 @@
       "submit": "连接",
       "invalid": "密码无效，请重试。",
       "serverPlaceholder": "http://192.168.1.10:8765",
-      "serverInvalid": "请输入有效的 http:// 或 https:// 服务器地址。"
+      "serverInvalid": "请输入有效的 http:// 或 https:// 服务器地址。",
+      "serverTitle": "配置服务器",
+      "serverHint": "登录前请先设置你的 nanobot Gateway 地址。",
+      "serverContinue": "继续",
+      "changeServer": "更换服务器"
     },
     "account": {
       "section": "账户",

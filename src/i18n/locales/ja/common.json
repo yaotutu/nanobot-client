@@ -18,7 +18,11 @@
       "submit": "接続",
       "invalid": "パスワードが無効です。もう一度お試しください。",
       "serverPlaceholder": "http://192.168.1.10:8765",
-      "serverInvalid": "有効な http:// または https:// のサーバーアドレスを入力してください。"
+      "serverInvalid": "有効な http:// または https:// のサーバーアドレスを入力してください。",
+      "serverTitle": "サーバーを設定",
+      "serverHint": "サインイン前に nanobot Gateway のアドレスを設定してください。",
+      "serverContinue": "続行",
+      "changeServer": "サーバーを変更"
     },
     "account": {
       "section": "アカウント",

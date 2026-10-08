@@ -27,11 +27,11 @@ describe('本地主题、语言与服务器偏好', () => {
   });
 
   it('默认偏好包含主题、设备语言和默认服务器', () => {
-    expect(DEFAULT_LOCAL_PREFS).toEqual({ theme: 'light', language: 'en', serverUrl: DEFAULT_SERVER_URL });
+    expect(DEFAULT_LOCAL_PREFS).toEqual({ theme: 'light', language: 'en', serverUrl: DEFAULT_SERVER_URL, serverConfigured: false });
   });
 
   it('替换主题与语言并写入现有存储 key', () => {
-    const preferences: LocalPreferences = { theme: 'dark', language: 'zh-CN', serverUrl: 'http://example.test:8765' };
+    const preferences: LocalPreferences = { theme: 'dark', language: 'zh-CN', serverUrl: 'http://example.test:8765', serverConfigured: true };
     useLocalPreferencesStore.getState().replace(preferences);
     expectPersistedPreferences(preferences);
   });
@@ -66,7 +66,7 @@ describe('本地主题、语言与服务器偏好', () => {
   });
 
   it('从现有存储 key 读取当前主题与语言', async () => {
-    const preferences: LocalPreferences = { ...DEFAULT_LOCAL_PREFS, theme: 'dark', language: 'ko', serverUrl: 'http://example.test:8765' };
+    const preferences: LocalPreferences = { ...DEFAULT_LOCAL_PREFS, theme: 'dark', language: 'ko', serverUrl: 'http://example.test:8765', serverConfigured: true };
     vi.mocked(SecureStore.getItemAsync).mockResolvedValue(JSON.stringify(preferences));
 
     await useLocalPreferencesStore.getState().hydrate();
@@ -78,8 +78,8 @@ describe('本地主题、语言与服务器偏好', () => {
   });
 
   it('更新服务器地址时先规范化，再同步 API 运行时配置', () => {
-    useLocalPreferencesStore.getState().update({ serverUrl: ' http://example.test:9999/ ' });
-    expectPersistedPreferences({ ...DEFAULT_LOCAL_PREFS, serverUrl: 'http://example.test:9999' });
+    useLocalPreferencesStore.getState().update({ serverUrl: ' http://example.test:9999/ ', serverConfigured: true });
+    expectPersistedPreferences({ ...DEFAULT_LOCAL_PREFS, serverUrl: 'http://example.test:9999', serverConfigured: true });
     expect(getServerUrl()).toBe('http://example.test:9999');
   });
 

@@ -18,7 +18,11 @@
       "submit": "Kết nối",
       "invalid": "Mật khẩu không hợp lệ. Hãy thử lại.",
       "serverPlaceholder": "http://192.168.1.10:8765",
-      "serverInvalid": "Nhập địa chỉ máy chủ http:// hoặc https:// hợp lệ."
+      "serverInvalid": "Nhập địa chỉ máy chủ http:// hoặc https:// hợp lệ.",
+      "serverTitle": "Cấu hình máy chủ",
+      "serverHint": "Đặt địa chỉ nanobot Gateway của bạn trước khi đăng nhập.",
+      "serverContinue": "Tiếp tục",
+      "changeServer": "Đổi máy chủ"
     },
     "account": {
       "section": "Tài khoản",

@@ -11,6 +11,8 @@ export interface LocalPreferences {
   language: AppLanguage;
   /** 用户选择的服务器地址；默认值来自构建配置，运行时可修改。 */
   serverUrl: string;
+  /** 是否已经由用户确认过地址；首次安装时先进入服务器配置，不默认要求输入密码。 */
+  serverConfigured: boolean;
 }
 
 const STORAGE_KEY = 'nanobot-native.local-preferences';
@@ -19,6 +21,7 @@ export const DEFAULT_LOCAL_PREFS: LocalPreferences = {
   theme: 'light',
   language: resolveDeviceLocale(),
   serverUrl: DEFAULT_SERVER_URL,
+  serverConfigured: false,
 };
 
 function normalize(raw: unknown): LocalPreferences {
@@ -29,6 +32,7 @@ function normalize(raw: unknown): LocalPreferences {
     theme: value.theme === 'dark' ? 'dark' : 'light',
     language: normalizeLocale(value.language),
     serverUrl: serverUrl ?? DEFAULT_SERVER_URL,
+    serverConfigured: value.serverConfigured === true,
   };
 }
 

@@ -18,7 +18,11 @@
       "submit": "Hubungkan",
       "invalid": "Kata sandi tidak valid. Coba lagi.",
       "serverPlaceholder": "http://192.168.1.10:8765",
-      "serverInvalid": "Masukkan alamat server http:// atau https:// yang valid."
+      "serverInvalid": "Masukkan alamat server http:// atau https:// yang valid.",
+      "serverTitle": "Konfigurasikan server",
+      "serverHint": "Atur alamat nanobot Gateway Anda sebelum masuk.",
+      "serverContinue": "Lanjutkan",
+      "changeServer": "Ubah server"
     },
     "account": {
       "section": "Akun",

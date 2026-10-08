@@ -25,7 +25,7 @@ export function useAppPreferences() {
   }, [replace]);
 
   const changeServerUrl = useCallback((serverUrl: string) => {
-    useLocalPreferencesStore.getState().update({ serverUrl });
+    useLocalPreferencesStore.getState().update({ serverUrl, serverConfigured: true });
   }, []);
 
   return { changePreferences, changeServerUrl, preferences };
