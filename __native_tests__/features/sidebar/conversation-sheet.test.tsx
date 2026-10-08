@@ -160,8 +160,10 @@ describe('ConversationSheet 独立 Native 回归', () => {
     expect(sheetStyle.paddingTop).toBeGreaterThanOrEqual(24);
     expect(sheetStyle.paddingBottom).toBeGreaterThanOrEqual(16);
     expect(sheetStyle.maxWidth).toBeUndefined();
-    expect(sheetStyle.borderTopRightRadius).toBeGreaterThan(0);
-    expect(sheetStyle.borderBottomRightRadius).toBeGreaterThan(0);
+    expect(sheetStyle.borderTopRightRadius).toBe(26);
+    expect(sheetStyle.borderBottomRightRadius).toBe(26);
+    expect(sheetStyle.borderWidth).toBe(1);
+    expect(sheetStyle.borderColor).toBe(LIGHT_COLORS.border);
 
     // Modal 原生动画被关闭，入场方向完全由 translateX 控制，避免不同平台动画行为分叉。
     expect(Array.isArray(sheetStyle.transform)).toBe(true);
@@ -442,7 +444,18 @@ describe('ConversationSheet 独立 Native 回归', () => {
     { name: '深色', colors: DARK_COLORS },
   ])('$name主题同时应用于主面板、选中会话、操作和重命名子层', async ({ colors }) => {
     const result = await render(<ConversationSheet {...createProps()} colors={colors} />);
-    expect(StyleSheet.flatten(sheetNode(result).props.style).backgroundColor).toBe(colors.card);
+    // 抽屉主体使用 canvas 色而不是卡片色，形成 OpenMuse 式纸片层级。
+    expect(StyleSheet.flatten(sheetNode(result).props.style).backgroundColor).toBe(colors.background);
+    expect(StyleSheet.flatten(sheetNode(result).props.style)).toMatchObject({ borderWidth: 1, borderColor: colors.border });
+    const iconTile = result.container.queryAll((node) => {
+      const style = StyleSheet.flatten(node.props.style);
+      return style?.width === 42 && style?.height === 42 && style?.borderRadius === 13;
+    });
+    expect(iconTile.length).toBeGreaterThan(0);
+    expect(StyleSheet.flatten(result.getByRole('button', { name: 'sidebar.newChat' }).props.style)).toMatchObject({
+      backgroundColor: colors.accentSoft,
+      borderRadius: 22,
+    });
     expect(StyleSheet.flatten(result.getByText('普通会话').props.style).color).toBe(colors.foreground);
     expect(StyleSheet.flatten(result.getByLabelText('普通会话').props.style).backgroundColor).toBe(colors.pressed);
     await openSessionActions(result);

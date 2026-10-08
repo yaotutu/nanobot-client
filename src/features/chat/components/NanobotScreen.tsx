@@ -68,7 +68,12 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
     slashCommands: capabilities.slashCommands,
     turnActive: runtime.turnActive,
   });
-  const { reset: resetComposer, setQuotedContext } = composerController;
+  const {
+    reset: resetComposer,
+    setQuotedContext,
+    onChangeText: changeComposerText,
+    inputRef: composerInputRef,
+  } = composerController;
 
   const hasMessages = messages.length > 0;
   const hasUserPrompts = messages.some((message) => message.role === 'user');
@@ -94,6 +99,12 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
     ? session.sidebarState.title_overrides[session.activeSession.key]
       || sessionTitle(session.activeSession)
     : t('app.brand');
+
+  // 空状态引导只改变输入草稿并聚焦，不触碰发送队列，保持聊天核心行为不变。
+  const handleUsePrompt = useCallback((prompt: string) => {
+    changeComposerText(prompt);
+    composerInputRef.current?.focus();
+  }, [changeComposerText, composerInputRef]);
 
   const handleSessionReset = useCallback(() => {
     resetForSessionChange();
@@ -194,6 +205,7 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
         colors={colors}
         composer={composer}
         hasMessages={hasMessages}
+        onUsePrompt={handleUsePrompt}
         threadLoading={thread.loading}
         threadProps={{
           listRef,

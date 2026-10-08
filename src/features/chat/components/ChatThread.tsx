@@ -111,9 +111,10 @@ export function ChatThread({
         contentContainerStyle={[
           styles.messagesContent,
           {
-            paddingBottom: 12,
+            // OpenMuse 参考节奏：顶部 15、消息间距 13、底部 20。
+            paddingBottom: 20,
             backgroundColor: colors.background,
-            rowGap: 12,
+            rowGap: 13,
           },
         ]}
         data={units}
@@ -219,7 +220,7 @@ export function ChatThread({
 const styles = StyleSheet.create({
   threadListArea: { minHeight: 0, flex: 1 },
   list: { flex: 1 },
-  messagesContent: { flexGrow: 1, paddingHorizontal: 17, paddingTop: 8 },
+  messagesContent: { flexGrow: 1, paddingHorizontal: 17, paddingTop: 15 },
   // 单独占据列表与输入框之间的一行，避免浮在消息内容上遮住代码或表格。
   scrollToBottomButton: {
     alignSelf: 'center',

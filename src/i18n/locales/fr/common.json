@@ -177,7 +177,13 @@
     "loadingConversation": "Chargement de la conversation…",
     "empty": {
       "title": "Qu’avez-vous en tête ?",
-      "subtitle": "Commencez par une question, une idée ou un fichier."
+      "subtitle": "Commencez par une question, une idée ou un fichier.",
+      "prompts": {
+        "explain": "Explique-moi un concept simplement",
+        "plan": "Aide-moi à découper une tâche",
+        "review": "Relis mon brouillon ou mon code"
+      },
+      "usePrompt": "Utiliser l’invite : {{prompt}}"
     },
     "header": {
       "newChat": "Démarrer un nouveau sujet",

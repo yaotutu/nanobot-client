@@ -149,7 +149,9 @@ export function SidebarListRow({
         pressed && styles.rowPressed,
       ]}
     >
-      <MessageCircle color={colors.muted} size={19} strokeWidth={1.7} />
+      <View style={styles.sessionIconTile}>
+        <MessageCircle color={colors.muted} size={18} strokeWidth={1.7} />
+      </View>
       <View style={styles.sessionCopy}>
         <View style={styles.sessionTitleRow}>
           <Text numberOfLines={1} style={styles.sessionTitle}>{title}</Text>

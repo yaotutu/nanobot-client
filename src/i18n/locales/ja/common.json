@@ -177,7 +177,13 @@
     "loadingConversation": "会話を読み込み中…",
     "empty": {
       "title": "何を話しましょうか？",
-      "subtitle": "質問やアイデア、ファイルから始めましょう。"
+      "subtitle": "質問やアイデア、ファイルから始めましょう。",
+      "prompts": {
+        "explain": "概念をやさしく説明して",
+        "plan": "タスクを分解する手伝いをして",
+        "review": "下書きやコードを確認して"
+      },
+      "usePrompt": "このプロンプトを使う：{{prompt}}"
     },
     "header": {
       "newChat": "新しいトピックを開始",

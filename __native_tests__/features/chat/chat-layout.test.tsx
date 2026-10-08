@@ -81,9 +81,14 @@ describe('聊天页唯一布局', () => {
       useEffect(() => { mount(); return () => { unmount(); }; }, []);
       return <Text>persistent-composer</Text>;
     }
-    const props = { colors: chatPaletteForTheme(false), composer: <ComposerProbe />, hasMessages: false, threadLoading: false, threadProps: {} as ChatThreadProps };
+    const onUsePrompt = jest.fn();
+    const props = { colors: chatPaletteForTheme(false), composer: <ComposerProbe />, hasMessages: false, threadLoading: false, threadProps: {} as ChatThreadProps, onUsePrompt };
     const result = await render(<ChatSurface {...props} />);
     expect(result.getByText('thread.empty.title')).toBeTruthy();
+    // 空状态引导不自动发送，只把选中模板交给控制器填充草稿。
+    expect(result.getAllByRole('button')).toHaveLength(3);
+    await fireEvent.press(result.getAllByRole('button')[0]);
+    expect(onUsePrompt).toHaveBeenCalledTimes(1);
     await result.rerender(<ChatSurface {...props} threadLoading />);
     expect(result.getByText('thread.loadingConversation')).toBeTruthy();
     await result.rerender(<ChatSurface {...props} hasMessages />);
@@ -204,11 +209,13 @@ describe('消息卡片与活动区的紧凑视觉', () => {
     const result = await render(<MessageRow {...props} />);
     const card = result.container.queryAll((node) => StyleSheet.flatten(node.props.style)?.borderBottomLeftRadius === 7)[0];
     expect(StyleSheet.flatten(card.props.style)).toMatchObject({ maxWidth: '95%', borderRadius: 22, backgroundColor: props.colors.pressed });
+    // 不再强制满宽，短回复会像 OpenMuse 一样自然收缩。
+    expect(StyleSheet.flatten(card.props.style).width).toBeUndefined();
     expect(textLayoutNode(result.getByText('hello-assistant'))).toHaveStyle({ fontSize: 16, lineHeight: 24 });
     const actions = ['message.copyReply', 'message.askAboutSelection', 'message.forkFromHere', 'message.retry'];
     for (const label of actions) {
       const action = result.getByLabelText(label);
-      expect(action).toHaveStyle({ width: 36, height: 30 });
+      expect(action).toHaveStyle({ width: 30, height: 26 });
       expect(action.props.hitSlop).toBe(7);
       await fireEvent.press(action);
     }

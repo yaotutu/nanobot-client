@@ -12,6 +12,9 @@ export interface Palette {
   card: string;
   userBubble: string;
   userText: string;
+  // 轻量动作区使用的柔和强调色；避免各组件自行判断明暗主题。
+  accentSoft: string;
+  accentText: string;
   pressed: string;
   errorBackground: string;
   errorText: string;

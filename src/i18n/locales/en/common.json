@@ -177,7 +177,13 @@
     "loadingConversation": "Loading conversation…",
     "empty": {
       "title": "What’s on your mind?",
-      "subtitle": "Start with a question, an idea, or a file."
+      "subtitle": "Start with a question, an idea, or a file.",
+      "prompts": {
+        "explain": "Explain a concept in plain language",
+        "plan": "Help me break down a task",
+        "review": "Review my draft or code"
+      },
+      "usePrompt": "Use prompt: {{prompt}}"
     },
     "header": {
       "newChat": "Start a new topic",

@@ -171,7 +171,7 @@ export function MessageRow({
                 pressed && { backgroundColor: colors.pressed },
               ]}
             >
-              <Quote color={colors.subtle} size={15} strokeWidth={1.8} />
+              <Quote color={colors.subtle} size={13} strokeWidth={1.7} />
             </Pressable>
           ) : null}
           {showAssistantActions && forkIndex !== undefined ? (
@@ -186,8 +186,8 @@ export function MessageRow({
               ]}
             >
               {forkBusy
-                ? <ActivityIndicator color={colors.subtle} size={15} />
-                : <GitFork color={colors.subtle} size={15} strokeWidth={1.8} />}
+                ? <ActivityIndicator color={colors.subtle} size={13} />
+                : <GitFork color={colors.subtle} size={13} strokeWidth={1.7} />}
             </Pressable>
           ) : null}
           {showAssistantActions && canRetry ? (
@@ -202,8 +202,8 @@ export function MessageRow({
               ]}
             >
               {isRetryBusy
-                ? <ActivityIndicator color={colors.subtle} size={15} />
-                : <RotateCw color={colors.subtle} size={15} strokeWidth={1.8} />}
+                ? <ActivityIndicator color={colors.subtle} size={13} />
+                : <RotateCw color={colors.subtle} size={13} strokeWidth={1.7} />}
             </Pressable>
           ) : null}
           {completedAtLabel ? (
@@ -225,25 +225,26 @@ export function MessageRow({
 }
 
 const styles = StyleSheet.create({
-  row: { width: '100%', marginVertical: 3 },
+  // 列表间距由 ChatThread 的 rowGap 统一控制，避免每条消息再叠加外边距。
+  row: { width: '100%' },
   assistantRow: { alignItems: 'flex-start' },
   userRow: { alignItems: 'flex-end' },
   // 沿用原版 openmuse/chat.tsx 的视觉：22px 圆角、用户右下角 7px、最大宽度 85%；正文仍为 16/24。
   userBubble: { maxWidth: '85%', borderRadius: 22, borderBottomRightRadius: 7, paddingHorizontal: 16, paddingVertical: 13 },
-  // 沿用原版的助手左下角 7px、最大宽度 95% 和灰卡；在上限内保持稳定宽度，给代码与表格留足空间。
-  // Markdown 段落自带 6px 底边距，这里补 7px，普通正文的上下实际留白均为 13px。
-  assistantBubble: { width: '100%', maxWidth: '95%', borderRadius: 22, borderBottomLeftRadius: 7, paddingHorizontal: 16, paddingTop: 13, paddingBottom: 7 },
+  // 沿用 OpenMuse 的助手左下尾角与 95% 上限；不再强制满宽，短文本会自然收缩。
+  // Markdown 段落自带 6px 底边距，这里补 7px，让正文实际上下留白保持 13px。
+  assistantBubble: { maxWidth: '95%', borderRadius: 22, borderBottomLeftRadius: 7, paddingHorizontal: 16, paddingTop: 13, paddingBottom: 7 },
   quotedContext: { width: '100%', marginBottom: 7, borderLeftWidth: 2, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   quotedContextHeader: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 },
   quotedContextLabel: { fontSize: 10, fontWeight: '700' },
   quotedContextText: { fontSize: 12, lineHeight: 17 },
   automationBadge: { alignSelf: 'flex-start', marginBottom: 7, borderWidth: StyleSheet.hairlineWidth, borderRadius: 9, paddingHorizontal: 8, paddingVertical: 4 },
   automationBadgeText: { fontSize: 10.5, fontWeight: '600' },
-  // 操作始终可见；压缩辅助行高度而非正文，保留原有 7px hitSlop（扩展触摸范围仍受父容器边界限制）。
-  messageActions: { minHeight: 30, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 4 },
-  userMessageActions: { minHeight: 30, alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center' },
-  completedAt: { marginLeft: 4, fontSize: 10.5, fontVariant: ['tabular-nums'] },
-  messageActionButton: { width: 36, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  // 操作始终可见，但压缩成低调的图标行：功能保留，视觉不与正文抢焦点。
+  messageActions: { minHeight: 26, alignSelf: 'flex-start', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 },
+  userMessageActions: { minHeight: 26, alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center' },
+  completedAt: { marginLeft: 3, fontSize: 10, fontVariant: ['tabular-nums'] },
+  messageActionButton: { width: 30, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   // 空回复占位也沿用助手卡片的底角，避免等待正文时撑出一整块空白。
   streamingDots: { minHeight: 36, borderRadius: 18, borderBottomLeftRadius: 7, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 6 },
   streamingDot: { width: 5, height: 5, borderRadius: 3 },

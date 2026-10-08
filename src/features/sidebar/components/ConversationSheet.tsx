@@ -211,7 +211,7 @@ export function ConversationSheet(props: ConversationSheetProps) {
                     { opacity: pressed ? 0.75 : 1 },
                   ]}
                 >
-                  <Plus color="#FFFFFF" size={20} strokeWidth={1.8} />
+                  <Plus color={colors.accentText} size={19} strokeWidth={2} />
                   <Text style={styles.newChatLabel}>{t('sidebar.newChat')}</Text>
                 </Pressable>
                 <Pressable

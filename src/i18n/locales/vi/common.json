@@ -177,7 +177,13 @@
     "loadingConversation": "Đang tải cuộc trò chuyện…",
     "empty": {
       "title": "Bạn đang nghĩ gì?",
-      "subtitle": "Bắt đầu bằng một câu hỏi, ý tưởng hoặc tệp."
+      "subtitle": "Bắt đầu bằng một câu hỏi, ý tưởng hoặc tệp.",
+      "prompts": {
+        "explain": "Giải thích một khái niệm đơn giản",
+        "plan": "Giúp tôi chia nhỏ một công việc",
+        "review": "Xem lại bản nháp hoặc mã của tôi"
+      },
+      "usePrompt": "Dùng gợi ý: {{prompt}}"
     },
     "header": {
       "newChat": "Bắt đầu chủ đề mới",

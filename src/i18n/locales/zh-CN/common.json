@@ -177,7 +177,13 @@
     "loadingConversation": "正在加载话题…",
     "empty": {
       "title": "有什么想聊的？",
-      "subtitle": "从一个问题、一个想法，或一份文件开始。"
+      "subtitle": "从一个问题、一个想法，或一份文件开始。",
+      "prompts": {
+        "explain": "用通俗的话解释一个概念",
+        "plan": "帮我拆解一个任务",
+        "review": "帮我检查草稿或代码"
+      },
+      "usePrompt": "使用提示：{{prompt}}"
     },
     "header": {
       "newChat": "从顶部新建话题",

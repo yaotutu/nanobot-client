@@ -42,8 +42,8 @@ export function MessageCopyButton({ colors, content }: { colors: Palette; conten
       style={({ pressed }) => [styles.messageActionButton, pressed && { backgroundColor: colors.pressed }]}
     >
       {copied
-        ? <Check color={colors.subtle} size={15} strokeWidth={2} />
-        : <Copy color={colors.subtle} size={15} strokeWidth={1.8} />}
+        ? <Check color={colors.subtle} size={13} strokeWidth={2} />
+        : <Copy color={colors.subtle} size={13} strokeWidth={1.7} />}
     </Pressable>
   );
 }
@@ -52,6 +52,6 @@ const styles = StyleSheet.create({
   forkBoundary: { marginVertical: 13, flexDirection: 'row', alignItems: 'center', gap: 10 },
   forkBoundaryLine: { height: StyleSheet.hairlineWidth, flex: 1 },
   forkBoundaryText: { fontSize: 11 },
-  // 与引用、重试、分支按钮保持同一紧凑尺寸和 7px hitSlop；扩展触摸范围仍受父容器边界限制。
-  messageActionButton: { width: 36, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  // 与引用、重试、分支按钮保持同一轻量尺寸；7px hitSlop 保留，避免小图标影响可点性。
+  messageActionButton: { width: 30, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
 });

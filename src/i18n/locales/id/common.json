@@ -177,7 +177,13 @@
     "loadingConversation": "Memuat percakapan…",
     "empty": {
       "title": "Apa yang ingin kamu bahas?",
-      "subtitle": "Mulai dengan pertanyaan, ide, atau berkas."
+      "subtitle": "Mulai dengan pertanyaan, ide, atau berkas.",
+      "prompts": {
+        "explain": "Jelaskan sebuah konsep dengan bahasa sederhana",
+        "plan": "Bantu saya memecah sebuah tugas",
+        "review": "Tinjau draf atau kode saya"
+      },
+      "usePrompt": "Gunakan prompt: {{prompt}}"
     },
     "header": {
       "newChat": "Mulai topik baru",

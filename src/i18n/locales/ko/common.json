@@ -177,7 +177,13 @@
     "loadingConversation": "대화 불러오는 중…",
     "empty": {
       "title": "어떤 이야기를 나눌까요?",
-      "subtitle": "질문, 아이디어 또는 파일로 시작해 보세요."
+      "subtitle": "질문, 아이디어 또는 파일로 시작해 보세요.",
+      "prompts": {
+        "explain": "개념을 쉽게 설명해 줘",
+        "plan": "작업을 나누어 정리해 줘",
+        "review": "초안이나 코드를 검토해 줘"
+      },
+      "usePrompt": "프롬프트 사용: {{prompt}}"
     },
     "header": {
       "newChat": "새 주제 시작",

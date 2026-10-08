@@ -177,7 +177,13 @@
     "loadingConversation": "Carregando conversa…",
     "empty": {
       "title": "O que você tem em mente?",
-      "subtitle": "Comece com uma pergunta, uma ideia ou um arquivo."
+      "subtitle": "Comece com uma pergunta, uma ideia ou um arquivo.",
+      "prompts": {
+        "explain": "Explique um conceito com linguagem simples",
+        "plan": "Me ajude a dividir uma tarefa",
+        "review": "Revise meu rascunho ou código"
+      },
+      "usePrompt": "Usar prompt: {{prompt}}"
     },
     "header": {
       "newChat": "Iniciar um novo tópico",
