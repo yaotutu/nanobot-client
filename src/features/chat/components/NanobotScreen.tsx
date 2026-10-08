@@ -139,8 +139,6 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
     onScrollEndDrag,
   } = useChatScroll({
     activeKey: session.activeKey,
-    hasMessages,
-    messages,
     units: threadModel.units,
     loadingOlder: thread.loadingOlder,
     hasMoreBefore: thread.hasMoreBefore,
