@@ -34,7 +34,8 @@ describe('平铺更新协议', () => {
 
 describe('Latest 清单检测', () => {
   it('只发一个固定 URL 请求，不遍历 Release 或解析标签', async () => {
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response(candidate()));
+    // 显式使用 fetch 的宽入参类型，避免不同 TS lib 对 URL / RequestInfo 多重载的差异。
+    const fetcher = vi.fn(async () => response(candidate()));
     expect(await findUpdate(fetcher)).toEqual(candidate());
     expect(fetcher).toHaveBeenCalledExactlyOnceWith(UPDATE_INFO_URL, expect.objectContaining({ signal: expect.any(AbortSignal) }));
   });
@@ -45,7 +46,7 @@ describe('Latest 清单检测', () => {
     await expect(findUpdate(vi.fn().mockResolvedValue(new Response('', { status })))).rejects.toMatchObject({ code: 'network' });
   });
   it('尊重 GitHub 明确限流时间', async () => {
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('', { status: 429, headers: { 'retry-after': '1800' } }));
+    const fetcher = vi.fn(async () => new Response('', { status: 429, headers: { 'retry-after': '1800' } }));
     await expect(findUpdate(fetcher)).rejects.toMatchObject({ code: 'rateLimit', retryAt: expect.any(Number) });
   });
   it('网络、无效 JSON、过大清单明确报错', async () => {
@@ -55,9 +56,12 @@ describe('Latest 清单检测', () => {
   });
   it('15秒超时中止请求', async () => {
     vi.useFakeTimers();
-    const fetcher = vi.fn<typeof fetch>((_url, options) => new Promise((_resolve, reject) => {
-      options?.signal?.addEventListener('abort', () => reject(new Error('timeout')));
-    }));
+    const fetcher = vi.fn((_input: RequestInfo | URL, options?: RequestInit) => {
+      void _input;
+      return new Promise<Response>((_resolve, reject) => {
+        options?.signal?.addEventListener('abort', () => reject(new Error('timeout')));
+      });
+    });
     const pending = expect(findUpdate(fetcher)).rejects.toMatchObject({ code: 'network' });
     await vi.advanceTimersByTimeAsync(15000);
     await pending;
