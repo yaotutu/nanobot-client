@@ -6,16 +6,14 @@ import type { Palette } from '@/ui/palette';
 export function createConversationStyles(colors: Palette) {
   return StyleSheet.create({
     keyboardRoot: { flex: 1 },
-    modalRoot: { flex: 1, justifyContent: 'flex-end' },
-    modalRootWide: { justifyContent: 'center', alignItems: 'center', padding: 24 },
+    // 左侧抽屉与入口方向一致；右侧区域留给半透明遮罩，不再按宽屏切到居中 Sheet。
+    modalRoot: { flex: 1, flexDirection: 'row', justifyContent: 'flex-start' },
     backdrop: { position: 'absolute', inset: 0, backgroundColor: 'rgba(10,18,24,0.32)' },
     sheet: {
-      width: '100%', maxHeight: '100%', backgroundColor: colors.card, borderTopLeftRadius: 24,
-      borderTopRightRadius: 24, overflow: 'hidden', boxShadow: '0 -8px 30px rgba(0,0,0,0.12)',
+      height: '100%', backgroundColor: colors.card, borderTopRightRadius: 24,
+      borderBottomRightRadius: 24, overflow: 'hidden', boxShadow: '0 0 30px rgba(0,0,0,0.16)',
     },
     content: { flex: 1 },
-    sheetWide: { maxWidth: 640, borderRadius: 24 },
-    handle: { alignSelf: 'center', width: 34, height: 4, borderRadius: 3, backgroundColor: colors.border, marginTop: 10 },
     header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: colors.border },
     logo: { width: 38, height: 38, borderRadius: 12 },
     heading: { flex: 1, minWidth: 0, gap: 3 },

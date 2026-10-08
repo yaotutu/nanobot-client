@@ -19,7 +19,7 @@ jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn(async () => undefin
 jest.mock('@/features/chat/components/widgets/inline-video-attachment', () => ({ InlineVideoAttachment: () => null }));
 
 jest.mock('lucide-react-native/icons/list-tree', () => () => null);
-jest.mock('lucide-react-native/icons/menu', () => () => null);
+jest.mock('lucide-react-native/icons/panel-left', () => () => null);
 jest.mock('lucide-react-native/icons/sliders-horizontal', () => () => null);
 jest.mock('lucide-react-native/icons/plus', () => () => null);
 jest.mock('lucide-react-native/icons/arrow-up', () => () => null);

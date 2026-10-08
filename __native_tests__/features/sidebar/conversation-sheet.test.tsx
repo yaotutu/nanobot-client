@@ -132,38 +132,46 @@ describe('ConversationSheet 独立 Native 回归', () => {
   });
 
   it.each([
-    { name: '手机', width: 390, height: 844, animation: 'slide', alignment: 'flex-end' },
-    { name: '宽屏', width: 1024, height: 768, animation: 'fade', alignment: 'center' },
-    { name: '手机断点前', width: 599, height: 844, animation: 'slide', alignment: 'flex-end' },
-    { name: '宽屏断点', width: 600, height: 844, animation: 'fade', alignment: 'center' },
-  ] as const)('$name 使用 $animation 动画且布局不再是左侧抽屉', async ({ width, height, animation, alignment }) => {
-    setWindow(width, height);
+    { name: '手机', width: 390, expectedWidth: 390 * 0.88 },
+    { name: '宽屏', width: 1024, expectedWidth: 420 },
+    { name: '手机断点前', width: 599, expectedWidth: 599 * 0.88 },
+    { name: '宽屏断点', width: 600, expectedWidth: 420 },
+  ] as const)('$name 使用左侧抽屉布局并从左侧滑入', async ({ width, expectedWidth }) => {
+    setWindow(width);
     const result = await render(<ConversationSheet {...createProps()} />);
-    expect(modalNode(result).props).toMatchObject({ animationType: animation, transparent: true, visible: true });
+    expect(modalNode(result).props).toMatchObject({
+      animationType: 'none',
+      transparent: true,
+      visible: true,
+    });
     expect(result.getByText('sidebar.conversations')).toBeTruthy();
     expect(result.queryByLabelText('sidebar.collapse')).toBeNull();
-    const roots = result.container.queryAll((node) => {
+
+    // 入口在左上角，外层布局必须同样指向左侧；宽屏也不再切成居中 Sheet。
+    const drawerRoots = result.container.queryAll((node) => {
       const style = StyleSheet.flatten(node.props.style);
-      return style?.flex === 1 && style?.justifyContent === alignment;
+      return style?.flex === 1 && style?.flexDirection === 'row' && style?.justifyContent === 'flex-start';
     });
-    expect(roots.length).toBeGreaterThan(0);
-    if (width >= 600) expect(StyleSheet.flatten(roots[0].props.style).alignItems).toBe('center');
+    expect(drawerRoots).toHaveLength(1);
+
     const sheetStyle = StyleSheet.flatten(sheetNode(result).props.style);
-    expect(sheetStyle.width).toBe('100%');
+    expect(sheetStyle.height).toBe('100%');
+    expect(sheetStyle.width).toBeCloseTo(expectedWidth);
+    expect(sheetStyle.paddingTop).toBeGreaterThanOrEqual(24);
     expect(sheetStyle.paddingBottom).toBeGreaterThanOrEqual(16);
-    expect(sheetStyle.height).toBeLessThanOrEqual(height - 24);
-    expect(sheetStyle.height).toBeCloseTo(height * (width < 600 ? 0.9 : 0.8));
-    expect(sheetStyle.borderTopLeftRadius).toBeGreaterThan(0);
-    if (width >= 600) {
-      // maxWidth 是宽屏的固定上限；在 600px 断点由 width:100% 和父层 padding 限制实际宽度。
-      expect(sheetStyle.maxWidth).toBe(640);
-      expect(sheetStyle.borderRadius).toBeGreaterThan(0);
-    }
+    expect(sheetStyle.maxWidth).toBeUndefined();
+    expect(sheetStyle.borderTopRightRadius).toBeGreaterThan(0);
+    expect(sheetStyle.borderBottomRightRadius).toBeGreaterThan(0);
+
+    // Modal 原生动画被关闭，入场方向完全由 translateX 控制，避免不同平台动画行为分叉。
+    expect(Array.isArray(sheetStyle.transform)).toBe(true);
+    const transform = sheetStyle.transform as NonNullable<typeof sheetStyle.transform>;
+    expect(transform).toHaveLength(1);
+    expect(Object.keys(transform[0])).toEqual(['translateX']);
   });
 
-  it.each(['android', 'ios'] as const)('%s 与其他平台共用同一套 UI，键盘避让 behavior 固定为 height', async (platform) => {
+  it.each(['android', 'ios'] as const)('%s 与其他平台共用同一套抽屉 UI，键盘避让 behavior 固定为 height', async (platform) => {
     // 只切换平台并观察真实 KAV 的 render 实例，保留原始渲染，不模拟键盘事件或 Yoga。
-    // 项目不再维护 Android/iOS 两套 UI；键盘避让策略统一，剩余空间仍由内部 onLayout 测量。
     jest.replaceProperty(ReactNative.Platform, 'OS', platform);
     const kavRender = jest.spyOn(ReactNative.KeyboardAvoidingView.prototype, 'render');
     await render(<ConversationSheet {...createProps()} />);
@@ -172,39 +180,12 @@ describe('ConversationSheet 独立 Native 回归', () => {
     expect(kav.props.behavior).toBe('height');
   });
 
-  it.each([
-    { name: '手机', width: 390, height: 844, ratio: 0.9, alignment: 'flex-end' },
-    { name: '宽屏', width: 1024, height: 768, ratio: 0.8, alignment: 'center' },
-  ] as const)('$name 根据内部实际 onLayout 收缩面板，恢复可用高度后正常布局不变', async ({ width, height, ratio, alignment }) => {
-    setWindow(width, height);
+  it('主面板保留全高布局和内容 wrapper 的原生布局约束', async () => {
     const result = await render(<ConversationSheet {...createProps()} />);
-    const normalHeight = height * ratio;
-    expect(StyleSheet.flatten(sheetNode(result).props.style).height).toBeCloseTo(normalHeight);
-    // 只定位 KAV 内部负责测量的 flex:1 根容器，避免误触 FlatList 或 KAV 自身的 onLayout。
-    // 真实事件触发生产 setAvailableHeight，不 mock useState，也不模拟 Yoga/键盘像素布局。
-    const measuredRoots = result.container.queryAll((node) => {
-      const style = StyleSheet.flatten(node.props.style);
-      return typeof node.props.onLayout === 'function' && style?.flex === 1 && style?.justifyContent === alignment;
-    });
-    expect(measuredRoots).toHaveLength(1);
-    await fireEvent(measuredRoots[0], 'layout', { nativeEvent: { layout: { x: 0, y: 0, width, height } } });
-    expect(StyleSheet.flatten(sheetNode(result).props.style).height).toBeCloseTo(normalHeight);
-
-    await fireEvent(measuredRoots[0], 'layout', { nativeEvent: { layout: { x: 0, y: 0, width, height: 420 } } });
-    const constrainedHeight = StyleSheet.flatten(sheetNode(result).props.style).height;
-    // 使用安全区 mock 的 top:24 与面板预留 12；断言数值高度改变，而非只检查百分比上限。
-    expect(constrainedHeight).toBeLessThanOrEqual(420 - 24 - 12);
-    expect(constrainedHeight).toBe(420 - 24 - 12);
-
-    await fireEvent(measuredRoots[0], 'layout', { nativeEvent: { layout: { x: 0, y: 0, width, height } } });
-    expect(StyleSheet.flatten(sheetNode(result).props.style).height).toBeCloseTo(normalHeight);
-  });
-
-  it('主面板保留 maxHeight:100% 和内容 wrapper 的原生布局约束', async () => {
-    const result = await render(<ConversationSheet {...createProps()} />);
-    // 保留百分比上限作为样式契约；最终收缩逻辑由上面的真实 onLayout 回归验证，
-    // 这里不把百分比属性当作实际键盘布局或数值高度计算的替代。
-    expect(StyleSheet.flatten(sheetNode(result).props.style).maxHeight).toBe('100%');
+    const sheetStyle = StyleSheet.flatten(sheetNode(result).props.style);
+    // 左侧抽屉不再根据键盘或屏幕比例压缩高度；键盘只由 KAV 避让，列表自身滚动。
+    expect(sheetStyle.height).toBe('100%');
+    expect(sheetStyle.maxHeight).toBeUndefined();
     const content = result.container.queryAll((node) => node.props.importantForAccessibility === 'auto');
     expect(content).toHaveLength(1);
     expect(StyleSheet.flatten(content[0].props.style).flex).toBe(1);

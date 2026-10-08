@@ -1,5 +1,5 @@
 import ListTree from 'lucide-react-native/icons/list-tree';
-import Menu from 'lucide-react-native/icons/menu';
+import PanelLeft from 'lucide-react-native/icons/panel-left';
 import SlidersHorizontal from 'lucide-react-native/icons/sliders-horizontal';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -31,7 +31,7 @@ export function ChatHeader({ colors, chatTitle, hasUserPrompts, onOpenConversati
         onPress={onOpenConversations}
         style={({ pressed }) => [styles.button, styles.menuButton, { backgroundColor: pressed ? colors.pressed : colors.card }]}
       >
-        <Menu color={colors.foreground} size={19} strokeWidth={1.7} />
+        <PanelLeft color={colors.foreground} size={19} strokeWidth={1.7} />
       </Pressable>
       <View style={styles.heading}>
         <Image accessible={false} source={nanobotIcon} resizeMode="contain" style={styles.avatar} />

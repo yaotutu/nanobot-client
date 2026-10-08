@@ -3,9 +3,10 @@ import Search from 'lucide-react-native/icons/search';
 import Plus from 'lucide-react-native/icons/plus';
 import Settings from 'lucide-react-native/icons/settings';
 import X from 'lucide-react-native/icons/x';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Animated,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -87,11 +88,25 @@ export function ConversationSheet(props: ConversationSheetProps) {
   } = props;
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { width, height } = useWindowDimensions();
-  const compact = width < 600;
-  // 用实际可用容器高度限制面板，而非百分比上限；Android Modal 的键盘布局与主 Activity 不同。
-  const [availableHeight, setAvailableHeight] = useState(height);
+  const { width } = useWindowDimensions();
+  // 左侧抽屉宽度只按窗口尺寸响应：手机留出主页面上下文，宽屏使用固定导航宽度。
+  const drawerWidth = Math.min(width < 600 ? width * 0.88 : 420, width);
   const styles = useMemo(() => createConversationStyles(colors), [colors]);
+  // Modal 的 slide 只能从底部进入；这里用 translateX 显式实现从左滑入，和左上角入口方向一致。
+  // Animated.Value 是跨渲染保持不变的动画状态，放在 useState 的惰性初始化中，避免在渲染期读取 ref.current。
+  const [translateX] = useState(() => new Animated.Value(-drawerWidth));
+
+  useEffect(() => {
+    // 抽屉每次打开都从左侧滑入；关闭由父层卸载 Modal，避免在测试和返回流程中引入额外退出状态。
+    if (!visible) return;
+    translateX.setValue(-drawerWidth);
+    Animated.timing(translateX, {
+      toValue: 0,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+  }, [drawerWidth, translateX, visible]);
+
   const statusLabel = t(networkAvailable ? `connection.${connectionStatus}` : 'connection.offline');
   const groupLabels = useMemo<ChatGroupLabels>(() => ({
     pinned: t('chat.groups.pinned'),
@@ -130,39 +145,33 @@ export function ConversationSheet(props: ConversationSheetProps) {
 
   return (
     <Modal
-      animationType={compact ? 'slide' : 'fade'}
+      animationType="none"
       onRequestClose={dismiss}
       statusBarTranslucent
       transparent
       visible
     >
-      {/* 先避让键盘，再测量内部剩余空间；确保重命名标题、输入框和按钮完整可见。 */}
+      {/* 抽屉内仍有重命名输入框，保留统一键盘避让；布局不再依赖底部 Sheet 的剩余高度测量。 */}
       <KeyboardAvoidingView
         behavior="height"
         style={styles.keyboardRoot}
       >
-        <View
-          onLayout={({ nativeEvent }) => setAvailableHeight(nativeEvent.layout.height)}
-          style={[styles.modalRoot, !compact && styles.modalRootWide]}
-        >
+        <View style={styles.modalRoot}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('sidebar.closeConversations')}
             onPress={dismiss}
             style={styles.backdrop}
           />
-          <View
+          <Animated.View
             accessibilityViewIsModal
             style={[
               styles.sheet,
-              !compact && styles.sheetWide,
               {
-                // 预留状态栏与遮罩空间；列表独立滚动，不让长历史把面板撑出屏幕。
-                height: Math.min(
-                  height * (compact ? 0.9 : 0.8),
-                  Math.max(0, availableHeight - insets.top - 12),
-                ),
+                width: drawerWidth,
+                paddingTop: Math.max(insets.top, 12),
                 paddingBottom: Math.max(insets.bottom, 12),
+                transform: [{ translateX }],
               },
             ]}
           >
@@ -173,8 +182,6 @@ export function ConversationSheet(props: ConversationSheetProps) {
               importantForAccessibility={hasActionLayer ? 'no-hide-descendants' : 'auto'}
               style={styles.content}
             >
-              {/* 与参考 UI 一致，短横条仅提示面板形态，不提供拖拽关闭手势。 */}
-              {compact ? <View accessible={false} style={styles.handle} /> : null}
               <View style={styles.header}>
                 <Image source={nanobotIcon} style={styles.logo} />
                 <View style={styles.heading}>
@@ -315,7 +322,7 @@ export function ConversationSheet(props: ConversationSheetProps) {
               renameValue={actions.renameValue}
               state={state}
             />
-          </View>
+          </Animated.View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
