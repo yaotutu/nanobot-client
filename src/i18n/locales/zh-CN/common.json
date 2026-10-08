@@ -391,6 +391,54 @@
       "description": "当前聊天的模型、工作区和访问权限。",
       "projectLocked": "当前聊天中无法更改工作区。",
       "unavailable": "暂不可用"
+    },
+    "agentActivity": {
+      "title": "Agent 活动",
+      "open": "打开 Agent 活动",
+      "close": "关闭 Agent 活动",
+      "running": "Agent 正在运行",
+      "idle": "Agent 已就绪",
+      "thinking": "正在思考",
+      "tool": "正在调用工具",
+      "file": "正在编辑文件",
+      "replying": "正在生成回复",
+      "waiting": "等待中",
+      "done": "已完成 · {{duration}}",
+      "error": "运行失败",
+      "summaryRunning": "Agent 正在运行",
+      "summaryIdle": "Agent 已就绪",
+      "elapsed": "已运行 {{duration}}",
+      "toolCount": "工具 {{count}}",
+      "fileCount": "文件 {{count}}",
+      "userMessage": "用户消息",
+      "fileSummary": "已编辑 {{count}} 个文件",
+      "emptyActivity": "本轮对话暂时没有活动。",
+      "emptyFiles": "本轮对话没有修改文件。",
+      "preview": "预览 {{path}}",
+      "previewShort": "预览",
+      "automationsTitle": "{{count}} 个定时任务",
+      "refresh": "刷新定时任务",
+      "tabs": {
+        "activity": "活动",
+        "files": "文件",
+        "automations": "定时任务"
+      },
+      "fileStatus": {
+        "editing": "编辑中 · {{count}} 行",
+        "done": "已编辑 · {{count}} 行",
+        "error": "编辑失败 · {{count}} 行"
+      }
+    },
+    "agentAutomation": {
+      "enabled": "已开启",
+      "disabled": "已关闭",
+      "nextRun": "下次运行",
+      "lastRun": "最近运行：{{status}}",
+      "status": {
+        "ok": "成功",
+        "error": "失败",
+        "skipped": "已跳过"
+      }
     }
   },
   "message": {

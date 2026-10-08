@@ -19,6 +19,10 @@ jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn(async () => undefin
 jest.mock('@/features/chat/components/widgets/inline-video-attachment', () => ({ InlineVideoAttachment: () => null }));
 
 jest.mock('lucide-react-native/icons/list-tree', () => () => null);
+jest.mock('lucide-react-native/icons/file-pen-line', () => () => null);
+jest.mock('lucide-react-native/icons/message-circle', () => () => null);
+jest.mock('lucide-react-native/icons/sparkles', () => () => null);
+jest.mock('lucide-react-native/icons/wrench', () => () => null);
 jest.mock('lucide-react-native/icons/panel-left', () => () => null);
 jest.mock('lucide-react-native/icons/sliders-horizontal', () => () => null);
 jest.mock('lucide-react-native/icons/plus', () => () => null);
@@ -98,15 +102,15 @@ describe('聊天页唯一布局', () => {
     expect(unmount).not.toHaveBeenCalled();
   });
 
-  it('顶部菜单、会话选项、标题导航可操作，不再提供主题快捷按钮', async () => {
-    const props = { colors: chatPaletteForTheme(false), chatTitle: 'demo', hasUserPrompts: true, onOpenConversations: jest.fn(), onOpenPromptNavigator: jest.fn(), onOpenChatOptions: jest.fn() };
+  it('顶部菜单、会话选项、头像区域可操作，不再提供主题快捷按钮', async () => {
+    const props = { colors: chatPaletteForTheme(false), chatTitle: 'demo', hasUserPrompts: true, onOpenConversations: jest.fn(), onOpenChatOptions: jest.fn(), onOpenAgentActivity: jest.fn() };
     const result = await render(<ChatHeader {...props} />);
     await fireEvent.press(result.getByRole('button', { name: 'thread.header.openConversations' }));
     await fireEvent.press(result.getByRole('button', { name: 'thread.composer.options' }));
-    await fireEvent.press(result.getByRole('button', { name: 'thread.promptNavigator.open' }));
+    await fireEvent.press(result.getByRole('button', { name: 'thread.agentActivity.open' }));
     expect(props.onOpenConversations).toHaveBeenCalledTimes(1);
     expect(props.onOpenChatOptions).toHaveBeenCalledTimes(1);
-    expect(props.onOpenPromptNavigator).toHaveBeenCalledTimes(1);
+    expect(props.onOpenAgentActivity).toHaveBeenCalledTimes(1);
     expect(result.getAllByRole('button')).toHaveLength(3);
     expect(result.queryByRole('button', { name: 'sidebar.newChat' })).toBeNull();
     expect(result.getByRole('button', { name: 'thread.composer.options' })).toHaveStyle({ right: 20, width: 44, height: 44 });
@@ -115,11 +119,29 @@ describe('聊天页唯一布局', () => {
     expect(result.getByText('demo')).toBeTruthy();
   });
 
+  it('Agent 运行时头像区域仍打开活动面板', async () => {
+    const onOpenAgentActivity = jest.fn();
+    const result = await render(
+      <ChatHeader
+        colors={chatPaletteForTheme(false)}
+        chatTitle="demo"
+        hasUserPrompts
+        headerActivity={{ phase: 'thinking', elapsedMs: 1000, reasoningStepCount: 1, toolCallCount: 0, fileEditCount: 0 }}
+        onOpenAgentActivity={onOpenAgentActivity}
+        onOpenChatOptions={jest.fn()}
+        onOpenConversations={jest.fn()}
+      />,
+    );
+    expect(result.getByText('thread.agentActivity.thinking')).toBeTruthy();
+    await fireEvent.press(result.getByRole('button', { name: 'thread.agentActivity.open' }));
+    expect(onOpenAgentActivity).toHaveBeenCalledTimes(1);
+  });
+
   it.each([false, true])('空会话也可从右上角打开选项（深色主题：%s）', async (dark) => {
     const onOpenChatOptions = jest.fn();
     const result = await render(<ChatHeader colors={chatPaletteForTheme(dark)} chatTitle="" hasUserPrompts={false}
-      onOpenConversations={jest.fn()} onOpenPromptNavigator={jest.fn()} onOpenChatOptions={onOpenChatOptions} />);
-    // 空会话的标题胶囊只读，但配置入口仍可使用，便于发出第一条消息前选择模型和工作区。
+      onOpenConversations={jest.fn()} onOpenChatOptions={onOpenChatOptions} onOpenAgentActivity={jest.fn()} />);
+    // 空会话仍可点击头像区域查看活动面板；配置入口也可先选模型和工作区。
     await fireEvent.press(result.getByRole('button', { name: 'thread.composer.options' }));
     expect(onOpenChatOptions).toHaveBeenCalledTimes(1);
     expect(result.queryByRole('button', { name: 'thread.promptNavigator.open' })).toBeNull();
@@ -279,14 +301,15 @@ describe('消息卡片与活动区的紧凑视觉', () => {
     expect(result.queryByText('reasoning-preview')).toBeNull();
   });
 
-  it('流式活动保持自动展开，用户主动折叠后新内容不抢回展开状态', async () => {
+  it('流式活动默认轻量折叠，用户主动展开后新内容不抢回展开状态', async () => {
     const props = { colors: chatPaletteForTheme(false), hasBodyBelow: false, isTurnStreaming: true, messages: [{ id: 'live-reasoning', role: 'assistant' as const, content: '', reasoning: 'live-preview', reasoningStreaming: true, createdAt: Date.now() }] };
     const result = await render(<AgentActivityCluster {...props} />);
-    expect(result.getByRole('button').props.accessibilityState.expanded).toBe(true);
-    expect(result.getByText('live-preview')).toBeTruthy();
-    await fireEvent.press(result.getByRole('button'));
-    await result.rerender(<AgentActivityCluster {...props} messages={[{ ...props.messages[0], reasoning: 'updated-preview' }]} />);
     expect(result.getByRole('button').props.accessibilityState.expanded).toBe(false);
-    expect(result.queryByText('updated-preview')).toBeNull();
+    expect(result.queryByText('live-preview')).toBeNull();
+    await fireEvent.press(result.getByRole('button'));
+    expect(result.getByText('live-preview')).toBeTruthy();
+    await result.rerender(<AgentActivityCluster {...props} messages={[{ ...props.messages[0], reasoning: 'updated-preview' }]} />);
+    expect(result.getByRole('button').props.accessibilityState.expanded).toBe(true);
+    expect(result.getByText('updated-preview')).toBeTruthy();
   });
 });

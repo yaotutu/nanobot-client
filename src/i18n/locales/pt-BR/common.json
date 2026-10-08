@@ -391,6 +391,54 @@
       "description": "Modelo, espaço de trabalho e acesso deste chat.",
       "projectLocked": "O espaço de trabalho não pode ser alterado neste chat.",
       "unavailable": "Indisponível"
+    },
+    "agentActivity": {
+      "title": "Atividade do agente",
+      "open": "Abrir atividade do agente",
+      "close": "Fechar atividade do agente",
+      "running": "O agente está executando",
+      "idle": "Agente pronto",
+      "thinking": "Pensando",
+      "tool": "Usando ferramentas",
+      "file": "Editando arquivos",
+      "replying": "Escrevendo resposta",
+      "waiting": "Aguardando",
+      "done": "Concluído · {{duration}}",
+      "error": "Falha na execução",
+      "summaryRunning": "O agente está executando",
+      "summaryIdle": "Agente pronto",
+      "elapsed": "Executando {{duration}}",
+      "toolCount": "Ferramentas {{count}}",
+      "fileCount": "Arquivos {{count}}",
+      "userMessage": "Sua mensagem",
+      "fileSummary": "{{count}} arquivos editados",
+      "emptyActivity": "Ainda não há atividade neste turno.",
+      "emptyFiles": "Nenhum arquivo foi alterado neste turno.",
+      "preview": "Pré-visualizar {{path}}",
+      "previewShort": "Pré-visualizar",
+      "automationsTitle": "{{count}} tarefas agendadas",
+      "refresh": "Atualizar tarefas agendadas",
+      "tabs": {
+        "activity": "Atividade",
+        "files": "Arquivos",
+        "automations": "Agendadas"
+      },
+      "fileStatus": {
+        "editing": "Editando · {{count}} linhas",
+        "done": "Editado · {{count}} linhas",
+        "error": "Falha ao editar · {{count}} linhas"
+      }
+    },
+    "agentAutomation": {
+      "enabled": "Ativada",
+      "disabled": "Desativada",
+      "nextRun": "Próxima execução",
+      "lastRun": "Última execução: {{status}}",
+      "status": {
+        "ok": "Sucesso",
+        "error": "Erro",
+        "skipped": "Ignorada"
+      }
     }
   },
   "message": {

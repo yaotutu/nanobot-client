@@ -28,6 +28,8 @@ interface ChatOptionsModalProps {
   canChangeProject: boolean;
   disabled: boolean;
   turnActive: boolean;
+  hasUserPrompts: boolean;
+  onOpenPromptNavigator: () => void;
   onClose: () => void;
 }
 
@@ -43,6 +45,8 @@ export function ChatOptionsModal({
   canChangeProject,
   disabled,
   turnActive,
+  hasUserPrompts,
+  onOpenPromptNavigator,
   onClose,
 }: ChatOptionsModalProps) {
   const { t } = useTranslation();
@@ -116,6 +120,21 @@ export function ChatOptionsModal({
             </Pressable>
           </View>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            {/* 消息导航是从当前对话内容回溯提示词的彩蛋入口，归聊天选项管理，避免头部承担两套语义。 */}
+            <View style={[styles.section, { backgroundColor: colors.background }]}>
+              <Text style={[styles.label, { color: colors.muted }]}>{t('thread.promptNavigator.title')}</Text>
+              <Pressable
+                accessibilityLabel={t('thread.promptNavigator.open')}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !hasUserPrompts }}
+                disabled={!hasUserPrompts}
+                onPress={onOpenPromptNavigator}
+                style={[styles.trigger, !hasUserPrompts && styles.disabled]}
+              >
+                <Text style={[styles.value, { color: colors.foreground }]}>{t('thread.promptNavigator.open')}</Text>
+                <ChevronDown color={colors.subtle} size={18} />
+              </Pressable>
+            </View>
             <View style={[styles.section, { backgroundColor: colors.background }]}>
               <Text style={[styles.label, { color: colors.muted }]}>{t('settings.models.selectModel')}</Text>
               <Pressable

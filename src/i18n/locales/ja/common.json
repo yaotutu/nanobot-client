@@ -391,6 +391,54 @@
       "description": "このチャットのモデル、ワークスペース、アクセス権。",
       "projectLocked": "このチャットではワークスペースを変更できません。",
       "unavailable": "利用できません"
+    },
+    "agentActivity": {
+      "title": "エージェント活動",
+      "open": "エージェント活動を開く",
+      "close": "エージェント活動を閉じる",
+      "running": "エージェントが実行中",
+      "idle": "エージェント準備完了",
+      "thinking": "思考中",
+      "tool": "ツール実行中",
+      "file": "ファイル編集中",
+      "replying": "返信生成中",
+      "waiting": "待機中",
+      "done": "完了 · {{duration}}",
+      "error": "実行に失敗",
+      "summaryRunning": "エージェントが実行中",
+      "summaryIdle": "エージェント準備完了",
+      "elapsed": "{{duration}} 実行中",
+      "toolCount": "ツール {{count}}",
+      "fileCount": "ファイル {{count}}",
+      "userMessage": "あなたのメッセージ",
+      "fileSummary": "{{count}} 個のファイルを編集",
+      "emptyActivity": "このターンにはまだ活動がありません。",
+      "emptyFiles": "このターンで変更されたファイルはありません。",
+      "preview": "{{path}} をプレビュー",
+      "previewShort": "プレビュー",
+      "automationsTitle": "自動タスク {{count}} 件",
+      "refresh": "自動タスクを更新",
+      "tabs": {
+        "activity": "活動",
+        "files": "ファイル",
+        "automations": "自動タスク"
+      },
+      "fileStatus": {
+        "editing": "編集中 · {{count}} 行",
+        "done": "編集済み · {{count}} 行",
+        "error": "編集失敗 · {{count}} 行"
+      }
+    },
+    "agentAutomation": {
+      "enabled": "オン",
+      "disabled": "オフ",
+      "nextRun": "次回実行",
+      "lastRun": "最終実行：{{status}}",
+      "status": {
+        "ok": "成功",
+        "error": "エラー",
+        "skipped": "スキップ"
+      }
     }
   },
   "message": {

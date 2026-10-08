@@ -391,6 +391,54 @@
       "description": "Model, ruang kerja, dan akses untuk obrolan ini.",
       "projectLocked": "Ruang kerja tidak dapat diubah dalam obrolan ini.",
       "unavailable": "Tidak tersedia"
+    },
+    "agentActivity": {
+      "title": "Aktivitas agen",
+      "open": "Buka aktivitas agen",
+      "close": "Tutup aktivitas agen",
+      "running": "Agen sedang bekerja",
+      "idle": "Agen siap",
+      "thinking": "Berpikir",
+      "tool": "Menjalankan alat",
+      "file": "Mengedit file",
+      "replying": "Menulis balasan",
+      "waiting": "Menunggu",
+      "done": "Selesai · {{duration}}",
+      "error": "Eksekusi gagal",
+      "summaryRunning": "Agen sedang bekerja",
+      "summaryIdle": "Agen siap",
+      "elapsed": "Berjalan {{duration}}",
+      "toolCount": "Alat {{count}}",
+      "fileCount": "File {{count}}",
+      "userMessage": "Pesan Anda",
+      "fileSummary": "{{count}} file diedit",
+      "emptyActivity": "Belum ada aktivitas pada giliran ini.",
+      "emptyFiles": "Tidak ada file yang diubah pada giliran ini.",
+      "preview": "Pratinjau {{path}}",
+      "previewShort": "Pratinjau",
+      "automationsTitle": "{{count}} tugas terjadwal",
+      "refresh": "Segarkan tugas terjadwal",
+      "tabs": {
+        "activity": "Aktivitas",
+        "files": "File",
+        "automations": "Terjadwal"
+      },
+      "fileStatus": {
+        "editing": "Mengedit · {{count}} baris",
+        "done": "Diedit · {{count}} baris",
+        "error": "Gagal mengedit · {{count}} baris"
+      }
+    },
+    "agentAutomation": {
+      "enabled": "Aktif",
+      "disabled": "Nonaktif",
+      "nextRun": "Jalankan berikutnya",
+      "lastRun": "Terakhir dijalankan: {{status}}",
+      "status": {
+        "ok": "Berhasil",
+        "error": "Gagal",
+        "skipped": "Dilewati"
+      }
     }
   },
   "message": {

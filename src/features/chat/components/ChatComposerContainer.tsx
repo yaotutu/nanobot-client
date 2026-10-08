@@ -17,6 +17,8 @@ interface ChatComposerContainerProps {
   model: ChatModelSelection;
   composer: ComposerController;
   optionsOpen: boolean;
+  hasUserPrompts: boolean;
+  onOpenPromptNavigator: () => void;
   onCloseOptions: () => void;
 }
 
@@ -27,6 +29,8 @@ export function ChatComposerContainer({
   dark,
   model,
   optionsOpen,
+  hasUserPrompts,
+  onOpenPromptNavigator,
   onCloseOptions,
 }: ChatComposerContainerProps) {
   // 所有配置沿用原来的连接／发送禁用规则；权限和工作区另外禁止在回合执行中修改。
@@ -98,6 +102,8 @@ export function ChatComposerContainer({
           model={model}
           onClose={onCloseOptions}
           turnActive={controller.runtime.turnActive}
+          hasUserPrompts={hasUserPrompts}
+          onOpenPromptNavigator={onOpenPromptNavigator}
           workspace={controller.workspace}
         />
       ) : null}

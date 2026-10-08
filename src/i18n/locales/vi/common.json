@@ -391,6 +391,54 @@
       "description": "Mô hình, không gian làm việc và quyền truy cập cho cuộc trò chuyện này.",
       "projectLocked": "Không thể thay đổi không gian làm việc trong cuộc trò chuyện này.",
       "unavailable": "Không khả dụng"
+    },
+    "agentActivity": {
+      "title": "Hoạt động của agent",
+      "open": "Mở hoạt động của agent",
+      "close": "Đóng hoạt động của agent",
+      "running": "Agent đang chạy",
+      "idle": "Agent đã sẵn sàng",
+      "thinking": "Đang suy nghĩ",
+      "tool": "Đang chạy công cụ",
+      "file": "Đang chỉnh sửa tệp",
+      "replying": "Đang viết phản hồi",
+      "waiting": "Đang chờ",
+      "done": "Đã hoàn thành · {{duration}}",
+      "error": "Chạy thất bại",
+      "summaryRunning": "Agent đang chạy",
+      "summaryIdle": "Agent đã sẵn sàng",
+      "elapsed": "Đã chạy {{duration}}",
+      "toolCount": "Công cụ {{count}}",
+      "fileCount": "Tệp {{count}}",
+      "userMessage": "Tin nhắn của bạn",
+      "fileSummary": "Đã chỉnh sửa {{count}} tệp",
+      "emptyActivity": "Lượt này chưa có hoạt động.",
+      "emptyFiles": "Không có tệp nào được thay đổi trong lượt này.",
+      "preview": "Xem trước {{path}}",
+      "previewShort": "Xem trước",
+      "automationsTitle": "{{count}} tác vụ định thời",
+      "refresh": "Làm mới tác vụ định thời",
+      "tabs": {
+        "activity": "Hoạt động",
+        "files": "Tệp",
+        "automations": "Định thời"
+      },
+      "fileStatus": {
+        "editing": "Đang chỉnh sửa · {{count}} dòng",
+        "done": "Đã chỉnh sửa · {{count}} dòng",
+        "error": "Chỉnh sửa thất bại · {{count}} dòng"
+      }
+    },
+    "agentAutomation": {
+      "enabled": "Bật",
+      "disabled": "Tắt",
+      "nextRun": "Lần chạy sau",
+      "lastRun": "Lần chạy gần nhất: {{status}}",
+      "status": {
+        "ok": "Thành công",
+        "error": "Lỗi",
+        "skipped": "Đã bỏ qua"
+      }
     }
   },
   "message": {

@@ -1,4 +1,6 @@
 import { createDeferredComponent } from '@/hooks/use-deferred-component';
+import type { TurnUnit } from '@/features/chat/activity/model/activity-timeline';
+import type { CliAppInfo, McpPresetInfo } from '@/types/api/capabilities';
 import type { UIMessage } from '@/types/api/chat/messages';
 import type { Palette } from '@/ui/palette';
 
@@ -12,6 +14,9 @@ const DeferredAssistantQuoteModal = createDeferredComponent(() => import(
 const DeferredFilePreviewModal = createDeferredComponent(() => import(
   '@/features/chat/components/modals/file-preview-modal'
 ).then(({ FilePreviewModal }) => FilePreviewModal));
+const DeferredAgentActivitySheet = createDeferredComponent(() => import(
+  '@/features/chat/components/modals/AgentActivitySheet'
+).then(({ AgentActivitySheet }) => AgentActivitySheet));
 const DeferredPromptNavigator = createDeferredComponent(() => import(
   '@/features/chat/components/widgets/prompt-navigator'
 ).then(({ PromptNavigator }) => PromptNavigator));
@@ -20,6 +25,11 @@ export interface ChatModalsProps {
   colors: Palette;
   dark: boolean;
   activeKey: string | null;
+  agentActivitySheetOpen: boolean;
+  cliApps: CliAppInfo[];
+  mcpPresets: McpPresetInfo[];
+  turnActive: boolean;
+  units: TurnUnit[];
   messages: UIMessage[];
   promptNavigatorOpen: boolean;
   assistantQuoteSource: string | null;
@@ -28,6 +38,8 @@ export interface ChatModalsProps {
   onClosePromptNavigator: () => void;
   onCloseAssistantQuote: () => void;
   onCloseFilePreview: () => void;
+  onCloseAgentActivity: () => void;
+  onOpenFilePreview: (path: string) => void;
   onConfirmAssistantQuote: (content: string) => void;
   onJumpToPrompt: (messageId: string) => void;
 }
@@ -37,6 +49,22 @@ export function ChatModals(props: ChatModalsProps) {
 
   return (
     <>
+      {props.agentActivitySheetOpen ? (
+        <DeferredAgentActivitySheet
+          componentProps={{
+            cliApps: props.cliApps,
+            colors,
+            mcpPresets: props.mcpPresets,
+            onOpenFilePreview: props.onOpenFilePreview,
+            sessionKey: props.activeKey,
+            turnActive: props.turnActive,
+            units: props.units,
+            visible: true,
+            onClose: props.onCloseAgentActivity,
+          }}
+          enabled
+        />
+      ) : null}
       {props.promptNavigatorOpen ? (
         <DeferredPromptNavigator
           componentProps={{

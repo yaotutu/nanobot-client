@@ -17,6 +17,7 @@ import { ChatModals } from '@/features/chat/components/ChatModals';
 import { ChatSurface } from '@/features/chat/components/ChatSurface';
 import { useChatLocalState } from '@/features/chat/hooks/use-chat-local-state';
 import { useChatThreadModel } from '@/features/chat/hooks/use-chat-thread-model';
+import { useHeaderActivity } from '@/features/chat/hooks/use-header-activity';
 import { useChatScroll } from '@/features/chat/hooks/useChatScroll';
 import { useComposerController } from '@/features/chat/hooks/use-composer-controller';
 import { useFilePreviewAvailability } from '@/features/chat/hooks/use-file-preview-availability';
@@ -50,7 +51,9 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
     assistantQuoteSource,
     promptNavigatorOpen,
     filePreviewPath,
+    agentActivitySheetOpen,
     setAssistantQuoteSource,
+    setAgentActivitySheetOpen,
     setPromptNavigatorOpen,
     setFilePreviewPath,
     resetForSessionChange,
@@ -82,6 +85,12 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
     messages,
     turnActive: runtime.turnActive,
     userMessageOffset: thread.userMessageOffset,
+  });
+  const headerActivity = useHeaderActivity({
+    cliApps: capabilities.cliApps,
+    mcpPresets: capabilities.mcpPresets,
+    turnActive: runtime.turnActive,
+    units: threadModel.units,
   });
   const messageActions = useMessageActions({
     clearComposerQueue: composerController.clearQueue,
@@ -146,6 +155,12 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
       dark={dark}
       model={shell.model}
       optionsOpen={shell.chatOptionsOpen}
+      hasUserPrompts={hasUserPrompts}
+      onOpenPromptNavigator={() => {
+        // 两个入口都是 Modal，先退出聊天选项，再打开消息导航，避免 Android 返回键层级混乱。
+        shell.onCloseChatOptions();
+        setPromptNavigatorOpen(true);
+      }}
       onCloseOptions={shell.onCloseChatOptions}
     />
   );
@@ -163,8 +178,9 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
         chatTitle={chatTitle}
         hasUserPrompts={hasUserPrompts}
         onOpenConversations={shell.onOpenConversations}
-        onOpenPromptNavigator={() => setPromptNavigatorOpen(true)}
         onOpenChatOptions={shell.onOpenChatOptions}
+        onOpenAgentActivity={() => setAgentActivitySheetOpen(true)}
+        headerActivity={headerActivity}
       />
 
       {!runtime.networkAvailable || runtime.connectionStatus !== 'open' || runtime.connectionSyncing ? (
@@ -247,12 +263,23 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
         dark={dark}
         messages={messages}
         promptNavigatorOpen={promptNavigatorOpen}
+        agentActivitySheetOpen={agentActivitySheetOpen}
+        cliApps={capabilities.cliApps}
+        mcpPresets={capabilities.mcpPresets}
+        turnActive={runtime.turnActive}
+        units={threadModel.units}
         assistantQuoteSource={assistantQuoteSource}
         filePreviewPath={filePreviewPath}
         token={capabilities.bootstrap.api_token}
         onClosePromptNavigator={() => setPromptNavigatorOpen(false)}
         onCloseAssistantQuote={() => setAssistantQuoteSource(null)}
         onCloseFilePreview={() => setFilePreviewPath(null)}
+        onCloseAgentActivity={() => setAgentActivitySheetOpen(false)}
+        onOpenFilePreview={(path) => {
+          // 预览是全屏弹窗；打开前先关闭活动面板，避免两层 Modal 抢返回键。
+          setAgentActivitySheetOpen(false);
+          setFilePreviewPath(path);
+        }}
         onConfirmAssistantQuote={composerController.confirmQuote}
         onJumpToPrompt={jumpToPrompt}
       />

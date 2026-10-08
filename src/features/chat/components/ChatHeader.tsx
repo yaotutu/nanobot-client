@@ -1,9 +1,10 @@
-import ListTree from 'lucide-react-native/icons/list-tree';
 import PanelLeft from 'lucide-react-native/icons/panel-left';
 import SlidersHorizontal from 'lucide-react-native/icons/sliders-horizontal';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { HeaderActivityPill } from '@/features/chat/components/HeaderActivityPill';
+import type { HeaderActivity } from '@/features/chat/activity/model/header-activity';
 import { chatLayout } from '@/features/chat/ui/chat-theme';
 import type { Palette } from '@/ui/palette';
 
@@ -16,13 +17,23 @@ export interface ChatHeaderProps {
   chatTitle: string;
   hasUserPrompts: boolean;
   onOpenConversations: () => void;
-  onOpenPromptNavigator: () => void;
   onOpenChatOptions: () => void;
+  onOpenAgentActivity: () => void;
+  headerActivity?: HeaderActivity;
 }
 
 /** 仅还原参考 UI 的品牌层级；形象与操作仍属于 nanobot，不引入参考项目的通知或电脑业务。 */
-export function ChatHeader({ colors, chatTitle, hasUserPrompts, onOpenConversations, onOpenPromptNavigator, onOpenChatOptions }: ChatHeaderProps) {
+export function ChatHeader({
+  colors,
+  chatTitle,
+  hasUserPrompts,
+  headerActivity,
+  onOpenAgentActivity,
+  onOpenChatOptions,
+  onOpenConversations,
+}: ChatHeaderProps) {
   const { t } = useTranslation();
+  const idleActivity: HeaderActivity = { phase: 'idle', reasoningStepCount: 0, toolCallCount: 0, fileEditCount: 0 };
   return (
     <View style={styles.header}>
       <Pressable
@@ -33,23 +44,23 @@ export function ChatHeader({ colors, chatTitle, hasUserPrompts, onOpenConversati
       >
         <PanelLeft color={colors.foreground} size={19} strokeWidth={1.7} />
       </Pressable>
-      <View style={styles.heading}>
+      <Pressable
+        accessibilityLabel={t('thread.agentActivity.open')}
+        accessibilityRole="button"
+        onPress={onOpenAgentActivity}
+        style={({ pressed }) => [styles.heading, pressed && styles.pressFeedback]}
+      >
         <Image accessible={false} source={nanobotIcon} resizeMode="contain" style={styles.avatar} />
         <Text style={[styles.brand, { color: colors.foreground }]}>{t('app.brand')}</Text>
         <Text numberOfLines={1} style={[styles.subtitle, { color: colors.muted }]}>{t('thread.header.subtitle')}</Text>
-        {/* 原版的状态胶囊换成真实的会话导航，不绘制没有业务含义的在线圆点。 */}
-        <Pressable
-          accessibilityRole={hasUserPrompts ? 'button' : undefined}
-          accessibilityLabel={hasUserPrompts ? t('thread.promptNavigator.open') : undefined}
-          disabled={!hasUserPrompts}
-          hitSlop={{ top: 5, bottom: 5 }}
-          onPress={onOpenPromptNavigator}
-          style={({ pressed }) => [styles.topic, { backgroundColor: colors.pressed, opacity: pressed ? 0.72 : 1 }]}
-        >
-          {hasUserPrompts ? <ListTree color={colors.muted} size={12} strokeWidth={1.7} /> : null}
-          <Text numberOfLines={1} style={[styles.topicText, { color: colors.muted }]}>{hasUserPrompts ? chatTitle : t('sidebar.newChat')}</Text>
-        </Pressable>
-      </View>
+        {/* 头像、品牌与状态胶囊同属一个可点击区域；点击后始终进入 Agent 活动面板。 */}
+        <HeaderActivityPill
+          activity={headerActivity ?? idleActivity}
+          chatTitle={chatTitle}
+          colors={colors}
+          hasUserPrompts={hasUserPrompts}
+        />
+      </Pressable>
       {/* 模型、工作区和权限属于当前会话，入口与会话标题同层；新建会话保留在会话面板。 */}
       <Pressable
         accessibilityRole="button"
@@ -73,6 +84,6 @@ const styles = StyleSheet.create({
   avatar: { width: 49, height: 49 },
   brand: { fontSize: 16, lineHeight: 20, fontWeight: '600', letterSpacing: -0.4 },
   subtitle: { fontSize: 11, lineHeight: 16, marginBottom: 5 },
-  topic: { minHeight: 28, maxWidth: '100%', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  topicText: { flexShrink: 1, fontSize: 11, lineHeight: 16 },
+  // 头像区域没有圆形背景，按压透明度是明确的触控反馈，不做平台分支。
+  pressFeedback: { opacity: 0.72 },
 });

@@ -391,6 +391,54 @@
       "description": "Modèle, espace de travail et accès de cette conversation.",
       "projectLocked": "L’espace de travail ne peut pas être modifié dans cette conversation.",
       "unavailable": "Indisponible"
+    },
+    "agentActivity": {
+      "title": "Activité de l’agent",
+      "open": "Ouvrir l’activité de l’agent",
+      "close": "Fermer l’activité de l’agent",
+      "running": "L’agent travaille",
+      "idle": "Agent prêt",
+      "thinking": "Réflexion",
+      "tool": "Outils en cours",
+      "file": "Modification de fichiers",
+      "replying": "Rédaction de la réponse",
+      "waiting": "En attente",
+      "done": "Terminé · {{duration}}",
+      "error": "Échec de l’exécution",
+      "summaryRunning": "L’agent travaille",
+      "summaryIdle": "Agent prêt",
+      "elapsed": "En cours {{duration}}",
+      "toolCount": "Outils {{count}}",
+      "fileCount": "Fichiers {{count}}",
+      "userMessage": "Votre message",
+      "fileSummary": "{{count}} fichiers modifiés",
+      "emptyActivity": "Aucune activité dans ce tour.",
+      "emptyFiles": "Aucun fichier modifié dans ce tour.",
+      "preview": "Prévisualiser {{path}}",
+      "previewShort": "Prévisualiser",
+      "automationsTitle": "{{count}} tâches planifiées",
+      "refresh": "Actualiser les tâches planifiées",
+      "tabs": {
+        "activity": "Activité",
+        "files": "Fichiers",
+        "automations": "Planifiées"
+      },
+      "fileStatus": {
+        "editing": "Modification · {{count}} lignes",
+        "done": "Modifié · {{count}} lignes",
+        "error": "Échec · {{count}} lignes"
+      }
+    },
+    "agentAutomation": {
+      "enabled": "Activée",
+      "disabled": "Désactivée",
+      "nextRun": "Prochaine exécution",
+      "lastRun": "Dernière exécution : {{status}}",
+      "status": {
+        "ok": "Réussie",
+        "error": "Erreur",
+        "skipped": "Ignorée"
+      }
     }
   },
   "message": {

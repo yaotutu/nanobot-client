@@ -24,6 +24,7 @@ jest.mock('@/features/chat/components/ComposerContext', () => ({ ComposerContext
 const preset = (name: string): ModelPresetInfo => ({ name, label: name, model: name, provider: 'provider', active: name === 'first', is_default: false, max_tokens: 1024, context_window_tokens: 4096, temperature: 0.7, reasoning_effort: null });
 const createProps = (): React.ComponentProps<typeof ChatOptionsModal> => ({
   colors: chatPaletteForTheme(false), disabled: false, turnActive: false, canChangeProject: true, onClose: jest.fn(),
+  hasUserPrompts: true, onOpenPromptNavigator: jest.fn(),
   model: { activeModelPreset: 'first', modelDisplayLabel: 'First model', orderedModelPresets: [preset('first'), preset('second')], changeModelPreset: jest.fn(async () => undefined) },
   workspace: {
     activeScope: { project_path: '/workspace/demo', project_name: 'demo', access_mode: 'restricted', restrict_to_workspace: true },
@@ -40,6 +41,15 @@ const composerProps = (): ComposerProps => ({
 });
 
 describe('统一聊天选项弹窗', () => {
+  it('消息导航从聊天选项打开，空会话时禁用', async () => {
+    const props = createProps();
+    const result = await render(<ChatOptionsModal {...props} />);
+    await fireEvent.press(result.getByLabelText('thread.promptNavigator.open'));
+    expect(props.onOpenPromptNavigator).toHaveBeenCalledTimes(1);
+    await result.rerender(<ChatOptionsModal {...props} hasUserPrompts={false} />);
+    expect(result.getByLabelText('thread.promptNavigator.open').props.accessibilityState.disabled).toBe(true);
+  });
+
   it.each([false, true])('三项配置只使用一个原生弹窗（dark=%s）', async (dark) => {
     const props = createProps();
     const result = await render(<ChatOptionsModal {...props} colors={chatPaletteForTheme(dark)} />);

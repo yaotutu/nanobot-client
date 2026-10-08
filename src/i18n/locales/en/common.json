@@ -391,6 +391,54 @@
       "description": "Model, workspace and access for this chat.",
       "projectLocked": "The workspace cannot be changed in this chat.",
       "unavailable": "Unavailable"
+    },
+    "agentActivity": {
+      "title": "Agent activity",
+      "open": "Open agent activity",
+      "close": "Close agent activity",
+      "running": "Agent running",
+      "idle": "Agent ready",
+      "thinking": "Thinking",
+      "tool": "Running tools",
+      "file": "Editing files",
+      "replying": "Writing reply",
+      "waiting": "Waiting",
+      "done": "Completed · {{duration}}",
+      "error": "Run failed",
+      "summaryRunning": "Agent running",
+      "summaryIdle": "Agent ready",
+      "elapsed": "Run {{duration}}",
+      "toolCount": "Tools {{count}}",
+      "fileCount": "Files {{count}}",
+      "userMessage": "Your message",
+      "fileSummary": "Edited {{count}} files",
+      "emptyActivity": "No activity in this turn yet.",
+      "emptyFiles": "No files changed in this turn.",
+      "preview": "Preview {{path}}",
+      "previewShort": "Preview",
+      "automationsTitle": "{{count}} scheduled tasks",
+      "refresh": "Refresh scheduled tasks",
+      "tabs": {
+        "activity": "Activity",
+        "files": "Files",
+        "automations": "Scheduled"
+      },
+      "fileStatus": {
+        "editing": "Editing · {{count}} lines",
+        "done": "Edited · {{count}} lines",
+        "error": "Edit failed · {{count}} lines"
+      }
+    },
+    "agentAutomation": {
+      "enabled": "On",
+      "disabled": "Off",
+      "nextRun": "Next run",
+      "lastRun": "Last run: {{status}}",
+      "status": {
+        "ok": "Success",
+        "error": "Error",
+        "skipped": "Skipped"
+      }
     }
   },
   "message": {

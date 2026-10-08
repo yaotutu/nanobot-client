@@ -391,6 +391,54 @@
       "description": "目前聊天的模型、工作區和存取權限。",
       "projectLocked": "目前聊天中無法變更工作區。",
       "unavailable": "暫不可用"
+    },
+    "agentActivity": {
+      "title": "Agent 活動",
+      "open": "開啟 Agent 活動",
+      "close": "關閉 Agent 活動",
+      "running": "Agent 正在執行",
+      "idle": "Agent 已就緒",
+      "thinking": "正在思考",
+      "tool": "正在呼叫工具",
+      "file": "正在編輯檔案",
+      "replying": "正在產生回覆",
+      "waiting": "等待中",
+      "done": "已完成 · {{duration}}",
+      "error": "執行失敗",
+      "summaryRunning": "Agent 正在執行",
+      "summaryIdle": "Agent 已就緒",
+      "elapsed": "已執行 {{duration}}",
+      "toolCount": "工具 {{count}}",
+      "fileCount": "檔案 {{count}}",
+      "userMessage": "使用者訊息",
+      "fileSummary": "已編輯 {{count}} 個檔案",
+      "emptyActivity": "本輪對話目前沒有活動。",
+      "emptyFiles": "本輪對話沒有修改檔案。",
+      "preview": "預覽 {{path}}",
+      "previewShort": "預覽",
+      "automationsTitle": "{{count}} 個自動任務",
+      "refresh": "重新整理自動任務",
+      "tabs": {
+        "activity": "活動",
+        "files": "檔案",
+        "automations": "自動任務"
+      },
+      "fileStatus": {
+        "editing": "編輯中 · {{count}} 行",
+        "done": "已編輯 · {{count}} 行",
+        "error": "編輯失敗 · {{count}} 行"
+      }
+    },
+    "agentAutomation": {
+      "enabled": "已開啟",
+      "disabled": "已關閉",
+      "nextRun": "下次執行",
+      "lastRun": "最近執行：{{status}}",
+      "status": {
+        "ok": "成功",
+        "error": "失敗",
+        "skipped": "已跳過"
+      }
     }
   },
   "message": {
