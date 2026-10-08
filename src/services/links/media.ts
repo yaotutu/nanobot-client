@@ -1,4 +1,4 @@
-import { DEFAULT_SERVER_URL } from '@/services/api/config';
+import { getServerUrl } from '@/services/api/config';
 import type { UIMediaAttachment } from '@/types/api/chat/media';
 
 const IMAGE_EXTENSIONS = new Set([
@@ -10,7 +10,7 @@ function resolveMediaUrl(value?: string): string | undefined {
   if (!value) return value;
   if (value.startsWith('//') || /^[a-z][a-z0-9+.-]*:/i.test(value)) return value;
   try {
-    return new URL(value, `${DEFAULT_SERVER_URL}/`).toString();
+    return new URL(value, `${getServerUrl()}/`).toString();
   } catch {
     return value;
   }

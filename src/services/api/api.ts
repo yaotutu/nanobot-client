@@ -1,8 +1,8 @@
-import { DEFAULT_SERVER_URL } from './config';
 import { createApiClient, type ApiClient } from './api-client';
+import { getServerUrl } from './config';
 
 /**
- * 全局 API 客户端单例。baseUrl 在创建时锁定；token 通过可注入 provider 动态读取。
+ * 全局 API 客户端单例。baseUrl 每次请求动态读取；token 也通过可注入 provider 动态读取。
  *
  * 使用方式：
  *   import { apiClient } from '@/services/api/api';
@@ -19,7 +19,7 @@ export function setApiTokenProvider(provider: () => string): void {
 
 function createDefaultApiClient(): ApiClient {
   return createApiClient({
-    baseUrl: DEFAULT_SERVER_URL,
+    getBaseUrl: getServerUrl,
     getToken: () => apiTokenProvider(),
   });
 }

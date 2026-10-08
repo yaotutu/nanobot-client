@@ -5,15 +5,25 @@ import Download from 'lucide-react-native/icons/download';
 import Languages from 'lucide-react-native/icons/languages';
 import LogOut from 'lucide-react-native/icons/log-out';
 import Moon from 'lucide-react-native/icons/moon';
+import Server from 'lucide-react-native/icons/server';
 import Sun from 'lucide-react-native/icons/sun';
 import X from 'lucide-react-native/icons/x';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { hasUpdate, UpdateDetails, updateSummaryKey, type UpdateState } from '@/features/updates';
 import { localeOption, normalizeLocale, supportedLocales } from '@/i18n/config';
+import { normalizeServerUrl } from '@/services/api/config';
 import type { LocalPreferences } from '@/stores/local-preferences-store';
 import type { Palette } from '@/ui/palette';
 import { createPreferencesStyles } from './preferences-styles';
@@ -24,29 +34,68 @@ interface PreferencesModalProps {
   preferences: LocalPreferences;
   visible: boolean;
   onChange: (next: LocalPreferences) => void;
+  onServerChange: (serverUrl: string) => Promise<void> | void;
   onClose: () => void;
   onLogout: () => Promise<void>;
 }
 
-type PreferencesPage = 'home' | 'theme' | 'language' | 'updates';
+type PreferencesPage = 'home' | 'theme' | 'language' | 'server' | 'updates';
 
 /**
  * 关闭时卸载内部页面状态，重新打开始终回到设置首页。
- * 只覆盖聊天界面，不重建聊天、清空草稿或修改网关连接。
+ * 只覆盖聊天界面，不重建聊天或重置输入草稿。
  */
 export function PreferencesModal(props: PreferencesModalProps) {
   return props.visible ? <PreferencesContent {...props} /> : null;
 }
 
-function PreferencesContent({ colors, preferences, updates, onChange, onClose, onLogout }: PreferencesModalProps) {
+function PreferencesContent({
+  colors,
+  preferences,
+  updates,
+  onChange,
+  onServerChange,
+  onClose,
+  onLogout,
+}: PreferencesModalProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [page, setPage] = useState<PreferencesPage>('home');
+  const [serverDraft, setServerDraft] = useState(preferences.serverUrl);
+  const [savingServer, setSavingServer] = useState(false);
   const styles = createPreferencesStyles(colors);
-  const title = page === 'updates' ? t('updates.title') : page === 'home' ? t('sidebar.settings') : page === 'theme' ? t('settings.rows.theme') : t('sidebar.language.label');
-  // 系统返回与左上角返回遵循相同层级：选择页返回首页，首页才关闭弹窗。
-  const goBack = () => page === 'home' ? onClose() : setPage('home');
+  const normalizedServerUrl = normalizeServerUrl(serverDraft);
   const ThemeIcon = preferences.theme === 'light' ? Sun : Moon;
+
+  const title = page === 'updates'
+    ? t('updates.title')
+    : page === 'home'
+      ? t('sidebar.settings')
+      : page === 'theme'
+        ? t('settings.rows.theme')
+        : page === 'server'
+          ? t('settings.rows.server')
+          : t('sidebar.language.label');
+  const hint = page === 'updates'
+    ? t('updates.hint')
+    : page === 'home'
+      ? t('settings.preferences.note')
+      : page === 'theme'
+        ? t('settings.preferences.themeHint')
+        : page === 'server'
+          ? t('settings.server.hint')
+          : t('settings.preferences.languageHint');
+  // 系统返回与左上角返回遵循相同层级：选择页返回首页，首页才关闭弹窗。
+  const goBack = () => (page === 'home' ? onClose() : setPage('home'));
+  const submitServer = async () => {
+    if (!normalizedServerUrl || savingServer) return;
+    setSavingServer(true);
+    try {
+      await onServerChange(normalizedServerUrl);
+    } finally {
+      setSavingServer(false);
+    }
+  };
 
   return (
     <Modal animationType="slide" onRequestClose={goBack} visible>
@@ -65,7 +114,7 @@ function PreferencesContent({ colors, preferences, updates, onChange, onClose, o
           <ScrollView key={page} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
             <View style={styles.heading}>
               <Text accessibilityRole="header" style={styles.title}>{title}</Text>
-              <Text style={styles.description}>{t(page === 'updates' ? 'updates.hint' : page === 'home' ? 'settings.preferences.note' : page === 'theme' ? 'settings.preferences.themeHint' : 'settings.preferences.languageHint')}</Text>
+              <Text style={styles.description}>{hint}</Text>
             </View>
             {page === 'home' ? (
               <>
@@ -83,6 +132,17 @@ function PreferencesContent({ colors, preferences, updates, onChange, onClose, o
                       <View style={styles.iconTile}><Languages size={20} color={colors.foreground} /></View>
                       <Text style={styles.rowLabel}>{t('sidebar.language.label')}</Text>
                       <Text numberOfLines={1} style={styles.value}>{localeOption(normalizeLocale(preferences.language)).nativeLabel}</Text>
+                      <ChevronRight size={18} color={colors.subtle} />
+                    </Pressable>
+                  </View>
+                </View>
+                <View style={styles.section}>
+                  <Text style={styles.sectionLabel}>{t('settings.preferences.connectionGroup')}</Text>
+                  <View style={styles.group}>
+                    <Pressable accessibilityRole="button" accessibilityLabel={t('settings.rows.server')} accessibilityValue={{ text: preferences.serverUrl }} onPress={() => setPage('server')} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+                      <View style={styles.iconTile}><Server size={20} color={colors.foreground} /></View>
+                      <Text style={styles.rowLabel}>{t('settings.rows.server')}</Text>
+                      <Text numberOfLines={1} style={styles.value}>{preferences.serverUrl}</Text>
                       <ChevronRight size={18} color={colors.subtle} />
                     </Pressable>
                   </View>
@@ -109,7 +169,41 @@ function PreferencesContent({ colors, preferences, updates, onChange, onClose, o
                   </View>
                 </View>
               </>
-            ) : page === 'updates' ? <UpdateDetails colors={colors} updates={updates} /> : (
+            ) : page === 'updates' ? <UpdateDetails colors={colors} updates={updates} /> : page === 'server' ? (
+              <View style={styles.group}>
+                <TextInput
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!savingServer}
+                  keyboardType="url"
+                  onChangeText={setServerDraft}
+                  placeholder={t('settings.server.placeholder')}
+                  placeholderTextColor={colors.muted}
+                  returnKeyType="done"
+                  style={[
+                    styles.serverInput,
+                    !!serverDraft.trim() && !normalizedServerUrl && styles.serverInputInvalid,
+                  ]}
+                  value={serverDraft}
+                />
+                {!!serverDraft.trim() && !normalizedServerUrl ? (
+                  <Text style={[styles.serverError, { color: colors.errorText }]}>{t('settings.server.invalid')}</Text>
+                ) : null}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t('settings.server.save')}
+                  disabled={!normalizedServerUrl || savingServer}
+                  onPress={() => void submitServer()}
+                  style={({ pressed }) => [
+                    styles.saveButton,
+                    (!normalizedServerUrl || savingServer) && styles.saveButtonDisabled,
+                    pressed && styles.saveButtonPressed,
+                  ]}
+                >
+                  {savingServer ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.saveButtonText}>{t('settings.server.save')}</Text>}
+                </Pressable>
+              </View>
+            ) : (
               <View style={styles.group}>
                 {/* 选择后仍停留在详情页，受控值立即显示勾选；返回首页再显示最新摘要。
                     不添加保存按钮或另一份偏好状态，避免与父层持久化逻辑产生双写。 */}

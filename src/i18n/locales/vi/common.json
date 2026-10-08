@@ -16,7 +16,9 @@
       "hint": "Nhập secret được cấu hình là tokenIssueSecret trong cấu hình gateway.",
       "placeholder": "Mật khẩu",
       "submit": "Kết nối",
-      "invalid": "Mật khẩu không hợp lệ. Hãy thử lại."
+      "invalid": "Mật khẩu không hợp lệ. Hãy thử lại.",
+      "serverPlaceholder": "http://192.168.1.10:8765",
+      "serverInvalid": "Nhập địa chỉ máy chủ http:// hoặc https:// hợp lệ."
     },
     "account": {
       "section": "Tài khoản",
@@ -79,7 +81,8 @@
     "rows": {
       "currentModel": "Cấu hình hiện tại",
       "selectedPreset": "Preset đã chọn",
-      "theme": "Chủ đề"
+      "theme": "Chủ đề",
+      "server": "Máy chủ"
     },
     "skills": {
       "openDetails": "Mở chi tiết {{name}}"
@@ -97,7 +100,14 @@
       "note": "Các tùy chọn này chỉ áp dụng cho thiết bị này, không thay đổi cài đặt cuộc trò chuyện.",
       "themeHint": "Chọn giao diện nanobot trên thiết bị này.",
       "languageHint": "Chọn ngôn ngữ giao diện ứng dụng.",
-      "back": "Quay lại cài đặt"
+      "back": "Quay lại cài đặt",
+      "connectionGroup": "Kết nối"
+    },
+    "server": {
+      "hint": "Dùng địa chỉ nanobot Gateway của riêng bạn. Khi đổi, bạn sẽ đăng xuất và cần đăng nhập lại.",
+      "placeholder": "http://192.168.1.10:8765",
+      "invalid": "Nhập địa chỉ máy chủ http:// hoặc https:// hợp lệ.",
+      "save": "Lưu và chuyển"
     }
   },
   "chat": {

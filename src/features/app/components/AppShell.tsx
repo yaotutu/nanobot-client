@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppBootstrapController } from '@/features/app/hooks/use-app-bootstrap-controller';
+import { useAppPreferences } from '@/features/app/hooks/use-app-preferences';
 import { useUpdateLifecycle } from '@/features/updates';
 import { AuthScreen } from '@/features/auth/screen';
 import { createDeferredComponent } from '@/hooks/use-deferred-component';
@@ -13,7 +14,7 @@ type ReadyAppShellProps = Record<string, never>;
 
 /**
  * 完整工作区只在鉴权成功后挂载。这里刻意不用 React.lazy/Suspense：Pixel XL（Android 10）
- * 在 Fabric 提交 Suspense 懒加载树时曾进入 MountingCoordinator 原生 SIGSEGV。
+ * 在 Fabric 提交 Suspense 懒加载树时曾进入原生 SIGSEGV。
  * 普通 effect/state 包装器既能拆分启动依赖，又避免重新引入该原生崩溃路径。
  */
 const DeferredReadyAppShell = createDeferredComponent<ReadyAppShellProps>(() => {
@@ -28,7 +29,7 @@ const DeferredReadyAppShell = createDeferredComponent<ReadyAppShellProps>(() => 
 export function AppShell() {
   useUpdateLifecycle();
   const auth = useAppBootstrapController();
-  const { t } = useTranslation();
+  const { changeServerUrl, preferences } = useAppPreferences();
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -47,19 +48,16 @@ export function AppShell() {
     return () => clearTimeout(timer);
   }, [auth.phase]);
 
-  if (auth.phase === 'authentication') {
-    return <AuthScreen failed={auth.authenticationFailed} onSubmit={auth.authenticate} />;
-  }
-
-  if (auth.phase === 'unreachable') {
+  // 登录和网关不可达共用同一个表单；不可达时用户可以直接修改服务器地址再重试。
+  if (auth.phase === 'authentication' || auth.phase === 'unreachable') {
     return (
-      <View style={[styles.centered, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <Text style={styles.errorTitle}>{t('app.auth.error.title')}</Text>
-        <Text style={styles.errorMessage}>{auth.error ?? t('app.auth.error.gatewayHint')}</Text>
-        <Pressable onPress={auth.retryConnection} style={styles.retryButton}>
-          <Text style={styles.retryText}>{t('settings.channels.reconnect')}</Text>
-        </Pressable>
-      </View>
+      <AuthScreen
+        error={auth.phase === 'unreachable' ? auth.error : null}
+        failed={auth.authenticationFailed}
+        onServerUrlChange={changeServerUrl}
+        onSubmit={auth.authenticate}
+        serverUrl={preferences.serverUrl}
+      />
     );
   }
 
@@ -96,8 +94,4 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: { color: '#777672', fontSize: 13 },
-  errorTitle: { color: '#252421', fontSize: 20, fontWeight: '600' },
-  errorMessage: { color: '#777672', fontSize: 14, lineHeight: 21, textAlign: 'center' },
-  retryButton: { marginTop: 8, minWidth: 128, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#242320' },
-  retryText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
 });

@@ -16,7 +16,9 @@
       "hint": "gateway 設定の tokenIssueSecret に指定されたシークレットを入力してください。",
       "placeholder": "パスワード",
       "submit": "接続",
-      "invalid": "パスワードが無効です。もう一度お試しください。"
+      "invalid": "パスワードが無効です。もう一度お試しください。",
+      "serverPlaceholder": "http://192.168.1.10:8765",
+      "serverInvalid": "有効な http:// または https:// のサーバーアドレスを入力してください。"
     },
     "account": {
       "section": "アカウント",
@@ -79,7 +81,8 @@
     "rows": {
       "currentModel": "現在の設定",
       "selectedPreset": "選択中のプリセット",
-      "theme": "テーマ"
+      "theme": "テーマ",
+      "server": "サーバー"
     },
     "skills": {
       "openDetails": "{{name}} の詳細を開く"
@@ -97,7 +100,14 @@
       "note": "この端末の表示にのみ適用され、会話の設定は変更しません。",
       "themeHint": "この端末での nanobot の外観を選択します。",
       "languageHint": "アプリの表示言語を選択します。",
-      "back": "設定に戻る"
+      "back": "設定に戻る",
+      "connectionGroup": "接続"
+    },
+    "server": {
+      "hint": "自分の nanobot Gateway のアドレスを使用します。変更するとサインアウトし、再度サインインが必要です。",
+      "placeholder": "http://192.168.1.10:8765",
+      "invalid": "有効な http:// または https:// のサーバーアドレスを入力してください。",
+      "save": "保存して切り替える"
     }
   },
   "chat": {

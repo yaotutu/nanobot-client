@@ -26,7 +26,7 @@ export function ReadyAppShell() {
   useEffect(() => {
     markStartup('ready_shell_mounted');
   }, []);
-  const { preferences, changePreferences } = useAppPreferences();
+  const { preferences, changePreferences, changeServerUrl } = useAppPreferences();
   const dark = preferences.theme === 'dark';
   const colors = dark ? DARK_COLORS : LIGHT_COLORS;
   const bootstrap = app.auth.bootstrap!;
@@ -40,6 +40,7 @@ export function ReadyAppShell() {
   });
 
   const chatController = app.chat!;
+  const { logout } = app.runtime;
 
   const selectSession = useCallback((key: string | null) => {
     navigation.resetChat();
@@ -55,6 +56,13 @@ export function ReadyAppShell() {
     navigation.resetChat();
     app.workspace.startNewChatInProject(projectPath, projectName);
   }, [app, navigation]);
+
+  // 切换服务器等价于切换账号环境：关闭旧 socket、清空内存数据并重新登录。
+  // 不复用旧 token，避免不同 gateway 的会话 ID、工作区和鉴权上下文串在一起。
+  const switchServer = useCallback(async (serverUrl: string) => {
+    await logout();
+    changeServerUrl(serverUrl);
+  }, [changeServerUrl, logout]);
 
   return (
     <View style={styles.root}>
@@ -74,8 +82,9 @@ export function ReadyAppShell() {
         preferences={preferences}
         visible={navigation.preferencesOpen}
         onChange={changePreferences}
+        onServerChange={switchServer}
         onClose={() => navigation.setPreferencesOpen(false)}
-        onLogout={app.runtime.logout}
+        onLogout={logout}
       />
       <AppModals
         updateAvailable={hasUpdate(updates)}

@@ -16,7 +16,9 @@
       "hint": "請輸入閘道設定中 tokenIssueSecret 所設定的金鑰。",
       "placeholder": "密碼",
       "submit": "連線",
-      "invalid": "密碼無效，請再試一次。"
+      "invalid": "密碼無效，請再試一次。",
+      "serverPlaceholder": "http://192.168.1.10:8765",
+      "serverInvalid": "請輸入有效的 http:// 或 https:// 伺服器地址。"
     },
     "account": {
       "section": "帳戶",
@@ -79,7 +81,8 @@
     "rows": {
       "currentModel": "目前設定",
       "selectedPreset": "已選預設",
-      "theme": "主題"
+      "theme": "主題",
+      "server": "伺服器"
     },
     "skills": {
       "openDetails": "開啟 {{name}} 的詳細資料"
@@ -97,7 +100,14 @@
       "note": "僅影響此裝置的顯示，不變更對話設定。",
       "themeHint": "選擇 nanobot 在此裝置上的外觀。",
       "languageHint": "選擇應用程式介面使用的語言。",
-      "back": "返回設定"
+      "back": "返回設定",
+      "connectionGroup": "連線"
+    },
+    "server": {
+      "hint": "填寫你自己的 nanobot Gateway 地址。切換後會登出目前帳號，並要求重新驗證。",
+      "placeholder": "http://192.168.1.10:8765",
+      "invalid": "請輸入有效的 http:// 或 https:// 伺服器地址。",
+      "save": "儲存並切換"
     }
   },
   "chat": {

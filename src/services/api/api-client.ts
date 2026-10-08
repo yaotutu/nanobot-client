@@ -9,7 +9,7 @@
  * 直接接触 baseUrl / token。
  */
 export interface ApiClientOptions {
-  baseUrl: string;
+  getBaseUrl: () => string;
   /** 返回当前可用的 API token；未登录返回空串时客户端会自动抛错 */
   getToken: () => string;
   /** 默认超时，毫秒；0 表示不超时 */
@@ -40,7 +40,6 @@ export class ApiError extends Error {
 }
 
 export interface ApiClient {
-  readonly baseUrl: string;
   request<T>(path: string, options?: RequestOptions): Promise<T>;
   get<T>(path: string, query?: RequestOptions['query'], options?: Omit<RequestOptions, 'method' | 'query' | 'body'>): Promise<T>;
   post<T>(path: string, body?: unknown, options?: Omit<RequestOptions, 'method' | 'body'>): Promise<T>;
@@ -76,10 +75,10 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
 }
 
 export function createApiClient(opts: ApiClientOptions): ApiClient {
-  const { baseUrl, getToken, defaultTimeoutMs = 20_000 } = opts;
+  const { getBaseUrl, getToken, defaultTimeoutMs = 20_000 } = opts;
 
   const request = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
-    const url = `${baseUrl}${path}${buildQuery(options.query)}`;
+    const url = `${getBaseUrl()}${path}${buildQuery(options.query)}`;
     const headers: Record<string, string> = {
       Accept: 'application/json',
       ...(options.headers ?? {}),
@@ -121,7 +120,6 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
   };
 
   return {
-    baseUrl,
     request,
     get: (path, query, options) => request(path, { ...options, method: 'GET', query }),
     post: (path, body, options) => request(path, { ...options, method: 'POST', body }),

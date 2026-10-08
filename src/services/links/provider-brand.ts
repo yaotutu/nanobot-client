@@ -1,4 +1,4 @@
-import { DEFAULT_SERVER_URL } from '@/services/api/config';
+import { getServerUrl } from '@/services/api/config';
 
 function officialFaviconUrl(domain: string): string {
   return `https://${domain}/favicon.ico`;
@@ -57,7 +57,7 @@ export function resolveLogoUrl(value: string | null | undefined): string | undef
   const trimmed = value?.trim();
   if (!trimmed) return undefined;
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  if (trimmed.startsWith('/')) return `${DEFAULT_SERVER_URL}${trimmed}`;
+  if (trimmed.startsWith('/')) return `${getServerUrl()}${trimmed}`;
   return undefined;
 }
 

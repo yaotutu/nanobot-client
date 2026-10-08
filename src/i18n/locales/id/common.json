@@ -16,7 +16,9 @@
       "hint": "Masukkan secret yang dikonfigurasi sebagai tokenIssueSecret di konfigurasi gateway.",
       "placeholder": "Kata sandi",
       "submit": "Hubungkan",
-      "invalid": "Kata sandi tidak valid. Coba lagi."
+      "invalid": "Kata sandi tidak valid. Coba lagi.",
+      "serverPlaceholder": "http://192.168.1.10:8765",
+      "serverInvalid": "Masukkan alamat server http:// atau https:// yang valid."
     },
     "account": {
       "section": "Akun",
@@ -79,7 +81,8 @@
     "rows": {
       "currentModel": "Konfigurasi saat ini",
       "selectedPreset": "Preset terpilih",
-      "theme": "Tema"
+      "theme": "Tema",
+      "server": "Server"
     },
     "skills": {
       "openDetails": "Buka detail {{name}}"
@@ -97,7 +100,14 @@
       "note": "Preferensi ini hanya berlaku di perangkat ini, bukan untuk percakapan Anda.",
       "themeHint": "Pilih tampilan nanobot di perangkat ini.",
       "languageHint": "Pilih bahasa antarmuka aplikasi.",
-      "back": "Kembali ke pengaturan"
+      "back": "Kembali ke pengaturan",
+      "connectionGroup": "Koneksi"
+    },
+    "server": {
+      "hint": "Gunakan alamat nanobot Gateway Anda sendiri. Mengubahnya akan keluar dari sesi dan meminta masuk kembali.",
+      "placeholder": "http://192.168.1.10:8765",
+      "invalid": "Masukkan alamat server http:// atau https:// yang valid.",
+      "save": "Simpan dan ganti"
     }
   },
   "chat": {

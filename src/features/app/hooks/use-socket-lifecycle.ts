@@ -5,7 +5,7 @@ import { useChatStore } from '@/features/chat/store';
 import { useWorkspacesStore } from '@/features/workspaces/store';
 import i18n from '@/i18n';
 import { deriveWsUrl } from '@/services/api/bootstrap';
-import { DEFAULT_SERVER_URL as SERVER_URL } from '@/services/api/config';
+import { getServerUrl } from '@/services/api/config';
 
 import { createNanobotSocket, type NanobotSocket } from '@/features/connection/socket-transport';
 import { useConnectionStore } from '@/features/connection/store';
@@ -42,7 +42,7 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
 
     const socket = createNanobotSocket({
       url: deriveWsUrl(
-        SERVER_URL,
+        getServerUrl(),
         currentBootstrap.ws_path,
         currentBootstrap.token,
         currentBootstrap.ws_url ?? null,
@@ -52,7 +52,7 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
           const fresh = await refreshAuth('socket-reauthentication');
           if (!fresh) return null;
           return deriveWsUrl(
-            SERVER_URL,
+            getServerUrl(),
             fresh.ws_path,
             fresh.token,
             fresh.ws_url ?? null,
@@ -114,7 +114,7 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
   useEffect(() => {
     if (!bootstrap) return;
     const url = deriveWsUrl(
-      SERVER_URL,
+      getServerUrl(),
       bootstrap.ws_path,
       bootstrap.token,
       bootstrap.ws_url ?? null,

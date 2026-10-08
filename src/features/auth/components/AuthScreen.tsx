@@ -12,24 +12,40 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { normalizeServerUrl } from '@/services/api/config';
+
 // Static Metro asset; require is the React Native asset loader.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const nanobotIcon = require('../../../../assets/images/nanobot-icon.png');
 
 interface AuthScreenProps {
   failed: boolean;
+  /** 连接错误；为空且 failed 为 true 时显示默认密码错误文案。 */
+  error?: string | null;
   submitting?: boolean;
+  serverUrl: string;
+  onServerUrlChange: (serverUrl: string) => void;
   onSubmit: (secret: string) => Promise<void> | void;
 }
 
-export function AuthScreen({ failed, submitting = false, onSubmit }: AuthScreenProps) {
+export function AuthScreen({
+  error = null,
+  failed,
+  submitting = false,
+  serverUrl,
+  onServerUrlChange,
+  onSubmit,
+}: AuthScreenProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const [secret, setSecret] = useState('');
+  const [serverDraft, setServerDraft] = useState(serverUrl);
+  const normalizedServerUrl = normalizeServerUrl(serverDraft);
 
   const submit = () => {
     const value = secret.trim();
-    if (!value || submitting) return;
+    if (!value || !normalizedServerUrl || submitting) return;
+    onServerUrlChange(normalizedServerUrl);
     void onSubmit(value);
   };
 
@@ -42,7 +58,26 @@ export function AuthScreen({ failed, submitting = false, onSubmit }: AuthScreenP
         <Image source={nanobotIcon} style={styles.logo} />
         <Text style={styles.title}>{t('app.auth.title')}</Text>
         <Text style={styles.hint}>{t('app.auth.hint')}</Text>
-        {failed ? <Text style={styles.error}>{t('app.auth.invalid')}</Text> : null}
+        {error || failed ? (
+          <Text style={[styles.error, styles.formError]}>
+            {error || t('app.auth.invalid')}
+          </Text>
+        ) : null}
+        <TextInput
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!submitting}
+          keyboardType="url"
+          onChangeText={setServerDraft}
+          placeholder={t('app.auth.serverPlaceholder')}
+          placeholderTextColor="#9B9B9B"
+          returnKeyType="next"
+          style={[styles.input, styles.serverInput, !!serverDraft.trim() && !normalizedServerUrl && styles.inputFailed]}
+          value={serverDraft}
+        />
+        {!!serverDraft.trim() && !normalizedServerUrl ? (
+          <Text style={[styles.error, styles.serverError]}>{t('app.auth.serverInvalid')}</Text>
+        ) : null}
         <TextInput
           autoCapitalize="none"
           autoCorrect={false}
@@ -58,11 +93,11 @@ export function AuthScreen({ failed, submitting = false, onSubmit }: AuthScreenP
         />
         <Pressable
           accessibilityRole="button"
-          disabled={!secret.trim() || submitting}
+          disabled={!secret.trim() || !normalizedServerUrl || submitting}
           onPress={submit}
           style={({ pressed }) => [
             styles.button,
-            (!secret.trim() || submitting) && styles.buttonDisabled,
+            (!secret.trim() || !normalizedServerUrl || submitting) && styles.buttonDisabled,
             pressed && styles.buttonPressed,
           ]}
         >
@@ -122,6 +157,17 @@ const styles = StyleSheet.create({
   },
   inputFailed: {
     borderColor: '#D9685E',
+  },
+  serverInput: {
+    marginBottom: 0,
+  },
+  serverError: {
+    alignSelf: 'flex-start',
+    marginBottom: 4,
+  },
+  formError: {
+    alignSelf: 'flex-start',
+    marginBottom: 4,
   },
   button: {
     width: '100%',

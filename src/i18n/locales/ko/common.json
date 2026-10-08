@@ -16,7 +16,9 @@
       "hint": "gateway 설정의 tokenIssueSecret에 구성된 비밀 값을 입력하세요.",
       "placeholder": "비밀번호",
       "submit": "연결",
-      "invalid": "비밀번호가 올바르지 않습니다. 다시 시도하세요."
+      "invalid": "비밀번호가 올바르지 않습니다. 다시 시도하세요.",
+      "serverPlaceholder": "http://192.168.1.10:8765",
+      "serverInvalid": "유효한 http:// 또는 https:// 서버 주소를 입력하세요."
     },
     "account": {
       "section": "계정",
@@ -79,7 +81,8 @@
     "rows": {
       "currentModel": "현재 구성",
       "selectedPreset": "선택한 프리셋",
-      "theme": "테마"
+      "theme": "테마",
+      "server": "서버"
     },
     "skills": {
       "openDetails": "{{name}} 상세 열기"
@@ -97,7 +100,14 @@
       "note": "이 기기의 표시에만 적용되며 대화 설정은 변경되지 않습니다.",
       "themeHint": "이 기기에서 nanobot의 테마를 선택하세요.",
       "languageHint": "앱에서 사용할 언어를 선택하세요.",
-      "back": "설정으로 돌아가기"
+      "back": "설정으로 돌아가기",
+      "connectionGroup": "연결"
+    },
+    "server": {
+      "hint": "자신의 nanobot Gateway 주소를 사용하세요. 변경하면 로그아웃되고 다시 로그인해야 합니다.",
+      "placeholder": "http://192.168.1.10:8765",
+      "invalid": "유효한 http:// 또는 https:// 서버 주소를 입력하세요.",
+      "save": "저장하고 전환"
     }
   },
   "chat": {

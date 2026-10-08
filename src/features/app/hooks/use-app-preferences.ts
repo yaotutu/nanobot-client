@@ -24,5 +24,9 @@ export function useAppPreferences() {
     void setAppLanguage(normalizeLocale(next.language));
   }, [replace]);
 
-  return { preferences, changePreferences };
+  const changeServerUrl = useCallback((serverUrl: string) => {
+    useLocalPreferencesStore.getState().update({ serverUrl });
+  }, []);
+
+  return { changePreferences, changeServerUrl, preferences };
 }

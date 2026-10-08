@@ -16,7 +16,9 @@
       "hint": "Informe o segredo configurado como tokenIssueSecret na configuração do gateway.",
       "placeholder": "Senha",
       "submit": "Conectar",
-      "invalid": "Senha inválida. Tente novamente."
+      "invalid": "Senha inválida. Tente novamente.",
+      "serverPlaceholder": "http://192.168.1.10:8765",
+      "serverInvalid": "Informe um endereço de servidor http:// ou https:// válido."
     },
     "account": {
       "section": "Conta",
@@ -79,7 +81,8 @@
     "rows": {
       "currentModel": "Configuração atual",
       "selectedPreset": "Predefinição selecionada",
-      "theme": "Tema"
+      "theme": "Tema",
+      "server": "Servidor"
     },
     "skills": {
       "openDetails": "Abrir detalhes de {{name}}"
@@ -97,7 +100,14 @@
       "note": "Estas preferências se aplicam apenas a este dispositivo, não às suas conversas.",
       "themeHint": "Escolha a aparência do nanobot neste dispositivo.",
       "languageHint": "Escolha o idioma da interface do aplicativo.",
-      "back": "Voltar às configurações"
+      "back": "Voltar às configurações",
+      "connectionGroup": "Conexão"
+    },
+    "server": {
+      "hint": "Use o endereço do seu próprio nanobot Gateway. Ao alterar, você sairá e precisará entrar novamente.",
+      "placeholder": "http://192.168.1.10:8765",
+      "invalid": "Informe um endereço de servidor http:// ou https:// válido.",
+      "save": "Salvar e alternar"
     }
   },
   "chat": {

@@ -8,10 +8,13 @@ import { apiClient } from '@/services/api/api';
 import type { LocalPreferences } from '@/stores/local-preferences-store';
 import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
 
+// 服务器偏好是纯展示数据；测试里使用独立地址，避免依赖真实局域网网关。
+
 // 仅隔离 Jest 无法直接加载的装饰性 ESM 图标，仍测试真实列表与 Modal 交互。
 jest.mock('lucide-react-native/icons/arrow-left', () => () => null);
 jest.mock('lucide-react-native/icons/check', () => () => null);
 jest.mock('lucide-react-native/icons/chevron-right', () => () => null);
+jest.mock('lucide-react-native/icons/server', () => () => null);
 jest.mock('lucide-react-native/icons/download', () => () => null);
 jest.mock('lucide-react-native/icons/languages', () => () => null);
 jest.mock('lucide-react-native/icons/log-out', () => () => null);
@@ -40,9 +43,11 @@ jest.mock('@/services/api/api', () => ({
 }));
 
 // 仅提供当前支持的主题与语言；冻结对象，确保单项更新保留另一项且不直接修改入参。
+const serverUrl = 'http://example.test:8765';
 const preferences = Object.freeze<LocalPreferences>({
   theme: 'light',
   language: 'en',
+  serverUrl,
 });
 
 // 只导入状态类型，不加载原生 runtime 或真实 store；每次构造独立 controller，
@@ -84,6 +89,7 @@ const createProps = () => ({
   updates: createUpdates(),
   visible: true,
   onChange: jest.fn<(next: LocalPreferences) => void>(),
+  onServerChange: jest.fn(async () => undefined),
   onClose: jest.fn<() => void>(),
   onLogout: jest.fn(async () => undefined),
 });
@@ -115,6 +121,7 @@ describe('PreferencesModal', () => {
     expect(props.onChange).not.toHaveBeenCalled();
     expect(props.onClose).not.toHaveBeenCalled();
     expect(props.onLogout).not.toHaveBeenCalled();
+    expect(props.onServerChange).not.toHaveBeenCalled();
     expectNoUpdateActions(props.updates);
   });
 
@@ -123,15 +130,36 @@ describe('PreferencesModal', () => {
     expect(result.getAllByText(/.+/).map((node) => node.props.children)).toEqual([
       'sidebar.settings', 'settings.preferences.note', 'settings.preferences.group',
       'settings.rows.theme', 'settings.values.light', 'sidebar.language.label', 'English',
+      'settings.preferences.connectionGroup', 'settings.rows.server', serverUrl,
       'updates.appGroup', 'updates.title', 'updates.unknown',
       'settings.preferences.account', 'app.account.logout',
     ]);
     expect(result.queryAllByRole('radio')).toHaveLength(0);
-    expect(result.getAllByRole('button')).toHaveLength(5);
+    expect(result.getAllByRole('button')).toHaveLength(6);
+    expect(result.getByRole('button', { name: 'settings.rows.server' })).toHaveAccessibilityValue({ text: serverUrl });
     expect(result.getByRole('button', { name: 'updates.title' })).toHaveAccessibilityValue({ text: 'updates.unknown' });
     expect(result.queryByTestId('settings-update-badge')).toBeNull();
     expect(result.getByRole('button', { name: 'settings.rows.theme' })).toHaveAccessibilityValue({ text: 'settings.values.light' });
     expect(result.getByRole('button', { name: 'sidebar.language.label' })).toHaveAccessibilityValue({ text: 'English' });
+  });
+
+  it('服务器地址只提交规范化结果，非法输入阻止保存', async () => {
+    const props = createProps();
+    const result = await render(<PreferencesModal {...props} />);
+    await fireEvent.press(result.getByRole('button', { name: 'settings.rows.server' }));
+    expect(result.getByRole('header', { name: 'settings.rows.server' })).toBeTruthy();
+    expect(result.getByDisplayValue(serverUrl)).toBeTruthy();
+
+    await fireEvent.changeText(result.getByDisplayValue(serverUrl), 'not-a-url');
+    expect(result.getByText('settings.server.invalid')).toBeTruthy();
+    expect(result.getByRole('button', { name: 'settings.server.save' })).toBeDisabled();
+
+    await fireEvent.changeText(result.getByDisplayValue('not-a-url'), 'http://example.test:9999/');
+    await fireEvent.press(result.getByRole('button', { name: 'settings.server.save' }));
+    expect(props.onServerChange).toHaveBeenCalledWith('http://example.test:9999');
+    expect(props.onChange).not.toHaveBeenCalled();
+    expect(props.onLogout).not.toHaveBeenCalled();
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it('展示及本地操作均不调用服务端', async () => {
@@ -180,10 +208,16 @@ describe('PreferencesModal', () => {
     expect(result.getByRole('button', { name: 'sidebar.language.label' })).toHaveAccessibilityValue({ text: locale.nativeLabel });
   });
 
-  it.each(['theme', 'language', 'updates'] as const)('系统返回先退出 %s 详情，首页再返回才关闭', async (page) => {
+  it.each(['theme', 'language', 'server', 'updates'] as const)('系统返回先退出 %s 详情，首页再返回才关闭', async (page) => {
     const props = createProps();
     const result = await render(<PreferencesModal {...props} />);
-    const title = page === 'updates' ? 'updates.title' : page === 'theme' ? 'settings.rows.theme' : 'sidebar.language.label';
+    const title = page === 'updates'
+      ? 'updates.title'
+      : page === 'theme'
+        ? 'settings.rows.theme'
+        : page === 'server'
+          ? 'settings.rows.server'
+          : 'sidebar.language.label';
     await fireEvent.press(result.getByRole('button', { name: title }));
     await fireEvent(result.getByRole('header', { name: title }), 'requestClose');
     expect(result.getByRole('header', { name: 'sidebar.settings' })).toBeTruthy();
@@ -193,10 +227,13 @@ describe('PreferencesModal', () => {
     expect(props.onChange).not.toHaveBeenCalled();
   });
 
-  it.each(['home', 'theme', 'language', 'updates'] as const)('在 %s 页面点击关闭仅触发 onClose', async (page) => {
+  it.each(['home', 'theme', 'language', 'server', 'updates'] as const)('在 %s 页面点击关闭仅触发 onClose', async (page) => {
     const props = createProps();
     const result = await render(<PreferencesModal {...props} />);
-    if (page !== 'home') await fireEvent.press(result.getByRole('button', { name: page === 'updates' ? 'updates.title' : page === 'theme' ? 'settings.rows.theme' : 'sidebar.language.label' }));
+    if (page === 'theme') await fireEvent.press(result.getByRole('button', { name: 'settings.rows.theme' }));
+    if (page === 'language') await fireEvent.press(result.getByRole('button', { name: 'sidebar.language.label' }));
+    if (page === 'server') await fireEvent.press(result.getByRole('button', { name: 'settings.rows.server' }));
+    if (page === 'updates') await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));
     await fireEvent.press(result.getByRole('button', { name: 'common.dismiss' }));
     expect(props.onClose).toHaveBeenCalledTimes(1);
     expect(props.onChange).not.toHaveBeenCalled();
@@ -209,7 +246,7 @@ describe('PreferencesModal', () => {
     await fireEvent.press(result.getByRole('button', { name: 'sidebar.language.label' }));
     await result.rerender(<PreferencesModal {...props} visible={false} />);
     expect(result.toJSON()).toBeNull();
-    await result.rerender(<PreferencesModal {...props} preferences={{ theme: 'dark', language: 'zh-CN' }} />);
+    await result.rerender(<PreferencesModal {...props} preferences={{ ...preferences, theme: 'dark', language: 'zh-CN' }} />);
     expect(result.getByRole('header', { name: 'sidebar.settings' })).toBeTruthy();
     expect(result.queryAllByRole('radio')).toHaveLength(0);
     expect(result.getByText('简体中文')).toBeTruthy();

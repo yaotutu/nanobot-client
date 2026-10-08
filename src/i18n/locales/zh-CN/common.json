@@ -16,7 +16,9 @@
       "hint": "请输入 gateway 配置中的 tokenIssueSecret。",
       "placeholder": "密码",
       "submit": "连接",
-      "invalid": "密码无效，请重试。"
+      "invalid": "密码无效，请重试。",
+      "serverPlaceholder": "http://192.168.1.10:8765",
+      "serverInvalid": "请输入有效的 http:// 或 https:// 服务器地址。"
     },
     "account": {
       "section": "账户",
@@ -79,7 +81,8 @@
     "rows": {
       "currentModel": "当前配置",
       "selectedPreset": "选中的预设",
-      "theme": "主题"
+      "theme": "主题",
+      "server": "服务器"
     },
     "skills": {
       "openDetails": "查看 {{name}} 详情"
@@ -97,7 +100,14 @@
       "note": "仅影响此设备的显示，不改变会话设置。",
       "themeHint": "选择 nanobot 在此设备上的外观。",
       "languageHint": "选择应用界面使用的语言。",
-      "back": "返回设置"
+      "back": "返回设置",
+      "connectionGroup": "连接"
+    },
+    "server": {
+      "hint": "填写你自己的 nanobot Gateway 地址。切换后会退出当前登录，并要求重新验证。",
+      "placeholder": "http://192.168.1.10:8765",
+      "invalid": "请输入有效的 http:// 或 https:// 服务器地址。",
+      "save": "保存并切换"
     }
   },
   "chat": {

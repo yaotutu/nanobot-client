@@ -29,7 +29,7 @@ function htmlResponse(status = 502) {
 describe('createApiClient', () => {
   it('issues GET with bearer token and parses JSON', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ hello: 'world' }));
-    const client = createApiClient({ baseUrl: 'http://x', getToken: () => 'tok' });
+    const client = createApiClient({ getBaseUrl: () => 'http://x', getToken: () => 'tok' });
     const out = await client.get<{ hello: string }>('/api/foo');
     expect(out).toEqual({ hello: 'world' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -42,7 +42,7 @@ describe('createApiClient', () => {
 
   it('serializes query parameters, dropping empty values', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({}));
-    const client = createApiClient({ baseUrl: 'http://x', getToken: () => 'tok' });
+    const client = createApiClient({ getBaseUrl: () => 'http://x', getToken: () => 'tok' });
     await client.get('/api/foo', { a: 1, b: '', c: undefined, d: null, e: 'x' });
     const [url] = fetchMock.mock.calls[0];
     expect(url).toBe('http://x/api/foo?a=1&e=x');
@@ -50,14 +50,14 @@ describe('createApiClient', () => {
 
   it('throws ApiError on non-2xx', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(new Response('Bad', { status: 401, statusText: 'Unauthorized' })));
-    const client = createApiClient({ baseUrl: 'http://x', getToken: () => '' });
+    const client = createApiClient({ getBaseUrl: () => 'http://x', getToken: () => '' });
     await expect(client.get('/api/x')).rejects.toBeInstanceOf(ApiError);
     await expect(client.get('/api/x')).rejects.toMatchObject({ status: 401 });
   });
 
   it('throws ApiError when HTML returned instead of JSON', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(htmlResponse()));
-    const client = createApiClient({ baseUrl: 'http://x', getToken: () => '' });
+    const client = createApiClient({ getBaseUrl: () => 'http://x', getToken: () => '' });
     await expect(client.get('/api/x')).rejects.toThrow(/html/i);
   });
 
@@ -68,15 +68,36 @@ describe('createApiClient', () => {
         signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
       });
     });
-    const client = createApiClient({ baseUrl: 'http://x', getToken: () => '', defaultTimeoutMs: 50 });
+    const client = createApiClient({ getBaseUrl: () => 'http://x', getToken: () => '', defaultTimeoutMs: 50 });
     await expect(client.get('/api/slow')).rejects.toThrow();
   });
 
   it('omits Authorization header when token is empty', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({}));
-    const client = createApiClient({ baseUrl: 'http://x', getToken: () => '' });
+    const client = createApiClient({ getBaseUrl: () => 'http://x', getToken: () => '' });
     await client.get('/api/foo');
     const [, init] = fetchMock.mock.calls[0];
     expect(init.headers.Authorization).toBeUndefined();
+  });
+});
+
+
+describe('dynamic base URL', () => {
+  it('reads the base URL for every request without recreating the client', async () => {
+    let baseUrl = 'http://first';
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({})));
+    const client = createApiClient({
+      getBaseUrl: () => baseUrl,
+      getToken: () => '',
+    });
+
+    await client.get('/api/foo');
+    baseUrl = 'http://second';
+    await client.get('/api/foo');
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      'http://first/api/foo',
+      'http://second/api/foo',
+    ]);
   });
 });
