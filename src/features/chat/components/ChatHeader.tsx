@@ -41,7 +41,13 @@ export function ChatHeader({
         accessibilityLabel={t('thread.agentActivity.open')}
         accessibilityRole="button"
         onPress={onOpenAgentActivity}
-        style={({ pressed }) => [styles.heading, pressed && styles.pressFeedback]}
+        style={({ pressed }) => [
+          styles.heading,
+          {
+            backgroundColor: pressed ? colors.pressed : colors.card,
+            borderColor: colors.border,
+          },
+        ]}
       >
         <HeaderAvatar phase={(headerActivity ?? idleActivity).phase} />
         <Text style={[styles.brand, { color: colors.foreground }]}>{t('app.brand')}</Text>
@@ -66,14 +72,23 @@ export function ChatHeader({
 }
 
 const styles = StyleSheet.create({
-  // 与参考手机页相同的 122 高顶栏，左右操作不挤占中间品牌与会话胶囊。
-  header: { height: 122, width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center', paddingTop: 2 },
+  // 顶部是悬浮层；中央卡片比原来略高，避免头像和胶囊贴着消息内容。
+  header: { height: 134, width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center', paddingTop: 2 },
   button: { position: 'absolute', top: 16, width: 44, height: 44, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   menuButton: { left: 20 },
   optionsButton: { right: 20 },
-  heading: { alignSelf: 'center', maxWidth: '68%', alignItems: 'center', gap: 1 },
+  // 中央品牌入口叠在消息内容上，必须像左右按钮一样有卡片背景，避免透明区域和消息文字混在一起。
+  heading: {
+    alignSelf: 'center',
+    maxWidth: '68%',
+    alignItems: 'center',
+    gap: 1,
+    paddingHorizontal: 18,
+    paddingTop: 4,
+    paddingBottom: 6,
+    borderRadius: 26,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   brand: { fontSize: 16, lineHeight: 20, fontWeight: '600', letterSpacing: -0.4 },
   subtitle: { fontSize: 11, lineHeight: 16, marginBottom: 5 },
-  // 头像区域没有圆形背景，按压透明度是明确的触控反馈，不做平台分支。
-  pressFeedback: { opacity: 0.72 },
 });
