@@ -39,6 +39,7 @@ export function useAppController() {
   const toggleSidebarGroup = useSidebarStore((state) => state.toggleGroup);
   const renameSession = useSidebarStore((state) => state.renameSession);
   const renameProject = useSidebarStore((state) => state.renameProject);
+  const refreshSessions = useSidebarStore((state) => state.refresh);
   const setShowArchived = useSidebarStore((state) => state.setShowArchived);
 
   const activeKey = useChatStore((state) => state.activeKey);
@@ -190,6 +191,7 @@ export function useAppController() {
       renameSession,
       renameProject,
       setShowArchived,
+      refreshSessions,
       removeSession: sessionCommands.removeSession,
     },
     workspace: {

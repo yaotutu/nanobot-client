@@ -41,6 +41,20 @@ export function ReadyAppShell() {
 
   const chatController = app.chat!;
   const { logout } = app.runtime;
+  const { openConversations, openSearch } = navigation;
+  const refreshSessions = app.sidebar.refreshSessions;
+
+  // 会话数据只在登录后和新建会话后刷新；服务端历史可能被其他客户端删除，
+  // 因此每次打开历史入口前主动拉取一次，避免长期驻留的客户端展示旧列表。
+  const openFreshConversations = useCallback(() => {
+    openConversations();
+    void refreshSessions();
+  }, [openConversations, refreshSessions]);
+
+  const openFreshSearch = useCallback(() => {
+    openSearch();
+    void refreshSessions();
+  }, [openSearch, refreshSessions]);
 
   // 设置页只接收展示契约；更新状态与用户操作仍由 updates feature 封装。
   const updateSection = {
@@ -84,7 +98,7 @@ export function ReadyAppShell() {
         chatOptionsOpen={navigation.chatOptionsOpen}
         onCloseChatOptions={() => navigation.setChatOptionsOpen(false)}
         navigationRevision={navigation.chatResetRevision}
-        onOpenConversations={navigation.openConversations}
+        onOpenConversations={openFreshConversations}
         onOpenChatOptions={navigation.openChatOptions}
       />
       <PreferencesModal
@@ -104,7 +118,7 @@ export function ReadyAppShell() {
         conversationsOpen={navigation.conversationsOpen}
         onCloseConversations={() => navigation.setConversationsOpen(false)}
         onCloseSessionSearch={() => navigation.setSessionSearchOpen(false)}
-        onOpenSearch={navigation.openSearch}
+        onOpenSearch={openFreshSearch}
         onOpenPreferences={navigation.openPreferences}
         onSelectSession={selectSession}
         onStartNewChat={startNewChat}

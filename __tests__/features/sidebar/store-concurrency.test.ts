@@ -74,6 +74,25 @@ describe('sidebar 请求的环境隔离与顺序保存', () => {
     expect(useSidebarStore.getState().loading).toBe(false);
   });
 
+  it('并发刷新时只保留最新响应，避免启动请求覆盖打开面板后的最新列表', async () => {
+    const oldResponse = deferred<ChatSummary[]>();
+    const latestResponse = deferred<ChatSummary[]>();
+    vi.mocked(listSessions)
+      .mockReturnValueOnce(oldResponse.promise)
+      .mockReturnValueOnce(latestResponse.promise);
+    const oldRefresh = useSidebarStore.getState().refresh();
+    const latestRefresh = useSidebarStore.getState().refresh();
+
+    oldResponse.resolve([]);
+    await oldRefresh;
+    expect(useSidebarStore.getState().loading).toBe(true);
+
+    latestResponse.resolve([session]);
+    await latestRefresh;
+    expect(useSidebarStore.getState().sessions).toEqual([session]);
+    expect(useSidebarStore.getState().loading).toBe(false);
+  });
+
   it('reset 后旧 refreshSidebarState 返回不覆盖新环境状态', async () => {
     const oldResponse = deferred<SidebarStatePayload>();
     vi.mocked(fetchSidebarState).mockReturnValueOnce(oldResponse.promise);

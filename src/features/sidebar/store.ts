@@ -83,6 +83,7 @@ export const useSidebarStore = create<SidebarStore>()(
   subscribeWithSelector((set, get) => {
     // 每次 reset 都开启新环境；请求与 pending 清理仅能修改发起时的环境。
     let generation = 0;
+    let refreshSequence = 0;
     let mutationVersion = 0;
     let writeQueue: Promise<void> = Promise.resolve();
 
@@ -126,14 +127,18 @@ export const useSidebarStore = create<SidebarStore>()(
 
       async refresh() {
         const requestGeneration = generation;
+        const requestId = ++refreshSequence;
         set({ loading: true });
         try {
           const sessions = await apiListSessions();
-          if (requestGeneration === generation) {
+          // 只允许当前环境最新一次刷新回写，避免启动请求和打开面板请求乱序覆盖。
+          if (requestGeneration === generation && requestId === refreshSequence) {
             set({ sessions, loading: false, error: null });
           }
         } catch {
-          if (requestGeneration === generation) set({ loading: false });
+          if (requestGeneration === generation && requestId === refreshSequence) {
+            set({ loading: false });
+          }
         }
       },
 
@@ -272,6 +277,7 @@ export const useSidebarStore = create<SidebarStore>()(
 
       resetAll() {
         generation += 1;
+        refreshSequence += 1;
         // 新环境不等待旧请求结束；旧队列仍会自行完成，但发送前检查会跳过旧任务。
         writeQueue = Promise.resolve();
         set({
