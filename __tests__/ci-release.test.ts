@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -62,7 +62,7 @@ describe('Android CI 整数版本', () => {
     expect(lock.packages.dependency).toEqual({ version: '2.0.0' });
     expect(readFileSync(fixture.output, 'utf8')).toBe([
       'version=1.0.6-dev.243', 'version_code=243', 'tag=dev-243',
-      'artifact_dir=release-assets/v1.0.6-dev.243', 'apk_name=nanobot-v1.0.6-dev.243.apk', '',
+      'artifact_dir=release-assets/v1.0.6-dev.243', 'apk_name=nanobot-v1.0.6-dev.243-universal.apk', '',
     ].join('\n'));
   });
 
@@ -146,12 +146,19 @@ const executePublish = (overrides: Partial<NodeJS.ProcessEnv> = {}) => {
     "} else if (args[1] === 'view') { process.stdout.write('https://github.com/example/project/releases/tag/dev-243'); }",
     '',
   ].join('\n'), { mode: 0o755 });
+  // 发布 shell 只检查文件是否存在，不读取 APK 内容；用五个空文件模拟 Gradle split 的完整产物。
+  const artifactDir = resolve(directory, 'release-assets/v1.0.6-dev.243');
+  mkdirSync(artifactDir, { recursive: true });
+  ['armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64', 'universal'].forEach((abi) => {
+    writeFileSync(resolve(artifactDir, `nanobot-v1.0.6-dev.243-${abi}.apk`), '');
+  });
+
   const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', publishShell], {
     cwd: directory,
     env: {
       ...process.env, PATH: `${directory}:${process.env.PATH}`, GH_TOKEN: 'fake', GH_REPO: 'example/project',
       RELEASE_TAG: 'dev-243', APP_VERSION: '1.0.6-dev.243', VERSION_CODE: '243',
-      ARTIFACT_DIR: 'release-assets/v1.0.6-dev.243', APK_NAME: 'nanobot-v1.0.6-dev.243.apk',
+      ARTIFACT_DIR: 'release-assets/v1.0.6-dev.243', APK_NAME: 'nanobot-v1.0.6-dev.243-universal.apk',
       GITHUB_SHA: 'a'.repeat(40), MAIN_SHA: 'a'.repeat(40), FINAL_MAIN_SHA: 'a'.repeat(40),
       GITHUB_SERVER_URL: 'https://github.com', GITHUB_REPOSITORY: 'example/project', GITHUB_RUN_ID: '123',
       GITHUB_STEP_SUMMARY: resolve(directory, 'summary'), RELEASE_STATE: 'missing',
@@ -166,8 +173,8 @@ describe('Android CI 工作流与幂等发布', () => {
   it('检查后先 prebuild 再初始化缓存，构建验证与保存资产后才发布', () => {
     const positions = [
       'Install dependencies', 'Run all checks', 'Prepare development version',
-      'Prepare Android project for Gradle cache', 'Cache Gradle dependencies', 'Build Android Release APK',
-      'Prepare verified update manifest', 'Save APK and checksums', 'Publish development release',
+      'Prepare Android project for Gradle cache', 'Cache Gradle dependencies', 'Build split Android Release APKs',
+      'Prepare verified update manifest', 'Save APKs and checksums', 'Publish development release',
     ].map((name) => workflow.indexOf('- name: ' + name));
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect(positions.every((position, index) => index === 0 || position > positions[index - 1])).toBe(true);
@@ -180,7 +187,7 @@ describe('Android CI 工作流与幂等发布', () => {
     expect(workflow).not.toContain('GITHUB_RUN_ATTEMPT');
   });
 
-  it('先建普通草稿并上传三个完整资产，复查 main 后才公开并设为 Latest', () => {
+  it('先建普通草稿并上传全部 APK 与清单，复查 main 后才公开并设为 Latest', () => {
     const { result, calls, releaseCommands } = executePublish();
     expect(result.status, result.stderr).toBe(0);
     expect(releaseCommands).toEqual(['view', 'create', 'upload', 'edit', 'view']);
@@ -190,7 +197,12 @@ describe('Android CI 工作流与幂等发布', () => {
       '--notes-file', 'release-notes.md', '--prerelease=false', '--draft', '--latest=false',
     ]);
     expect(calls.find((call) => call[1] === 'upload')).toEqual([
-      'release', 'upload', 'dev-243', 'release-assets/v1.0.6-dev.243/nanobot-v1.0.6-dev.243.apk',
+      'release', 'upload', 'dev-243',
+      'release-assets/v1.0.6-dev.243/nanobot-v1.0.6-dev.243-arm64-v8a.apk',
+      'release-assets/v1.0.6-dev.243/nanobot-v1.0.6-dev.243-armeabi-v7a.apk',
+      'release-assets/v1.0.6-dev.243/nanobot-v1.0.6-dev.243-universal.apk',
+      'release-assets/v1.0.6-dev.243/nanobot-v1.0.6-dev.243-x86.apk',
+      'release-assets/v1.0.6-dev.243/nanobot-v1.0.6-dev.243-x86_64.apk',
       'release-assets/v1.0.6-dev.243/checksums.txt', 'release-assets/v1.0.6-dev.243/update.json',
     ]);
     expect(calls.slice(-3)[0][0]).toBe('api');

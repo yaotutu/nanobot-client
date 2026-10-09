@@ -201,8 +201,8 @@ describe('开发版清单的 CI 接入', () => {
   it('Build 后验证清单再保存资产，传入精简契约与固定工具路径', () => {
     const workflow = readFileSync(resolve('.github/workflows/android-development-release.yml'), 'utf8');
     const steps = [
-      'Build Android Release APK', 'Prepare verified update manifest',
-      'Save APK and checksums', 'Publish development release',
+      'Build split Android Release APKs', 'Prepare verified update manifest',
+      'Save APKs and checksums', 'Publish development release',
     ].map((name) => workflow.indexOf('- name: ' + name));
     expect(steps.every((position) => position >= 0)).toBe(true);
     expect(steps.every((position, index) => index === 0 || position > steps[index - 1])).toBe(true);

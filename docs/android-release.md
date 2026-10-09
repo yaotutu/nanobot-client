@@ -12,7 +12,9 @@
 - 可在 GitHub → Actions → **Android Development Release** → **Run workflow** 手动触发，分支需选择 `main`；其他分支会跳过任务。
 - main 发布 job 使用固定并发组 `android-development-release-main`，`cancel-in-progress: true` 取消旧运行，只保留最新运行。非 main 手动运行不进入这个 job，不会取消正在执行的 main 发布。
 - 云端使用 Ubuntu 24.04、Node.js 24、JDK 17、Android SDK 36、NDK 27.1.12297006 和 CMake 3.22.1，缓存 npm / Gradle 依赖；不修改本机开发环境。
-- 依次执行 `npm ci` → `npm run check` → 生成临时版本 → Expo Prebuild → 初始化 Gradle 缓存 → 复用 `release.sh --no-version --local-only --skip-check` 构建 APK → 验证实际 APK 并生成 `update.json` → 上传 Actions Artifact → 检查 main 与同 tag Release → 创建草稿、上传三个资产 → 复查 main → 公开并设为 **Latest**。
+- Release 按同一份构建产物拆分为 `armeabi-v7a`、`arm64-v8a`、`x86`、`x86_64` 四个架构 APK，同时保留一个 `universal` 通用包。架构包供手动下载，体积明显更小；通用包供应用内更新和未知设备兜底。
+- ABI split 通过 `plugins/with-android-abi-splits.js` 写入 Expo prebuild 产物，只有传 `-Pnanobot.enableAbiSplits=true` 的 Release 构建启用。日常 Debug 构建和 `npm run android` 不传该参数，保持通用工程行为。
+- 依次执行 `npm ci` → `npm run check` → 生成临时版本 → Expo Prebuild → 初始化 Gradle 缓存 → 复用 `release.sh --no-version --local-only --skip-check` 构建五个 APK → 验证 universal APK 并生成 `update.json` → 上传 Actions Artifact → 检查 main 与同 tag Release → 创建草稿、上传全部资产 → 复查 main → 公开并设为 **Latest**。
 - lint、类型检查、单元测试、Native 测试、Android bundle smoke 或 APK 验证任意一项失败，都不会公开 Release。Actions Artifact 保留 14 天，发布失败后仍可下载已保存的构建产物。
 - Release 使用 **普通 Release**（`prerelease: false`），不是 Prerelease：固定 `latest/download/update.json` 入口需要 Latest 的普通 Release。标题、Release 备注和清单 notes 仍明确这是使用开发签名、仅供开发测试的 Android 包，不能据此视为商店正式版本。
 
@@ -32,7 +34,8 @@ tag = dev-versionCode
 应用版本：1.0.6-dev.243
 Android versionCode：243
 Release tag：dev-243
-APK：nanobot-v1.0.6-dev.243.apk
+universal APK：nanobot-v1.0.6-dev.243-universal.apk
+架构 APK：nanobot-v1.0.6-dev.243-{armeabi-v7a,arm64-v8a,x86,x86_64}.apk
 ```
 
 - 下一次新运行（run number 43）版本码为 244，仅增加 1；失败或被取消的 run 仍占用编号，因此已发布版本允许跳号，不保证连续。
@@ -42,13 +45,13 @@ APK：nanobot-v1.0.6-dev.243.apk
 - 不要删除并重建工作流或降低基数，以免运行编号重置或版本码倒退。版本 tag 不包含 SHA 或 attempt；源码仍通过 Release 的 target 指向完整 `GITHUB_SHA`，并记入 Release 备注。
 - 开始操作 Release 前检查远端当前 main SHA 等于 `GITHUB_SHA`；不相等则跳过。资产上传后、公开前再次检查，避免构建或上传期间 main 更新后旧版本抢占 Latest。
 - 同 tag Release 已公开时直接跳过，不覆盖资产、不重复设 Latest；查询失败（权限、网络等）会停止，不能当作 Release 不存在。
-- 上一次失败留下的同 tag **草稿**可删除后重建；只删除草稿及其资产，不删除源码 tag。先上传 APK、`checksums.txt`、`update.json` 三个资产，全部成功后才以 `draft=false`、`latest=true` 公开；上传失败保持草稿。
+- 上一次失败留下的同 tag **草稿**可删除后重建；只删除草稿及其资产，不删除源码 tag。先上传五个 APK、`checksums.txt`、`update.json`，全部成功后才以 `draft=false`、`latest=true` 公开；上传失败保持草稿。
 - 旧 SHA 的重跑不会发布；即使源码仍在 main，已公开的同版本也不能通过重跑替换。需要修复时提交新变更，获得新的整数版本码。
 - 不恢复旧的 SHA／attempt tag 或版本格式，也不兼容旧的嵌套更新清单。设备若曾安装版本码更高的旧实验包，新整数版本码不会绕过 Android 的降级限制；须自行确认设备当前版本码。
 
 ### 开发版更新资产与验证
 
-每次 CI Release 和 Actions Artifact 包含 APK、`checksums.txt`、`update.json`。客户端仅 GET：
+每次 CI Release 和 Actions Artifact 包含五个 APK、`checksums.txt`、`update.json`。客户端仅 GET：
 
 ```text
 https://github.com/yaotutu/nanobot-client/releases/latest/download/update.json
@@ -60,7 +63,7 @@ https://github.com/yaotutu/nanobot-client/releases/latest/download/update.json
 {
   "version": "1.0.6-dev.243",
   "versionCode": 243,
-  "apkUrl": "https://github.com/yaotutu/nanobot-client/releases/download/dev-243/nanobot-v1.0.6-dev.243.apk",
+  "apkUrl": "https://github.com/yaotutu/nanobot-client/releases/download/dev-243/nanobot-v1.0.6-dev.243-universal.apk",
   "size": 123456789,
   "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "publishedAt": "2026-10-08T00:00:00.000Z",
@@ -68,15 +71,15 @@ https://github.com/yaotutu/nanobot-client/releases/latest/download/update.json
 }
 ```
 
-大小、hash 和时间仅为格式示例。`apkUrl` 由 `GITHUB_REPOSITORY`、`RELEASE_TAG`、`APK_NAME` 构造，固定指向这一次整数 tag 的 APK，而不是随 Latest 变化的 APK 地址。`publishedAt` 为验证通过后的清单生成时间（公开之前），使用 ISO UTC 字符串；notes 由脚本生成并说明开发用途。
+大小、hash 和时间仅为格式示例。`apkUrl` 由 `GITHUB_REPOSITORY`、`RELEASE_TAG`、`APK_NAME` 构造，固定指向这一次整数 tag 的 **universal APK**，而不是随 Latest 变化的 APK 地址。这样不需要客户端识别 CPU ABI，任何支持的设备都能通过应用内更新覆盖安装。`publishedAt` 为验证通过后的清单生成时间（公开之前），使用 ISO UTC 字符串；notes 由脚本生成并说明开发用途。
 
-- `scripts/prepare-update-manifest.mjs` 使用 Build-Tools 36.0.0 的 `aapt dump badging` 从实际 APK 读取包名、versionName、versionCode，验证固定包名 `com.anonymous.nanobotclient` 与本次 CI 版本一致，不从配置推测实际 APK 的元数据。
+- `scripts/prepare-update-manifest.mjs` 使用 Build-Tools 36.0.0 的 `aapt dump badging` 从实际 universal APK 读取包名、versionName、versionCode，验证固定包名 `com.anonymous.nanobotclient` 与本次 CI 版本一致，不从配置推测实际 APK 的元数据。
 - 使用 `apksigner verify --print-certs` 验证签名，只接受唯一签名者的证书 SHA-256。当前证书固定为 `fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`，脚本内固定现有身份，**不会生成或更换密钥**，不可通过环境变量绕过。
 - 签名变化、多签名者、包元数据缺失、工具验证失败或版本不一致都停止生成清单；只有全部成功才写出 `update.json`。包名与签名用于构建时验证，不作为旧协议字段输出。
-- APK SHA-256 从实际文件流式计算，不把整个安装包载入内存；size 由同一文件的 `stat` 读取，不复用声明值或 `checksums.txt`。
+- universal APK 的 SHA-256 从实际文件流式计算，不把整个安装包载入内存；size 由同一文件的 `stat` 读取，不复用声明值或 `checksums.txt`。`checksums.txt` 另覆盖全部五个 APK，供手动下载核对。
 - CLI 无位置参数，必需环境变量仅为 `ARTIFACT_DIR`、`APK_NAME`、`APP_VERSION`、`VERSION_CODE`、`RELEASE_TAG`、`GITHUB_REPOSITORY`、`AAPT_PATH`、`APKSIGNER_PATH`；输出到 `$ARTIFACT_DIR/update.json`。工具路径指向 `$ANDROID_HOME/build-tools/36.0.0/`。
 - 清单不再包含 schema、channel、commit、minSdk、签名字段或嵌套 `apk` 对象；旧格式、无清单 Release 和老 tag 不作兼容回退。
-- **应用内更新仅适用于 CI 发布**。下述本地 `npm run release` 保持原有行为，仅生成和上传 APK 与 `checksums.txt`，不生成 `update.json`，不是整数版本自动更新入口。本地脚本创建 Release 时显式传入 `--latest=false`，防止无清单手动包抢占 CI 的更新入口。手动包不参与应用内更新，不另建旧协议或备用更新通道。
+- **应用内更新仅适用于 CI 发布**。下述本地 `npm run release` 保持原有行为，仅生成和上传五个 APK 与 `checksums.txt`，不生成 `update.json`，不是整数版本自动更新入口。本地脚本创建 Release 时显式传入 `--latest=false`，防止无清单手动包抢占 CI 的更新入口。手动包不参与应用内更新，不另建旧协议或备用更新通道。
 
 ### 权限、签名与登录
 
@@ -96,7 +99,7 @@ https://github.com/yaotutu/nanobot-client/releases/latest/download/update.json
 - 只使用当前本地工作区的代码构建 APK；
 - 不检查 Git 工作区、分支、远程同步状态；
 - 不执行 `git add`、`git commit`、`git push`、`git pull` 或其他 Git 同步操作；
-- 默认创建 GitHub Release，并上传当前本地构建出来的 APK 和校验文件。
+- 默认创建 GitHub Release，并上传当前本地构建出来的五个 APK 和校验文件。
 
 GitHub Release 的 tag 由版本号生成，例如 `package.json` 为 `1.0.5` 时使用 `v1.0.5`。脚本上传的 APK 来自本次本地构建，不要求本地代码已经提交或同步。
 
@@ -120,10 +123,10 @@ npm run release
 2. 同步更新 `package.json`、`app.json` 和 `package-lock.json` 的版本号；
 3. 运行 `npm run check`；
 4. 增量准备 Android 原生工程；
-5. 使用 Gradle 构建 Android Release APK；
-6. 生成 APK 和 SHA-256 校验文件；
+5. 使用 Gradle 按 ABI 构建 Android Release APK，并额外生成 universal 包；
+6. 生成五个 APK 和 SHA-256 校验文件；
 7. 创建对应的 GitHub Release；
-8. 通过 GitHub 上传 API 覆盖同名资产并上传 APK 和 `checksums.txt`；网络失败时自动重试。
+8. 通过 GitHub 上传 API 覆盖同名资产并上传五个 APK 和 `checksums.txt`；网络失败时自动重试。
 
 发布成功后，终端会打印 GitHub Release 地址。
 
@@ -196,7 +199,11 @@ npm run release -- --clean-native
 
 ```text
 release-assets/vX.Y.Z/
-├── nanobot-vX.Y.Z.apk
+├── nanobot-vX.Y.Z-armeabi-v7a.apk
+├── nanobot-vX.Y.Z-arm64-v8a.apk
+├── nanobot-vX.Y.Z-x86.apk
+├── nanobot-vX.Y.Z-x86_64.apk
+├── nanobot-vX.Y.Z-universal.apk
 └── checksums.txt
 ```
 

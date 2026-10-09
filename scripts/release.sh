@@ -11,6 +11,10 @@ readonly REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 readonly PACKAGE_LOCK="$REPO_ROOT/package-lock.json"
 readonly APP_JSON="$REPO_ROOT/app.json"
 readonly DEV_SECRET_PATH="$REPO_ROOT/src/services/credentials/dev-secret.ts"
+# Release 同时产出四个 CPU 架构包和 universal 通用包：
+# - 架构包适合手动下载，体积明显小于通用包；
+# - universal 包保留给在线更新和未知设备兜底，保证任意支持的设备都能安装。
+readonly RELEASE_APK_ABIS=(armeabi-v7a arm64-v8a x86 x86_64 universal)
 
 BUMP="patch"
 SKIP_CHECK=false
@@ -25,9 +29,9 @@ usage() {
 Usage:
   npm run release -- [patch|minor|major|vX.Y.Z] [options]
 
-Builds the current local workspace into an Android Release APK, then creates a
-GitHub Release and uploads the APK. It never checks, commits, pushes, or syncs
-local Git code.
+Builds the current local workspace into Android Release APKs, then creates a
+GitHub Release and uploads those APKs. It never checks, commits, pushes, or
+syncs the local Git worktree.
 
 Examples:
   npm run release                          # bump, build, and publish GitHub Release
@@ -38,7 +42,7 @@ Examples:
 
 Options:
   --no-version     Do not change package/app versions.
-  --local-only     Build the APK but do not create a GitHub Release.
+  --local-only     Build APKs but do not create a GitHub Release.
   --clean-native   Delete and regenerate the Android project before building.
   --skip-check     Skip npm run check.
   -h, --help       Show this help text.
@@ -191,27 +195,36 @@ else
   npx expo prebuild --platform android --no-install
 fi
 
-printf '\n==> Building Android Release APK (incremental Gradle build)\n'
+printf '\n==> Building split Android Release APKs (incremental Gradle build)\n'
 pushd android >/dev/null
-./gradlew assembleRelease
+./gradlew assembleRelease -Pnanobot.enableAbiSplits=true
 popd >/dev/null
 
 PACKAGE_VERSION="$(node -e 'process.stdout.write(require("./package.json").version)')"
 TAG="v$PACKAGE_VERSION"
 ARTIFACT_DIR="$REPO_ROOT/release-assets/$TAG"
-APK_SOURCE="$REPO_ROOT/android/app/build/outputs/apk/release/app-release.apk"
-APK_NAME="nanobot-$TAG.apk"
-[[ -f "$APK_SOURCE" ]] || fail "Android APK was not produced at: $APK_SOURCE"
+APK_OUTPUT_DIR="$REPO_ROOT/android/app/build/outputs/apk/release"
+RELEASE_APK_NAMES=()
 
 printf '\n==> Packaging local artifacts\n'
 rm -rf -- "$ARTIFACT_DIR"
 mkdir -p -- "$ARTIFACT_DIR"
-cp -- "$APK_SOURCE" "$ARTIFACT_DIR/$APK_NAME"
+for abi in "${RELEASE_APK_ABIS[@]}"; do
+  # Gradle 的 split 输出名固定为 app-${abi}-release.apk；这里显式检查每个期望产物，
+  # 避免 glob 静默漏包后把不完整的 Release 发布出去。
+  apk_source="$APK_OUTPUT_DIR/app-$abi-release.apk"
+  apk_name="nanobot-$TAG-$abi.apk"
+  [[ -f "$apk_source" ]] || fail "Android $abi APK was not produced at: $apk_source"
+  cp -- "$apk_source" "$ARTIFACT_DIR/$apk_name"
+  RELEASE_APK_NAMES+=("$apk_name")
+done
+
 pushd "$ARTIFACT_DIR" >/dev/null
+# checksums.txt 覆盖所有 APK，方便手动下载任意架构包后逐个核对。
 if command -v sha256sum >/dev/null 2>&1; then
-  sha256sum "$APK_NAME" > checksums.txt
+  sha256sum ./*.apk > checksums.txt
 else
-  shasum -a 256 "$APK_NAME" > checksums.txt
+  shasum -a 256 ./*.apk > checksums.txt
 fi
 popd >/dev/null
 
@@ -299,8 +312,11 @@ upload_asset() {
   return 1
 }
 
-upload_asset "$ARTIFACT_DIR/$APK_NAME" "$APK_NAME" 'application/vnd.android.package-archive' \
-  || fail "Unable to upload APK to GitHub Release $TAG."
+# 逐个上传所有架构包和 universal 包；任何一个失败都停止，避免 Release 资产不完整。
+for apk_name in "${RELEASE_APK_NAMES[@]}"; do
+  upload_asset "$ARTIFACT_DIR/$apk_name" "$apk_name" 'application/vnd.android.package-archive' \
+    || fail "Unable to upload APK to GitHub Release $TAG: $apk_name"
+done
 upload_asset "$ARTIFACT_DIR/checksums.txt" 'checksums.txt' 'text/plain' \
   || fail "Unable to upload checksums to GitHub Release $TAG."
 unset GH_TOKEN

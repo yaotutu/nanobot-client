@@ -54,12 +54,13 @@ Object.entries(updatedFiles).forEach(([file, content]) => {
   writeFileSync(file, JSON.stringify(content, null, 2) + '\n');
 });
 
-// 输出与现有 release.sh 的目录/文件命名保持一致，工作流无需再次复制或重命名 APK。
+// 输出与 release.sh 的产物命名保持一致；更新清单始终指向 universal 包，
+// 客户端无需识别 ABI，手动下载的架构包只作为更小的可选安装包。
 appendFileSync(GITHUB_OUTPUT, [
   `version=${version}`,
   `version_code=${versionCode}`,
   `tag=${tag}`,
   `artifact_dir=release-assets/v${version}`,
-  `apk_name=nanobot-v${version}.apk`,
+  `apk_name=nanobot-v${version}-universal.apk`,
   '',
 ].join('\n'));

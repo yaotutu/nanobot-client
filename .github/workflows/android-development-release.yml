@@ -77,10 +77,10 @@ jobs:
         with:
           cache-provider: basic
 
-      - name: Build Android Release APK
+      - name: Build split Android Release APKs
         run: npm run release -- --no-version --local-only --skip-check
 
-      # 从本次实际 APK 提取并验证身份后才生成更新清单；失败时不能上传或发布。
+      # 从本次 universal APK 提取并验证身份后才生成更新清单；失败时不能上传或发布。
       # 固定当前包名与开发签名，不生成或更换密钥；清单只包含客户端更新所需字段。
       - name: Prepare verified update manifest
         env:
@@ -95,8 +95,8 @@ jobs:
           export APKSIGNER_PATH="$ANDROID_HOME/build-tools/36.0.0/apksigner"
           node scripts/prepare-update-manifest.mjs
 
-      # 即使 Release 上传失败，APK、校验文件和更新清单仍保留在本次 Actions 的 Artifacts 中。
-      - name: Save APK and checksums
+      # 即使 Release 上传失败，所有 APK、校验文件和更新清单仍保留在本次 Actions 的 Artifacts 中。
+      - name: Save APKs and checksums
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: nanobot-${{ steps.metadata.outputs.tag }}
@@ -113,7 +113,6 @@ jobs:
           APP_VERSION: ${{ steps.metadata.outputs.version }}
           VERSION_CODE: ${{ steps.metadata.outputs.version_code }}
           ARTIFACT_DIR: ${{ steps.metadata.outputs.artifact_dir }}
-          APK_NAME: ${{ steps.metadata.outputs.apk_name }}
         run: |
           # 发布前必须仍是 main 头提交，防止旧运行或手动重跑抢占 Latest；查询失败则直接停止。
           MAIN_SHA="$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq '.object.sha')"
@@ -148,18 +147,27 @@ jobs:
           - 构建记录：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
           - 首次启动请填写自己的 nanobot 网关地址；本 APK 不内置服务器地址。
           - 使用现有开发签名，不是应用商店正式签名；登录密码不会打包到 APK。
+          - 提供 armeabi-v7a、arm64-v8a、x86、x86_64 架构包，并保留 universal 通用包。
+          - 应用内更新固定下载 universal 包；手动下载对应架构包可以显著减少下载体积。
 
-          下载 APK 安装；checksums.txt 包含 APK 的 SHA-256 校验值，update.json 提供已验证的开发版更新元数据。
+          下载 APK 安装；checksums.txt 包含所有 APK 的 SHA-256 校验值，update.json 提供已验证的开发版更新元数据。
           EOF
           # latest/download 需要普通 Release；开发用途写入备注，不以 prerelease 标志表达。
-          # 先创建草稿，再完整上传三个资产；任何上传失败都保留草稿，客户端看不到半成品。
+          # 先创建草稿，再完整上传所有 APK 与清单；任何上传失败都保留草稿，客户端看不到半成品。
           gh release create "$RELEASE_TAG" \
             --target "$GITHUB_SHA" \
             --title "nanobot $APP_VERSION" \
             --notes-file release-notes.md \
             --prerelease=false --draft --latest=false
+
+          # release.sh 已显式要求五个 APK 全部存在；这里再次检查数量，防止 glob 在异常状态下静默短路。
+          APK_FILES=("$ARTIFACT_DIR"/*.apk)
+          if (( ${#APK_FILES[@]} != 5 )); then
+            echo "Expected 5 APK assets, found ${#APK_FILES[@]}." >&2
+            exit 1
+          fi
           gh release upload "$RELEASE_TAG" \
-            "$ARTIFACT_DIR/$APK_NAME" "$ARTIFACT_DIR/checksums.txt" "$ARTIFACT_DIR/update.json"
+            "${APK_FILES[@]}" "$ARTIFACT_DIR/checksums.txt" "$ARTIFACT_DIR/update.json"
           # 上传可能较久，公开前再次检查 main；不再是头提交时让草稿保持不可见。
           MAIN_SHA="$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq '.object.sha')"
           if [[ "$MAIN_SHA" != "$GITHUB_SHA" ]]; then

@@ -53,7 +53,8 @@
       "./plugins/with-nanobot-network-security",
       "expo-video",
       "expo-asset",
-      "expo-localization"
+      "expo-localization",
+      "./plugins/with-android-abi-splits"
     ],
     "experiments": {
       "typedRoutes": true
