@@ -457,6 +457,7 @@
     }
   },
   "message": {
+    "actions": "Tindakan pesan",
     "streaming": "sedang mengalir",
     "assistantTyping": "Asisten sedang mengetik",
     "toolSingle": "Menggunakan sebuah alat",

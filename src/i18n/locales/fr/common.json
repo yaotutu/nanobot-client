@@ -457,6 +457,7 @@
     }
   },
   "message": {
+    "actions": "Actions du message",
     "streaming": "en cours de génération",
     "assistantTyping": "L’assistant est en train d’écrire",
     "toolSingle": "Utilisation d’un outil",

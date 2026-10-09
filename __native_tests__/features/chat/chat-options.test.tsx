@@ -6,7 +6,7 @@ import { TextInput } from 'react-native';
 import { ChatOptionsModal } from '@/features/chat/components/modals/ChatOptionsModal';
 import { Composer } from '@/features/chat/components/Composer';
 import type { ComposerProps } from '@/features/chat/composer/model/view-contract';
-import { chatPaletteForTheme } from '@/features/chat/ui/chat-theme';
+import { DEFAULT_THEME_ID, resolveChatPalette, themeModeForDark } from '@/features/theme';
 import type { ModelPresetInfo } from '@/types/api/chat/models';
 
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 24, left: 0, right: 0 }) }));
@@ -23,7 +23,7 @@ jest.mock('@/features/chat/components/ComposerContext', () => ({ ComposerContext
 
 const preset = (name: string): ModelPresetInfo => ({ name, label: name, model: name, provider: 'provider', active: name === 'first', is_default: false, max_tokens: 1024, context_window_tokens: 4096, temperature: 0.7, reasoning_effort: null });
 const createProps = (): React.ComponentProps<typeof ChatOptionsModal> => ({
-  colors: chatPaletteForTheme(false), disabled: false, turnActive: false, canChangeProject: true, onClose: jest.fn(),
+  colors: resolveChatPalette(DEFAULT_THEME_ID, 'light'), disabled: false, turnActive: false, canChangeProject: true, onClose: jest.fn(),
   hasUserPrompts: true, onOpenPromptNavigator: jest.fn(),
   model: { activeModelPreset: 'first', modelDisplayLabel: 'First model', orderedModelPresets: [preset('first'), preset('second')], changeModelPreset: jest.fn(async () => undefined) },
   workspace: {
@@ -33,7 +33,7 @@ const createProps = (): React.ComponentProps<typeof ChatOptionsModal> => ({
   },
 });
 const composerProps = (): ComposerProps => ({
-  inputRef: createRef<TextInput>(), appearance: { colors: chatPaletteForTheme(false), dark: false },
+  inputRef: createRef<TextInput>(), appearance: { colors: resolveChatPalette(DEFAULT_THEME_ID, 'light'), dark: false },
   draft: { value: 'draft preserved', quotedContext: null, onChangeText: jest.fn(), onClearQuote: jest.fn(), onCursorChange: jest.fn() },
   attachments: { items: [], busy: false, error: null, full: false, readyCount: 0, onAdd: jest.fn(), onRemove: jest.fn() },
   runtime: { disabled: false, turnActive: false, runStartedAt: null, queuedPrompts: [], onSend: jest.fn(), onStop: jest.fn(), onRemoveQueuedPrompt: jest.fn() },
@@ -52,7 +52,7 @@ describe('统一聊天选项弹窗', () => {
 
   it.each([false, true])('三项配置只使用一个原生弹窗（dark=%s）', async (dark) => {
     const props = createProps();
-    const result = await render(<ChatOptionsModal {...props} colors={chatPaletteForTheme(dark)} />);
+    const result = await render(<ChatOptionsModal {...props} colors={resolveChatPalette(DEFAULT_THEME_ID, themeModeForDark(dark))} />);
     expect(result.getByText('thread.composer.options')).toBeTruthy();
     expect(result.getByText('settings.overview.workspace')).toBeTruthy();
     expect(result.getByText('thread.composer.workspace.accessAria')).toBeTruthy();

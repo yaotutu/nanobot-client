@@ -457,6 +457,7 @@
     }
   },
   "message": {
+    "actions": "Message actions",
     "streaming": "streaming",
     "assistantTyping": "Assistant is typing",
     "toolSingle": "Using a tool",

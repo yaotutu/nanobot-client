@@ -3,11 +3,9 @@ import { StyleSheet } from 'react-native';
 export const composerStyles = StyleSheet.create({
   composer: {
     width: '100%',
-    borderRadius: 32,
-    borderWidth: 1,
+    borderRadius: 29,
     overflow: 'hidden',
-    // 使用统一的柔和阴影，避免 Android elevation 在输入框下沿形成硬灰边。
-    boxShadow: '0px 4px 20px rgba(24, 56, 75, 0.04)',
+    // 输入框只保留一块完整表面，不再叠加描边、阴影和内部按钮底板。
   },
   slashPalette: { maxHeight: 264, borderBottomWidth: StyleSheet.hairlineWidth, borderTopLeftRadius: 22, borderTopRightRadius: 22, overflow: 'hidden' },
   slashPaletteScroll: { maxHeight: 264 },
@@ -45,7 +43,7 @@ export const composerStyles = StyleSheet.create({
   attachmentStatus: { marginTop: 2, fontSize: 10 },
   attachmentError: { paddingHorizontal: 14, paddingTop: 7, fontSize: 11, lineHeight: 15 },
   composerInput: { flex: 1, minWidth: 0, minHeight: 44, maxHeight: 140, paddingHorizontal: 2, paddingTop: 10, paddingBottom: 10, fontSize: 17, lineHeight: 24 },
-  inputRow: { minHeight: 60, flexDirection: 'row', alignItems: 'flex-end', gap: 7, padding: 8 },
+  inputRow: { minHeight: 58, flexDirection: 'row', alignItems: 'flex-end', gap: 4, padding: 7 },
   roundIconButton: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   sendButton: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   sendButtonDisabled: { opacity: 0.4 },

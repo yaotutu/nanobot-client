@@ -21,6 +21,7 @@ import {
 import { MessageRow as ExtractedMessageRow } from '@/features/chat/components/messages/MessageRow';
 import { ForkBoundaryDivider as ExtractedForkBoundaryDivider } from '@/features/chat/components/messages/MessageRow.extras';
 import type { Palette } from '@/ui/palette';
+import { chatLayout } from '@/features/chat/ui/chat-layout';
 import type {
   CliAppInfo,
   McpPresetInfo,
@@ -117,11 +118,11 @@ export function ChatThread({
         contentContainerStyle={[
           styles.messagesContent,
           {
-            // Inverted 会让原始 top/bottom 视觉互换：视觉底部 20、顶部 15。
-            paddingTop: 20,
-            paddingBottom: 15,
+            // 反向列表的 bottom 是视觉顶部；最早一条可完整滚到头像下方，其他消息仍可穿过浮层。
+            paddingTop: 12,
+            paddingBottom: chatLayout.headerHeight + 12,
             backgroundColor: colors.background,
-            rowGap: 13,
+            rowGap: 10,
           },
         ]}
         data={displayUnits}
@@ -221,13 +222,12 @@ export function ChatThread({
           style={({ pressed }) => [
             styles.scrollToBottomButton,
             {
-              backgroundColor: colors.pressed,
+              backgroundColor: colors.userBubble,
               opacity: pressed ? 0.72 : 1,
             },
           ]}
         >
-          <ArrowDown color={colors.foreground} size={14} strokeWidth={1.7} />
-          <Text style={[styles.latestLabel, { color: colors.foreground }]}>{t('thread.latestMessages')}</Text>
+          <ArrowDown color={colors.userText} size={20} strokeWidth={1.7} />
         </Pressable>
       ) : null}
     </View>
@@ -237,21 +237,24 @@ export function ChatThread({
 const styles = StyleSheet.create({
   threadListArea: { minHeight: 0, flex: 1 },
   list: { flex: 1 },
-  messagesContent: { flexGrow: 1, paddingHorizontal: 17 },
-  // 单独占据列表与输入框之间的一行，避免浮在消息内容上遮住代码或表格。
+  messagesContent: { flexGrow: 1, paddingHorizontal: chatLayout.horizontalInset },
+  // 以消息区为定位容器悬浮在右下角，不占据列表与输入框之间的布局空间。
+  // 这里只提供回到底部的操作入口，不表示未读状态，也不展示消息数量。
   scrollToBottomButton: {
-    alignSelf: 'center',
-    minHeight: 36,
-    marginTop: 2,
-    marginBottom: 10,
-    paddingHorizontal: 14,
+    position: 'absolute',
+    right: 14,
+    bottom: 12,
+    width: 44,
+    height: 44,
     borderRadius: 22,
-    flexDirection: 'row',
-    gap: 7,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  latestLabel: { fontSize: 12, fontWeight: '500' },
   loadOlderButton: { minHeight: 42, alignItems: 'center', justifyContent: 'center' },
   loadOlderText: { fontSize: 13, fontWeight: '500' },
   activityRow: { width: '100%' },

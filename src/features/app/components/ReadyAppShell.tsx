@@ -7,12 +7,12 @@ import { useAppModelSelection } from '@/features/app/hooks/use-app-model-selecti
 import { useAppNavigation } from '@/features/app/hooks/use-app-navigation';
 import { useAppPreferences } from '@/features/app/hooks/use-app-preferences';
 import { useDefaultSessionStartup } from '@/features/app/hooks/use-default-session-startup';
-import { chatPaletteForTheme, NanobotScreen } from '@/features/chat/screen';
+import { NanobotScreen } from '@/features/chat/screen';
 import { useUpdates, hasUpdate, UpdateDetails, updateSummaryKey } from '@/features/updates';
 import { PreferencesModal } from '@/features/settings';
 import { markStartup } from '@/services/runtime/startup-performance';
 import { sessionTitle, visibleSessionPreview } from '@/services/text/format';
-import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
+import { DEFAULT_THEME_ID, resolveAppPalette, resolveChatPalette, themeModeForDark } from '@/features/theme';
 
 /**
  * 已完成鉴权后的完整工作区。
@@ -30,7 +30,7 @@ export function ReadyAppShell() {
   }, []);
   const { preferences, changePreferences, changeDefaultSession, changeServerUrl } = useAppPreferences();
   const dark = preferences.theme === 'dark';
-  const colors = dark ? DARK_COLORS : LIGHT_COLORS;
+  const colors = resolveAppPalette(DEFAULT_THEME_ID, preferences.theme);
   const bootstrap = app.auth.bootstrap!;
   const model = useAppModelSelection({
     activeSession: app.model.activeSession,
@@ -139,7 +139,7 @@ export function ReadyAppShell() {
       <AppModals
         updateAvailable={hasUpdate(updates)}
         app={app}
-        colors={chatPaletteForTheme(dark)}
+        colors={resolveChatPalette(DEFAULT_THEME_ID, themeModeForDark(dark))}
         conversationsOpen={navigation.conversationsOpen}
         onCloseConversations={() => navigation.setConversationsOpen(false)}
         onCloseSessionSearch={() => navigation.setSessionSearchOpen(false)}

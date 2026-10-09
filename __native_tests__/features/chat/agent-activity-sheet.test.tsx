@@ -15,7 +15,7 @@ jest.mock('@/features/chat/api/session-automations', () => ({
 import { AgentActivitySheet } from '@/features/chat/components/modals/AgentActivitySheet';
 import { fetchSessionAutomations } from '@/features/chat/api/session-automations';
 import { normalizeActivityTimeline } from '@/features/chat/activity/model/activity-timeline';
-import { chatPaletteForTheme } from '@/features/chat/ui/chat-theme';
+import { DEFAULT_THEME_ID, resolveChatPalette } from '@/features/theme';
 import type { SessionAutomationJob } from '@/types/api/automations';
 import type { UIMessage } from '@/types/api/chat/messages';
 
@@ -64,7 +64,7 @@ async function renderSheet() {
   return render(
     <AgentActivitySheet
       cliApps={[]}
-      colors={chatPaletteForTheme(false)}
+      colors={resolveChatPalette(DEFAULT_THEME_ID, 'light')}
       mcpPresets={[]}
       sessionKey="session-key"
       turnActive

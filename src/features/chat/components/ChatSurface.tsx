@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ChatThreadProps } from '@/features/chat/components/ChatThread';
-import { chatLayout } from '@/features/chat/ui/chat-theme';
+import { chatLayout } from '@/features/chat/ui/chat-layout';
 import { createDeferredComponent } from '@/hooks/use-deferred-component';
 import type { Palette } from '@/ui/palette';
 
@@ -70,7 +70,7 @@ export function ChatSurface({ colors, composer, hasMessages, threadLoading, thre
           </ScrollView>
         )}
       </View>
-      <View style={[styles.composerDock, { backgroundColor: colors.background, paddingBottom: Math.max(insets.bottom, 12) }]}>
+      <View style={[styles.composerDock, { backgroundColor: colors.background, paddingBottom: Math.max(insets.bottom, 10) }]}>
         {composer}
       </View>
     </>
@@ -89,7 +89,7 @@ function ThreadLoading({ colors, label }: { colors: Palette; label: string }) {
 const styles = StyleSheet.create({
   content: { minHeight: 0, flex: 1, width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center' },
   // 空态只保持原视觉重心；有消息时文本允许进入顶部浮层的空白区域。
-  emptyContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22, paddingTop: 92, paddingBottom: 24, gap: 15 },
+  emptyContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22, paddingTop: chatLayout.headerHeight, paddingBottom: 24, gap: 15 },
   greeting: { maxWidth: 350, fontSize: 28, lineHeight: 36, fontWeight: '400', letterSpacing: -1, textAlign: 'center' },
   subtitle: { maxWidth: 320, fontSize: 14, lineHeight: 23, textAlign: 'center' },
   emptyPrompts: { width: '100%', maxWidth: 380, gap: 9 },
@@ -97,5 +97,5 @@ const styles = StyleSheet.create({
   emptyPromptText: { fontSize: 13.5, lineHeight: 19, textAlign: 'center' },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 72, gap: 12 },
   loadingText: { fontSize: 14 },
-  composerDock: { width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center', paddingHorizontal: chatLayout.horizontalInset, paddingTop: 0 },
+  composerDock: { width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center', paddingHorizontal: chatLayout.horizontalInset, paddingTop: 4 },
 });

@@ -457,6 +457,7 @@
     }
   },
   "message": {
+    "actions": "Thao tác tin nhắn",
     "streaming": "đang truyền",
     "assistantTyping": "Trợ lý đang nhập",
     "toolSingle": "Đang dùng một công cụ",

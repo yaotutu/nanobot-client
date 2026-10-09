@@ -7,7 +7,7 @@ import { StyleSheet } from 'react-native';
 import { ConversationSheet } from '@/features/sidebar/components/ConversationSheet';
 import type { SessionDeleteResult } from '@/types/api/chat/thread';
 import type { ChatSummary, SidebarStatePayload } from '@/types/api/sidebar';
-import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
+import { DEFAULT_THEME_ID, resolveAppPalette } from '@/features/theme';
 
 // 直接返回翻译 key，仅为会话操作插入标题，既验证新文案契约又区分不同会话的入口。
 // 不加载 i18n 初始化与语言资源，避免持久化偏好影响独立 Native 回归测试。
@@ -60,7 +60,7 @@ const createSession = (key: string, title: string): ChatSummary => ({
 const createProps = () => ({
   visible: true,
   updateAvailable: false,
-  colors: LIGHT_COLORS,
+  colors: resolveAppPalette(DEFAULT_THEME_ID, 'light'),
   sessions: [createSession('chat-1', '普通会话'), createSession('chat-2', '另一会话')],
   state: createDefaultSidebarState(),
   activeKey: 'chat-1',
@@ -163,7 +163,7 @@ describe('ConversationSheet 独立 Native 回归', () => {
     expect(sheetStyle.borderTopRightRadius).toBe(26);
     expect(sheetStyle.borderBottomRightRadius).toBe(26);
     expect(sheetStyle.borderWidth).toBe(1);
-    expect(sheetStyle.borderColor).toBe(LIGHT_COLORS.border);
+    expect(sheetStyle.borderColor).toBe(resolveAppPalette(DEFAULT_THEME_ID, 'light').border);
 
     // Modal 原生动画被关闭，入场方向完全由 translateX 控制，避免不同平台动画行为分叉。
     expect(Array.isArray(sheetStyle.transform)).toBe(true);
@@ -440,8 +440,8 @@ describe('ConversationSheet 独立 Native 回归', () => {
   });
 
   it.each([
-    { name: '浅色', colors: LIGHT_COLORS },
-    { name: '深色', colors: DARK_COLORS },
+    { name: '浅色', colors: resolveAppPalette(DEFAULT_THEME_ID, 'light') },
+    { name: '深色', colors: resolveAppPalette(DEFAULT_THEME_ID, 'dark') },
   ])('$name主题同时应用于主面板、选中会话、操作和重命名子层', async ({ colors }) => {
     const result = await render(<ConversationSheet {...createProps()} colors={colors} />);
     // 抽屉主体使用 canvas 色而不是卡片色，形成 OpenMuse 式纸片层级。

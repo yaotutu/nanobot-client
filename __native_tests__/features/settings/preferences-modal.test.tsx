@@ -8,7 +8,7 @@ import type { UpdateState } from '@/features/updates/store';
 import { supportedLocales } from '@/i18n/config';
 import { apiClient } from '@/services/api/api';
 import type { LocalPreferences } from '@/stores/local-preferences-store';
-import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
+import { DEFAULT_THEME_ID, resolveAppPalette } from '@/features/theme';
 
 // 服务器偏好是纯展示数据；测试里使用独立地址，避免依赖真实局域网网关。
 
@@ -104,7 +104,7 @@ const createUpdateSection = (updates: UpdateState) => ({
 });
 
 const createProps = (updates: UpdateState = createUpdates()) => ({
-  colors: LIGHT_COLORS,
+  colors: resolveAppPalette(DEFAULT_THEME_ID, 'light'),
   preferences,
   updates,
   updateSection: createUpdateSection(updates),
@@ -315,7 +315,7 @@ describe('PreferencesModal', () => {
     expect(result.getByText('settings.values.dark')).toBeTruthy();
   });
 
-  it.each([LIGHT_COLORS, DARK_COLORS])('首页和选择页使用传入的明暗调色板', async (colors) => {
+  it.each([resolveAppPalette(DEFAULT_THEME_ID, 'light'), resolveAppPalette(DEFAULT_THEME_ID, 'dark')])('首页和选择页使用传入的明暗调色板', async (colors) => {
     const result = await render(preferencesElement(createProps(), { colors }));
     expect(result.getByRole('header', { name: 'sidebar.settings' })).toHaveStyle({ color: colors.foreground });
     expect(result.getByText('settings.preferences.note')).toHaveStyle({ color: colors.muted });

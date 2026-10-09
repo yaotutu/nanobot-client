@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -9,6 +10,7 @@ import {
 import GitFork from 'lucide-react-native/icons/git-fork';
 import Quote from 'lucide-react-native/icons/quote';
 import RotateCw from 'lucide-react-native/icons/rotate-cw';
+import Ellipsis from 'lucide-react-native/icons/ellipsis';
 
 import { parseQuotedUserMessage } from '@/services/text/user-quote-format';
 import { formatDateTime } from '@/services/text/format';
@@ -62,6 +64,8 @@ export function MessageRow({
   resolveFilePreviewAvailability,
 }: MessageRowProps) {
   const { t } = useTranslation();
+  // 展开状态只属于当前消息；列表复用行时不会把上一条消息的操作带到下一条。
+  const [expandedMessageId, setExpandedMessageId] = useState<string | null>(null);
   if (message.role !== 'user' && message.role !== 'assistant') return null;
   const assistant = message.role === 'assistant';
   const parsedUser = assistant ? null : parseQuotedUserMessage(message.content);
@@ -77,10 +81,13 @@ export function MessageRow({
     ? message.source?.label?.trim() || t('message.automationSourceFallback')
     : null;
   const showAssistantActions = assistant && (hasContent || hasMedia) && !message.isStreaming;
-  const completedAtLabel = assistant && message.completedAt
+  const completedAtLabel = assistant && !message.isStreaming && message.completedAt
     ? formatDateTime(message.completedAt)
     : null;
   const showUserCopy = !assistant && hasContent;
+  const canShowActions = showAssistantActions || showUserCopy;
+  const actionsExpanded = canShowActions && expandedMessageId === message.id;
+  const toggleActions = () => setExpandedMessageId(actionsExpanded ? null : message.id);
 
   return (
     <View style={[styles.row, assistant ? styles.assistantRow : styles.userRow]}>
@@ -120,7 +127,12 @@ export function MessageRow({
       ) : null}
       {hasContent ? (
         assistant ? (
-          <View style={[styles.assistantBubble, { backgroundColor: colors.pressed }]}>
+          <Pressable
+            accessible={false}
+            testID={`message-bubble-${message.id}`}
+            onLongPress={showAssistantActions ? toggleActions : undefined}
+            style={[styles.assistantBubble, { backgroundColor: colors.card }]}
+          >
             <MarkdownText
               colors={colors}
               dark={dark}
@@ -130,9 +142,14 @@ export function MessageRow({
             >
               {visibleContent}
             </MarkdownText>
-          </View>
+          </Pressable>
         ) : (
-          <View style={[styles.userBubble, { backgroundColor: colors.userBubble }]}>
+          <Pressable
+            accessible={false}
+            testID={`message-bubble-${message.id}`}
+            onLongPress={toggleActions}
+            style={[styles.userBubble, { backgroundColor: colors.userBubble }]}
+          >
             <UserMessageBody
               cliApps={cliApps}
               colors={colors}
@@ -141,10 +158,10 @@ export function MessageRow({
               message={message}
               slashCommands={slashCommands}
             />
-          </View>
+          </Pressable>
         )
       ) : message.isStreaming ? (
-        <View style={[styles.streamingDots, { backgroundColor: colors.pressed }]}>
+        <View style={[styles.streamingDots, { backgroundColor: colors.card }]}>
           <View style={[styles.streamingDot, { backgroundColor: colors.subtle }]} />
           <View style={[styles.streamingDot, { backgroundColor: colors.subtle }]} />
           <View style={[styles.streamingDot, { backgroundColor: colors.subtle }]} />
@@ -158,9 +175,36 @@ export function MessageRow({
           media={message.media}
         />
       ) : null}
-      {showAssistantActions || completedAtLabel ? (
-        <View style={styles.messageActions}>
-          {showAssistantActions ? <MessageCopyButton colors={colors} content={message.content} /> : null}
+      {canShowActions || completedAtLabel ? (
+        <View style={[styles.messageMeta, !assistant && styles.userMessageMeta]}>
+          {completedAtLabel ? (
+            <Text
+              accessibilityLabel={`${t('message.turnLatencyTitle')}: ${formatDateTime(message.completedAt)}`}
+              style={[styles.completedAt, { color: colors.subtle }]}
+            >
+              {completedAtLabel}
+            </Text>
+          ) : null}
+          {/* 常态只留一个更多入口；长按正文也能展开，文件链接和文本选择继续由正文处理。 */}
+          {canShowActions ? (
+            <Pressable
+              accessibilityLabel={t('message.actions')}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: actionsExpanded }}
+              hitSlop={8}
+              onPress={toggleActions}
+              style={({ pressed }) => [styles.moreButton, pressed && { backgroundColor: colors.pressed }]}
+            >
+              <Ellipsis color={colors.subtle} size={16} strokeWidth={1.7} />
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+      {actionsExpanded ? (
+        <View style={[styles.messageActions, !assistant && styles.userMessageMeta, { backgroundColor: colors.card }]}>
+          {(showUserCopy || showAssistantActions) ? (
+            <MessageCopyButton colors={colors} content={message.content} />
+          ) : null}
           {showAssistantActions ? (
             <Pressable
               accessibilityLabel={t('message.askAboutSelection')}
@@ -206,18 +250,6 @@ export function MessageRow({
                 : <RotateCw color={colors.subtle} size={13} strokeWidth={1.7} />}
             </Pressable>
           ) : null}
-          {completedAtLabel ? (
-            <Text
-              accessibilityLabel={`${t('message.turnLatencyTitle')}: ${formatDateTime(message.completedAt)}`}
-              style={[styles.completedAt, { color: colors.subtle }]}
-            >
-              {completedAtLabel}
-            </Text>
-          ) : null}
-        </View>
-      ) : showUserCopy ? (
-        <View style={styles.userMessageActions}>
-          <MessageCopyButton colors={colors} content={message.content} />
         </View>
       ) : null}
     </View>
@@ -229,23 +261,24 @@ const styles = StyleSheet.create({
   row: { width: '100%' },
   assistantRow: { alignItems: 'flex-start' },
   userRow: { alignItems: 'flex-end' },
-  // 沿用原版 openmuse/chat.tsx 的视觉：22px 圆角、用户右下角 7px、最大宽度 85%；正文仍为 16/24。
-  userBubble: { maxWidth: '85%', borderRadius: 22, borderBottomRightRadius: 7, paddingHorizontal: 16, paddingVertical: 13 },
-  // 沿用 OpenMuse 的助手左下尾角与 95% 上限；不再强制满宽，短文本会自然收缩。
-  // Markdown 段落自带 6px 底边距，这里补 7px，让正文实际上下留白保持 13px。
-  assistantBubble: { maxWidth: '95%', borderRadius: 22, borderBottomLeftRadius: 7, paddingHorizontal: 16, paddingTop: 13, paddingBottom: 7 },
+  // 长回复优先利用宽度，短文本仍自然收缩；用户气泡略窄以保留对话方向。
+  userBubble: { maxWidth: '88%', borderRadius: 24, borderBottomRightRadius: 8, paddingHorizontal: 15, paddingVertical: 12 },
+  // Markdown 自带 6px 段落底边距；底部只补 6px，保持实际上下留白一致。
+  assistantBubble: { maxWidth: '100%', borderRadius: 24, borderBottomLeftRadius: 8, paddingHorizontal: 15, paddingTop: 12, paddingBottom: 6 },
   quotedContext: { width: '100%', marginBottom: 7, borderLeftWidth: 2, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   quotedContextHeader: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 },
   quotedContextLabel: { fontSize: 10, fontWeight: '700' },
   quotedContextText: { fontSize: 12, lineHeight: 17 },
   automationBadge: { alignSelf: 'flex-start', marginBottom: 7, borderWidth: StyleSheet.hairlineWidth, borderRadius: 9, paddingHorizontal: 8, paddingVertical: 4 },
   automationBadgeText: { fontSize: 10.5, fontWeight: '600' },
-  // 操作始终可见，但压缩成低调的图标行：功能保留，视觉不与正文抢焦点。
-  messageActions: { minHeight: 26, alignSelf: 'flex-start', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 1 },
-  userMessageActions: { minHeight: 26, alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center' },
-  completedAt: { marginLeft: 3, fontSize: 10, fontVariant: ['tabular-nums'] },
+  messageMeta: { minHeight: 22, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 4 },
+  userMessageMeta: { alignSelf: 'flex-end' },
+  // 低频工具条按需挂载，默认不显示复制／引用／分支／重试四个图标。
+  messageActions: { alignSelf: 'flex-start', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 3, padding: 4, borderRadius: 12 },
+  moreButton: { width: 28, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  completedAt: { fontSize: 10, fontVariant: ['tabular-nums'] },
   messageActionButton: { width: 30, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   // 空回复占位也沿用助手卡片的底角，避免等待正文时撑出一整块空白。
-  streamingDots: { minHeight: 36, borderRadius: 18, borderBottomLeftRadius: 7, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  streamingDots: { minHeight: 36, borderRadius: 18, borderBottomLeftRadius: 8, paddingHorizontal: 15, flexDirection: 'row', alignItems: 'center', gap: 6 },
   streamingDot: { width: 5, height: 5, borderRadius: 3 },
 });

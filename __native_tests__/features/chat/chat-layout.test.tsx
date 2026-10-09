@@ -9,7 +9,8 @@ import { ChatSurface } from '@/features/chat/components/ChatSurface';
 import type { ChatThreadProps } from '@/features/chat/components/ChatThread';
 import { Composer } from '@/features/chat/components/Composer';
 import type { ComposerProps } from '@/features/chat/composer/model/view-contract';
-import { chatPaletteForTheme } from '@/features/chat/ui/chat-theme';
+import { chatLayout } from '@/features/chat/ui/chat-layout';
+import { DEFAULT_THEME_ID, resolveChatPalette, themeModeForDark } from '@/features/theme';
 import { AgentActivityCluster } from '@/features/chat/components/activity/AgentActivityCluster';
 import { MessageRow } from '@/features/chat/components/messages/MessageRow';
 
@@ -46,6 +47,7 @@ jest.mock('lucide-react-native/icons/quote', () => () => null);
 jest.mock('lucide-react-native/icons/rotate-cw', () => () => null);
 jest.mock('lucide-react-native/icons/check', () => () => null);
 jest.mock('lucide-react-native/icons/copy', () => () => null);
+jest.mock('lucide-react-native/icons/ellipsis', () => () => null);
 jest.mock('lucide-react-native/icons/circle-alert', () => () => null);
 jest.mock('lucide-react-native/icons/clock-3', () => () => null);
 jest.mock('lucide-react-native/icons/file-search', () => () => null);
@@ -80,7 +82,7 @@ jest.mock('@/features/chat/components/ComposerSuggestions', () => ({ ComposerSug
 jest.mock('@/features/chat/components/ComposerContext', () => ({ ComposerContext: () => null }));
 
 const createComposerProps = (): ComposerProps => ({
-  appearance: { colors: chatPaletteForTheme(false), dark: false },
+  appearance: { colors: resolveChatPalette(DEFAULT_THEME_ID, 'light'), dark: false },
   inputRef: createRef<TextInput>(),
   attachments: { items: [], busy: false, error: null, full: false, readyCount: 0, onAdd: jest.fn(), onRemove: jest.fn() },
   draft: { value: '', quotedContext: null, onChangeText: jest.fn(), onClearQuote: jest.fn(), onCursorChange: jest.fn() },
@@ -97,7 +99,7 @@ describe('聊天页唯一布局', () => {
       return <Text>persistent-composer</Text>;
     }
     const onUsePrompt = jest.fn();
-    const props = { colors: chatPaletteForTheme(false), composer: <ComposerProbe />, hasMessages: false, threadLoading: false, threadProps: {} as ChatThreadProps, onUsePrompt };
+    const props = { colors: resolveChatPalette(DEFAULT_THEME_ID, 'light'), composer: <ComposerProbe />, hasMessages: false, threadLoading: false, threadProps: {} as ChatThreadProps, onUsePrompt };
     const result = await render(<ChatSurface {...props} />);
     expect(result.getByText('thread.empty.title')).toBeTruthy();
     // 空状态引导不自动发送，只把选中模板交给控制器填充草稿。
@@ -114,7 +116,7 @@ describe('聊天页唯一布局', () => {
   });
 
   it('顶部菜单、会话选项、头像区域可操作，不再提供主题快捷按钮', async () => {
-    const props = { colors: chatPaletteForTheme(false), onOpenConversations: jest.fn(), onOpenChatOptions: jest.fn(), onOpenAgentActivity: jest.fn() };
+    const props = { colors: resolveChatPalette(DEFAULT_THEME_ID, 'light'), onOpenConversations: jest.fn(), onOpenChatOptions: jest.fn(), onOpenAgentActivity: jest.fn() };
     const result = await render(<ChatHeader {...props} />);
     await fireEvent.press(result.getByRole('button', { name: 'thread.header.openConversations' }));
     await fireEvent.press(result.getByRole('button', { name: 'thread.composer.options' }));
@@ -127,16 +129,22 @@ describe('聊天页唯一布局', () => {
     expect(result.queryByRole('button', { name: 'sidebar.newChat' })).toBeNull();
     expect(result.queryByText('demo')).toBeNull();
     expect(result.queryByText('sidebar.newChat')).toBeNull();
-    expect(result.getByRole('button', { name: 'thread.composer.options' })).toHaveStyle({ right: 20, width: 44, height: 44 });
+    expect(result.getByRole('button', { name: 'thread.composer.options' })).toHaveStyle({ right: chatLayout.horizontalInset, width: 44, height: 44 });
     expect(result.getByText('app.brand')).toBeTruthy();
-    expect(result.getByText('thread.header.subtitle')).toBeTruthy();
+    expect(result.queryByText('thread.header.subtitle')).toBeNull();
+    expect(result.getByTestId('header-avatar-frame')).toHaveStyle({ width: 80, height: 80, borderRadius: 40, overflow: 'hidden' });
+    // 只有头像底座和胶囊有背景，外层不再形成盖住正文的大卡片。
+    const heading = StyleSheet.flatten(result.getByRole('button', { name: 'thread.agentActivity.open' }).props.style);
+    expect(heading.backgroundColor).toBeUndefined();
+    expect(heading.borderWidth).toBeUndefined();
+    expect(result.getByTestId('header-activity-pill')).toHaveStyle({ height: 30, marginTop: -8 });
   });
 
   it('Agent 运行时头像区域仍打开活动面板', async () => {
     const onOpenAgentActivity = jest.fn();
     const result = await render(
       <ChatHeader
-        colors={chatPaletteForTheme(false)}
+        colors={resolveChatPalette(DEFAULT_THEME_ID, 'light')}
         headerActivity={{ phase: 'thinking', elapsedMs: 1000, reasoningStepCount: 1, toolCallCount: 0, fileEditCount: 0 }}
         onOpenAgentActivity={onOpenAgentActivity}
         onOpenChatOptions={jest.fn()}
@@ -146,11 +154,24 @@ describe('聊天页唯一布局', () => {
     expect(result.getByText('thread.agentActivity.thinking')).toBeTruthy();
     await fireEvent.press(result.getByRole('button', { name: 'thread.agentActivity.open' }));
     expect(onOpenAgentActivity).toHaveBeenCalledTimes(1);
+    expect(result.queryByText('app.brand')).toBeNull();
+    expect(result.getByTestId('header-activity-pill')).toHaveStyle({ height: 30, marginTop: -8 });
+  });
+
+  it('空闲和工具运行在同一胶囊原位切换，头像不变大也不增加一行', async () => {
+    const props = { colors: resolveChatPalette(DEFAULT_THEME_ID, 'dark'), onOpenConversations: jest.fn(), onOpenChatOptions: jest.fn(), onOpenAgentActivity: jest.fn() };
+    const result = await render(<ChatHeader {...props} />);
+    const idlePillStyle = StyleSheet.flatten(result.getByTestId('header-activity-pill').props.style);
+    await result.rerender(<ChatHeader {...props} headerActivity={{ phase: 'tool', reasoningStepCount: 0, toolCallCount: 1, fileEditCount: 0 }} />);
+    expect(result.getAllByTestId('header-activity-pill')).toHaveLength(1);
+    expect(StyleSheet.flatten(result.getByTestId('header-activity-pill').props.style)).toEqual(idlePillStyle);
+    expect(result.getByText('thread.agentActivity.tool')).toBeTruthy();
+    expect(result.queryByText('thread.header.subtitle')).toBeNull();
   });
 
   it.each([false, true])('空会话也可从右上角打开选项（深色主题：%s）', async (dark) => {
     const onOpenChatOptions = jest.fn();
-    const result = await render(<ChatHeader colors={chatPaletteForTheme(dark)}
+    const result = await render(<ChatHeader colors={resolveChatPalette(DEFAULT_THEME_ID, themeModeForDark(dark))}
       onOpenConversations={jest.fn()} onOpenChatOptions={onOpenChatOptions} onOpenAgentActivity={jest.fn()} />);
     // 空会话仍可点击头像区域查看活动面板；配置入口也可先选模型和工作区。
     await fireEvent.press(result.getByRole('button', { name: 'thread.composer.options' }));
@@ -206,6 +227,19 @@ describe('聊天页唯一布局', () => {
     expect(result.getAllByRole('button')).toHaveLength(2);
   });
 
+  it.each([false, true])('输入框只有一块背景，空发送无底板、有草稿时使用统一强调色（dark=%s）', async (dark) => {
+    const props = createComposerProps();
+    props.appearance = { ...props.appearance, dark, colors: resolveChatPalette(DEFAULT_THEME_ID, themeModeForDark(dark)) };
+    const result = await render(<Composer {...props} />);
+    expect(result.getByRole('button', { name: 'thread.composer.send' })).toHaveStyle({ backgroundColor: 'transparent' });
+    await result.rerender(<Composer {...props} draft={{ ...props.draft, value: 'hello' }} />);
+    expect(result.getByRole('button', { name: 'thread.composer.send' })).toHaveStyle({ backgroundColor: props.appearance.colors.userBubble });
+    const surface = result.container.queryAll((node) => StyleSheet.flatten(node.props.style)?.borderRadius === 29)[0];
+    expect(surface).toHaveStyle({ backgroundColor: props.appearance.colors.card });
+    expect(StyleSheet.flatten(surface.props.style).borderWidth).toBeUndefined();
+    expect(StyleSheet.flatten(surface.props.style).boxShadow).toBeUndefined();
+  });
+
 });
 
 // 消息视觉回归只覆盖卡片、辅助操作与活动区，不接管 header/composer/消息列表的布局断言。
@@ -218,7 +252,7 @@ const textLayoutNode = (node: ReturnType<Awaited<ReturnType<typeof render>>['get
 
 const createMessageRowProps = (dark = false): React.ComponentProps<typeof MessageRow> => ({
   message: { id: 'assistant-visual', role: 'assistant', content: 'hello-assistant', createdAt: 1, completedAt: 2 },
-  colors: chatPaletteForTheme(dark), dark, cliApps: [], mcpPresets: [], slashCommands: [],
+  colors: resolveChatPalette(DEFAULT_THEME_ID, themeModeForDark(dark)), dark, cliApps: [], mcpPresets: [], slashCommands: [],
   forkIndex: 3, forkBusy: false, canRetry: true, isRetryBusy: false,
   onFork: jest.fn(), onRetry: jest.fn(async () => undefined), onQuote: jest.fn(),
 });
@@ -237,15 +271,19 @@ describe('消息卡片与活动区的紧凑视觉', () => {
     expect(StyleSheet.flatten(paragraph?.props.style)).toMatchObject({ marginTop: 0, marginBottom: 6 });
   });
 
-  it.each([false, true])('助手灰卡沿用原版尾角与 95% 上限，正文 16/24、全部操作保留（dark=%s）', async (dark) => {
+  it.each([false, true])('助手气泡利用完整行宽，正文 16/24，低频操作默认收起（dark=%s）', async (dark) => {
     const props = createMessageRowProps(dark);
     const result = await render(<MessageRow {...props} />);
-    const card = result.container.queryAll((node) => StyleSheet.flatten(node.props.style)?.borderBottomLeftRadius === 7)[0];
-    expect(StyleSheet.flatten(card.props.style)).toMatchObject({ maxWidth: '95%', borderRadius: 22, backgroundColor: props.colors.pressed });
+    const card = result.getByTestId('message-bubble-assistant-visual');
+    expect(StyleSheet.flatten(card.props.style)).toMatchObject({ maxWidth: '100%', borderRadius: 24, backgroundColor: props.colors.card, paddingHorizontal: 15 });
     // 不再强制满宽，短回复会像 OpenMuse 一样自然收缩。
     expect(StyleSheet.flatten(card.props.style).width).toBeUndefined();
     expect(textLayoutNode(result.getByText('hello-assistant'))).toHaveStyle({ fontSize: 16, lineHeight: 24 });
     const actions = ['message.copyReply', 'message.askAboutSelection', 'message.forkFromHere', 'message.retry'];
+    actions.forEach((label) => expect(result.queryByLabelText(label)).toBeNull());
+    expect(result.getByRole('button', { name: 'message.actions' }).props.accessibilityState.expanded).toBe(false);
+    await fireEvent.press(result.getByRole('button', { name: 'message.actions' }));
+    expect(result.getByRole('button', { name: 'message.actions' }).props.accessibilityState.expanded).toBe(true);
     for (const label of actions) {
       const action = result.getByLabelText(label);
       expect(action).toHaveStyle({ width: 30, height: 26 });
@@ -258,16 +296,20 @@ describe('消息卡片与活动区的紧凑视觉', () => {
     expect(props.onFork).toHaveBeenCalledWith(3);
     expect(props.onRetry).toHaveBeenCalledTimes(1);
     expect(result.getByLabelText(/^message.turnLatencyTitle:/)).toBeTruthy();
+    await fireEvent.press(result.getByRole('button', { name: 'message.actions' }));
+    expect(result.queryByLabelText('message.askAboutSelection')).toBeNull();
   });
 
-  it.each([false, true])('用户蓝气泡保留 85% 上限、右下尾角、引用上下文与原文复制（dark=%s）', async (dark) => {
+  it.each([false, true])('用户气泡保留方向、引用上下文与按需原文复制（dark=%s）', async (dark) => {
     const props = createMessageRowProps(dark);
     const content = '> [!QUOTE]\n> quoted-assistant\n\nhello-user';
     const result = await render(<MessageRow {...props} message={{ id: 'user-visual', role: 'user', content, createdAt: 1 }} />);
-    const bubble = result.container.queryAll((node) => StyleSheet.flatten(node.props.style)?.borderBottomRightRadius === 7)[0];
-    expect(StyleSheet.flatten(bubble.props.style)).toMatchObject({ maxWidth: '85%', borderRadius: 22, backgroundColor: props.colors.userBubble, paddingHorizontal: 16, paddingVertical: 13 });
+    const bubble = result.getByTestId('message-bubble-user-visual');
+    expect(StyleSheet.flatten(bubble.props.style)).toMatchObject({ maxWidth: '88%', borderRadius: 24, borderBottomRightRadius: 8, backgroundColor: props.colors.userBubble, paddingHorizontal: 15, paddingVertical: 12 });
     expect(textLayoutNode(result.getByText('hello-user'))).toHaveStyle({ fontSize: 16, lineHeight: 24 });
     expect(result.getByText('quoted-assistant')).toBeTruthy();
+    expect(result.queryByLabelText('message.copyReply')).toBeNull();
+    await fireEvent(bubble, 'longPress');
     await fireEvent.press(result.getByLabelText('message.copyReply'));
     expect(Clipboard.setStringAsync).toHaveBeenCalledWith(content);
   });
@@ -277,16 +319,32 @@ describe('消息卡片与活动区的紧凑视觉', () => {
     const message = { ...props.message, content: '', completedAt: undefined, isStreaming: true };
     const result = await render(<MessageRow {...props} message={message} />);
     const placeholder = result.container.queryAll((node) => StyleSheet.flatten(node.props.style)?.minHeight === 36)[0];
-    expect(StyleSheet.flatten(placeholder.props.style)).toMatchObject({ borderBottomLeftRadius: 7, backgroundColor: props.colors.pressed });
+    expect(StyleSheet.flatten(placeholder.props.style)).toMatchObject({ borderBottomLeftRadius: 8, backgroundColor: props.colors.card });
     expect(result.queryByLabelText('message.copyReply')).toBeNull();
     await result.rerender(<MessageRow {...props} message={{ ...message, content: 'streaming-answer' }} />);
     expect(textLayoutNode(result.getByText('streaming-answer'))).toHaveStyle({ fontSize: 16, lineHeight: 24 });
     expect(result.queryByLabelText('message.askAboutSelection')).toBeNull();
+    expect(result.queryByRole('button', { name: 'message.actions' })).toBeNull();
+    await fireEvent(result.getByTestId('message-bubble-assistant-visual'), 'longPress');
+    expect(result.queryByLabelText('message.copyReply')).toBeNull();
+  });
+
+  it('长按能展开操作，但替换消息或转入流式回复后不沿用旧操作区', async () => {
+    const props = createMessageRowProps();
+    const result = await render(<MessageRow {...props} />);
+    await fireEvent(result.getByTestId('message-bubble-assistant-visual'), 'longPress');
+    expect(result.getByLabelText('message.copyReply')).toBeTruthy();
+    await result.rerender(<MessageRow {...props} message={{ ...props.message, isStreaming: true }} />);
+    expect(result.queryByLabelText('message.copyReply')).toBeNull();
+    await result.rerender(<MessageRow {...props} message={{ ...props.message, id: 'another-message' }} />);
+    expect(result.getByRole('button', { name: 'message.actions' }).props.accessibilityState.expanded).toBe(false);
+    expect(result.queryByLabelText('message.copyReply')).toBeNull();
   });
 
   it('紧凑操作按钮仍遵守分支与重试的忙碌禁用状态', async () => {
     const props = createMessageRowProps();
     const result = await render(<MessageRow {...props} forkBusy isRetryBusy />);
+    await fireEvent.press(result.getByRole('button', { name: 'message.actions' }));
     await fireEvent.press(result.getByLabelText('message.forkFromHere'));
     await fireEvent.press(result.getByLabelText('message.retry'));
     expect(props.onFork).not.toHaveBeenCalled();
@@ -294,7 +352,7 @@ describe('消息卡片与活动区的紧凑视觉', () => {
   });
 
   it('已完成活动默认折叠，收紧留白后仍可手动展开查看推理', async () => {
-    const props = { colors: chatPaletteForTheme(false), hasBodyBelow: true, isTurnStreaming: false, messages: [{ id: 'reasoning-visual', role: 'assistant' as const, content: '', reasoning: 'reasoning-preview', createdAt: 1 }], turnLatencyMs: 2_000 };
+    const props = { colors: resolveChatPalette(DEFAULT_THEME_ID, 'light'), hasBodyBelow: true, isTurnStreaming: false, messages: [{ id: 'reasoning-visual', role: 'assistant' as const, content: '', reasoning: 'reasoning-preview', createdAt: 1 }], turnLatencyMs: 2_000 };
     const result = await render(<AgentActivityCluster {...props} />);
     const header = result.getByRole('button');
     expect(header.props.accessibilityState.expanded).toBe(false);
@@ -313,7 +371,7 @@ describe('消息卡片与活动区的紧凑视觉', () => {
   });
 
   it('流式活动默认轻量折叠，用户主动展开后新内容不抢回展开状态', async () => {
-    const props = { colors: chatPaletteForTheme(false), hasBodyBelow: false, isTurnStreaming: true, messages: [{ id: 'live-reasoning', role: 'assistant' as const, content: '', reasoning: 'live-preview', reasoningStreaming: true, createdAt: Date.now() }] };
+    const props = { colors: resolveChatPalette(DEFAULT_THEME_ID, 'light'), hasBodyBelow: false, isTurnStreaming: true, messages: [{ id: 'live-reasoning', role: 'assistant' as const, content: '', reasoning: 'live-preview', reasoningStreaming: true, createdAt: Date.now() }] };
     const result = await render(<AgentActivityCluster {...props} />);
     expect(result.getByRole('button').props.accessibilityState.expanded).toBe(false);
     expect(result.queryByText('live-preview')).toBeNull();

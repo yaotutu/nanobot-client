@@ -27,7 +27,7 @@ import type {
   ChatScreenController,
 } from '@/features/chat/model/chat-screen-contract';
 import { useChatStore } from '@/features/chat/store';
-import { chatPaletteForTheme } from '@/features/chat/ui/chat-theme';
+import { DEFAULT_THEME_ID, resolveChatPalette, themeModeForDark } from '@/features/theme';
 
 interface NanobotScreenProps {
   controller: ChatScreenController;
@@ -58,7 +58,7 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
     resetForSessionChange,
   } = useChatLocalState();
   const { dark } = shell;
-  const colors = chatPaletteForTheme(dark);
+  const colors = resolveChatPalette(DEFAULT_THEME_ID, themeModeForDark(dark));
   const composerController = useComposerController({
     cliApps: capabilities.cliApps,
     limits: capabilities.bootstrap.limits,

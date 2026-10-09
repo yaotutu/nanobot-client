@@ -14,10 +14,10 @@ jest.mock('lucide-react-native/icons/image', () => () => null);
 jest.mock('lucide-react-native/icons/x', () => () => null);
 
 import { AttachmentPickerSheet } from '@/features/chat/components/modals/AttachmentPickerSheet';
-import { chatPaletteForTheme } from '@/features/chat/ui/chat-theme';
+import { DEFAULT_THEME_ID, resolveChatPalette } from '@/features/theme';
 
 const baseProps = {
-  colors: chatPaletteForTheme(false),
+  colors: resolveChatPalette(DEFAULT_THEME_ID, 'light'),
   onClose: jest.fn(),
   onPickDocuments: jest.fn(),
   onPickImages: jest.fn(),

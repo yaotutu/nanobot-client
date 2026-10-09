@@ -1,14 +1,21 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { createRef } from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import { fireEvent, render, within } from '@testing-library/react-native';
 
-import { ChatThread } from '@/features/chat/components/ChatThread';
+import { ChatThread, type ChatThreadProps } from '@/features/chat/components/ChatThread';
 import type { ChatThreadListRef } from '@/features/chat/hooks/useChatScroll';
-import { chatPaletteForTheme } from '@/features/chat/ui/chat-theme';
+import { DEFAULT_THEME_ID, resolveChatPalette, themeModeForDark } from '@/features/theme';
 import type { UIMessage } from '@/types/api/chat/messages';
 
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
-jest.mock('lucide-react-native/icons/arrow-down', () => () => null);
+jest.mock('lucide-react-native/icons/arrow-down', () => {
+  const { View: MockView } = jest.requireActual<typeof import('react-native')>('react-native');
+  // 保留箭头的渲染位置与颜色参数，避免空 mock 掩盖图标被移除或配色回退。
+  return (props: { color: string; size: number; strokeWidth: number }) => (
+    <MockView testID="scroll-to-bottom-arrow" {...props} />
+  );
+});
 jest.mock('@/features/chat/components/activity/AgentActivityCluster', () => {
   const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
   return { AgentActivityCluster: () => <MockText>activity</MockText> };
@@ -65,7 +72,7 @@ describe('倒置消息列表', () => {
         liveActivityClusterIndices={new Set()}
         forkingMessageId={null}
         retryingMessageId={null}
-        colors={chatPaletteForTheme(false)}
+        colors={resolveChatPalette(DEFAULT_THEME_ID, 'light')}
         dark={false}
         cliApps={[]}
         mcpPresets={[]}
@@ -89,9 +96,94 @@ describe('倒置消息列表', () => {
     expect(list.props.data[0].unit.message.id).toBe('latest-assistant');
     expect(result.getByText('latest-assistant')).toBeTruthy();
     expect(result.getByText('fork-boundary')).toBeTruthy();
+    expect(result.queryByLabelText('thread.scrollToBottom')).toBeNull();
     // 展示索引 0 对应时间线索引 1，避免倒置后破坏重试和 fork 的业务判断。
     expect(canRetryFromMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'message' }), 1);
     await fireEvent.press(result.getByLabelText('thread.loadEarlier'));
     expect(loadEarlier).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('回到底部悬浮按钮', () => {
+  // 使用完整且固定的列表输入，仅切换主题或 atBottom，避免把业务回调变化误判为布局变化。
+  const createProps = (dark = false): ChatThreadProps => ({
+    listRef: createRef<ChatThreadListRef>(),
+    atBottom: false,
+    scrollToBottom: jest.fn(),
+    loadEarlier: jest.fn(),
+    handleThreadScroll: jest.fn(),
+    handleContentSizeChange: jest.fn(),
+    handleScrollToIndexFailed: jest.fn(),
+    onMomentumScrollEnd: jest.fn(),
+    onScrollBeginDrag: jest.fn(),
+    onScrollEndDrag: jest.fn(),
+    units: [{ type: 'message', message: assistant('latest-assistant') }],
+    unitKeys: ['latest-assistant'],
+    forkIndexes: [undefined],
+    forkBoundaryAfterUnitIndex: null,
+    liveActivityClusterIndices: new Set(),
+    forkingMessageId: null,
+    retryingMessageId: null,
+    colors: resolveChatPalette(DEFAULT_THEME_ID, themeModeForDark(dark)),
+    dark,
+    cliApps: [],
+    mcpPresets: [],
+    slashCommands: [],
+    hasMoreBefore: false,
+    loadingOlder: false,
+    canRetryFromMessage: jest.fn(() => false),
+    forkFromMessage: jest.fn(async () => undefined),
+    retryFromMessage: jest.fn(() => jest.fn(async () => undefined)),
+    resolveFilePreviewAvailability: jest.fn(async () => true),
+    onOpenFilePreview: undefined,
+    onQuote: jest.fn(),
+  });
+
+  it.each([false, true])('绝对定位且仅显示箭头，不挤占消息列表（dark=%s）', async (dark) => {
+    const props = createProps(dark);
+    const result = await render(<ChatThread {...props} />);
+    const button = result.getByRole('button', { name: 'thread.scrollToBottom' });
+    const list = result.getByTestId('chat-thread-list');
+
+    // 原生渲染测试不执行真实布局；用绝对定位和列表外的结构约束回归“不占行”。
+    expect(button).toHaveStyle({
+      position: 'absolute',
+      width: 44,
+      height: 44,
+      right: 14,
+      bottom: 12,
+      borderRadius: 22,
+      backgroundColor: props.colors.userBubble,
+    });
+    expect(within(list).queryByLabelText('thread.scrollToBottom')).toBeNull();
+    expect(result.queryByText('thread.latestMessages')).toBeNull();
+    expect(within(button).queryAllByText(/.+/)).toHaveLength(0);
+    expect(within(button).getByTestId('scroll-to-bottom-arrow').props.color).toBe(props.colors.userText);
+
+    const listStyle = StyleSheet.flatten(list.props.style);
+    const contentStyle = StyleSheet.flatten(list.props.contentContainerStyle);
+    await result.rerender(<ChatThread {...props} atBottom />);
+    // 显隐只影响悬浮入口，列表自身的间距和内容布局保持不变。
+    const hiddenButtonList = result.getByTestId('chat-thread-list');
+    expect(StyleSheet.flatten(hiddenButtonList.props.style)).toEqual(listStyle);
+    expect(StyleSheet.flatten(hiddenButtonList.props.contentContainerStyle)).toEqual(contentStyle);
+    expect(result.queryByLabelText('thread.scrollToBottom')).toBeNull();
+  });
+
+  it('点击强制动画滚动到底部，并随 atBottom 更新隐藏或重新显示', async () => {
+    const props = createProps();
+    const result = await render(<ChatThread {...props} />);
+
+    await fireEvent.press(result.getByLabelText('thread.scrollToBottom'));
+    expect(props.scrollToBottom).toHaveBeenCalledTimes(1);
+    expect(props.scrollToBottom).toHaveBeenCalledWith(true, true);
+
+    // 实际滚动状态由父层回传；点击不能自行伪造已经到底的状态。
+    expect(result.getByLabelText('thread.scrollToBottom')).toBeTruthy();
+    await result.rerender(<ChatThread {...props} atBottom />);
+    expect(result.queryByLabelText('thread.scrollToBottom')).toBeNull();
+    await result.rerender(<ChatThread {...props} atBottom={false} />);
+    expect(result.getByLabelText('thread.scrollToBottom')).toBeTruthy();
+    expect(props.scrollToBottom).toHaveBeenCalledTimes(1);
   });
 });
