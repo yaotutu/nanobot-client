@@ -38,6 +38,7 @@ export class SocketPendingRegistry {
   private messageSends = new Map<string, PendingMessageSend>();
   private systemCommands = new Map<string, TimedPending<void>>();
   private transcriptions = new Map<string, TimedPending<string>>();
+  private webuiRequests = new Map<string, TimedPending<unknown>>();
   private newChat: TimedPending<string> | null = null;
 
   hasNewChat(): boolean {
@@ -167,9 +168,27 @@ export class SocketPendingRegistry {
     this.rejectTimed(this.transcriptions, requestId, error);
   }
 
+  createWebuiRequest<T>(
+    requestId: string,
+    timeoutMs: number,
+    timeoutMessage: string,
+    onSettled?: SettledCallback,
+  ): Promise<T> {
+    return this.createTimed<T>(this.webuiRequests, requestId, timeoutMs, timeoutMessage, onSettled) as Promise<T>;
+  }
+
+  resolveWebuiRequest(requestId: string, result: unknown): void {
+    this.resolveTimed(this.webuiRequests, requestId, result);
+  }
+
+  rejectWebuiRequest(requestId: string, error: Error): void {
+    this.rejectTimed(this.webuiRequests, requestId, error);
+  }
+
   rejectTransientRequests(error: Error): void {
     for (const key of [...this.systemCommands.keys()]) this.rejectTimed(this.systemCommands, key, error);
     for (const key of [...this.transcriptions.keys()]) this.rejectTimed(this.transcriptions, key, error);
+    for (const key of [...this.webuiRequests.keys()]) this.rejectTimed(this.webuiRequests, key, error);
   }
 
   private settleMessage(key: string, outcome: 'resolve' | 'reject', error?: Error): void {

@@ -1,4 +1,5 @@
 import type { GoalStateWsPayload } from '../runtime';
+import type { SidebarStatePayload } from '../sidebar';
 import type { WorkspaceScopePayload } from '../workspaces';
 import type {
   AgentUIBlob,
@@ -108,6 +109,17 @@ export type InboundEvent = (
       chat_id: string;
       scope?: string;
       workspace_scope?: WorkspaceScopePayload;
+    }
+  | {
+      event: 'webui_response';
+      request_id: string;
+      ok: boolean;
+      result?: unknown;
+      error?: { status?: number; message?: string };
+    }
+  | {
+      event: 'sidebar_state_updated';
+      state: SidebarStatePayload;
     }
   | { event: 'transcription_result'; request_id: string; text: string }
   | {

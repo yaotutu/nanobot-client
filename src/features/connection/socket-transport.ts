@@ -28,6 +28,8 @@ import {
 } from '@/features/connection/socket-protocol';
 import type { InboundEvent } from '@/types/api/chat/events';
 import type { OutboundMedia } from '@/types/api/chat/media';
+import type { SessionDeleteResult } from '@/types/api/chat/thread';
+import type { SidebarStatePayload } from '@/types/api/sidebar';
 import type { ConnectionStatus } from '@/types/api/runtime';
 import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 
@@ -207,6 +209,14 @@ export class NanobotSocket {
 
   setWorkspaceScope(chatId: string, scope: WorkspaceScopePayload): void {
     this.commands.setWorkspaceScope(chatId, scope);
+  }
+
+  updateSidebarState(state: SidebarStatePayload): Promise<SidebarStatePayload> {
+    return this.commands.updateSidebarState(state);
+  }
+
+  deleteSession(key: string): Promise<SessionDeleteResult> {
+    return this.commands.deleteSession(key);
   }
 
   stopTurn(chatId: string): void {

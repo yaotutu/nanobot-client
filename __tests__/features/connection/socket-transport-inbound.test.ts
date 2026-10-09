@@ -22,6 +22,26 @@ describe('socket transport inbound', () => {
     expect((events[0] as { event: string }).event).toBe('delta');
   });
 
+  it('emits sidebar and session update broadcasts', () => {
+    const socket = makeSocket();
+    MockWebSocket.last()!.fireOpen();
+
+    const events: unknown[] = [];
+    socket.onEvent((e) => events.push(e));
+
+    MockWebSocket.last()!.fireMessage(
+      JSON.stringify({ event: 'sidebar_state_updated', state: { schema_version: 1 } }),
+    );
+    MockWebSocket.last()!.fireMessage(
+      JSON.stringify({ event: 'session_updated', chat_id: 'c1' }),
+    );
+
+    expect(events.map((e) => (e as { event: string }).event)).toEqual([
+      'sidebar_state_updated',
+      'session_updated',
+    ]);
+  });
+
   it('resolves transcription_result events', async () => {
     const socket = makeSocket();
     MockWebSocket.last()!.fireOpen();

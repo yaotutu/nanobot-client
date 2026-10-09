@@ -36,6 +36,8 @@ interface SidebarState {
 interface SidebarActions {
   refresh(): Promise<void>;
   refreshSidebarState(): Promise<void>;
+  /** 消费其他客户端通过 `sidebar_state_updated` 广播的权威状态。 */
+  applyRemoteSidebarState(state: SidebarStatePayload): void;
   togglePinned(key: string): Promise<void>;
   toggleArchived(key: string): Promise<void>;
   toggleGroup(groupId: string): Promise<void>;
@@ -86,6 +88,8 @@ export const useSidebarStore = create<SidebarStore>()(
     let refreshSequence = 0;
     let mutationVersion = 0;
     let writeQueue: Promise<void> = Promise.resolve();
+    // 本机还有 sidebar 快照正在排队或等待服务端确认时，忽略远端广播，避免覆盖乐观状态。
+    let sidebarWritesInFlight = 0;
 
     async function mutateSidebar(
       updater: (current: SidebarStatePayload) => SidebarStatePayload,
@@ -95,10 +99,11 @@ export const useSidebarStore = create<SidebarStore>()(
       const next = updater(get().sidebarState);
       // 立即展示操作后的完整快照；排队期间后续操作仍从最新乐观状态计算。
       set({ sidebarState: next });
+      sidebarWritesInFlight += 1;
       const task = writeQueue.then(async () => {
-        // 尚未发送的旧环境快照直接失效，不能用新环境的连接继续保存。
-        if (requestGeneration !== generation) return;
         try {
+          // 尚未发送的旧环境快照直接失效，不能用新环境的连接继续保存。
+          if (requestGeneration !== generation) return;
           const persisted = await apiUpdateSidebarState(next);
           // 旧响应不能覆盖后续操作的乐观状态，也不能回写 reset 后的新环境。
           if (requestGeneration === generation && requestVersion === mutationVersion) {
@@ -111,6 +116,8 @@ export const useSidebarStore = create<SidebarStore>()(
             : i18n.t('sidebar.saveStateFailed', { defaultValue: 'Could not save sidebar state' });
           set({ error: message });
           // 不抛 —— sidebar state 失败不应阻塞聊天或后续排队的保存。
+        } finally {
+          sidebarWritesInFlight -= 1;
         }
       });
       // 队尾始终恢复为可继续的 Promise；单个任务失败不会阻断后续发送。
@@ -150,6 +157,12 @@ export const useSidebarStore = create<SidebarStore>()(
         } catch {
           // sidebar state 缺失时不影响功能
         }
+      },
+
+      applyRemoteSidebarState(state) {
+        // 远端广播是其他客户端保存成功的权威结果；本机写入期间先保留乐观快照，避免竞态覆盖。
+        if (sidebarWritesInFlight > 0) return;
+        set({ sidebarState: state });
       },
 
       async togglePinned(key) {

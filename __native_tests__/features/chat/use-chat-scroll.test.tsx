@@ -79,6 +79,8 @@ describe('倒置消息列表滚动 hook', () => {
       result.current.handleThreadScroll(makeScrollEvent(1_400));
     });
     expect(result.current.atBottom).toBe(false);
+    // 中间位置同时存在“上方更早内容”和“下方最新内容”，两个方向入口都应可见。
+    expect(result.current.canScrollToTop).toBe(true);
     expect(onLoadOlder).not.toHaveBeenCalled();
 
     // 距离虚拟 end 50px，接近视觉顶部，应触发一次旧消息分页。
@@ -89,12 +91,37 @@ describe('倒置消息列表滚动 hook', () => {
     });
     expect(onLoadOlder).toHaveBeenCalledTimes(1);
 
-    // 回到 offset 0 附近，恢复自动跟随最新消息。
+    // 回到 offset 0 附近，恢复自动跟随最新消息；上方历史入口保持可用。
     await act(async () => {
       result.current.handleThreadScroll(makeScrollEvent(20));
       result.current.handleContentSizeChange();
     });
     expect(result.current.atBottom).toBe(true);
+    expect(result.current.canScrollToTop).toBe(true);
+  });
+
+  it('接近视觉顶部时隐藏向上入口，离开底部时保留向下入口', async () => {
+    const onSessionReset = jest.fn();
+    const { result } = await renderChatScroll({
+      hasMoreBefore: false,
+      onSessionReset,
+    });
+    // 等待会话切换重置定时器完成，避免它的 0ms 回调在测试滚动事件之后把状态误置回底部。
+    await waitFor(() => expect(onSessionReset).toHaveBeenCalledTimes(1));
+
+    // 视觉顶部对应虚拟 end；距离为 50px 时不再显示向上入口。
+    await act(async () => {
+      result.current.handleThreadScroll(makeScrollEvent(1_450));
+    });
+    expect(result.current.atBottom).toBe(false);
+    expect(result.current.canScrollToTop).toBe(false);
+
+    // 向最新的方向回退到中间位置，向上入口恢复，向下入口继续可用。
+    await act(async () => {
+      result.current.handleThreadScroll(makeScrollEvent(1_400));
+    });
+    expect(result.current.atBottom).toBe(false);
+    expect(result.current.canScrollToTop).toBe(true);
   });
 
   it('切换会话后重置自动跟随状态', async () => {
@@ -127,6 +154,7 @@ describe('倒置消息列表滚动 hook', () => {
     });
     await waitFor(() => expect(onSessionReset).toHaveBeenCalledTimes(2));
     expect(result.current.atBottom).toBe(true);
+    expect(result.current.canScrollToTop).toBe(false);
     // 旧会话未结束的拖拽不能给新列表初始定位赋予自动分页资格。
     await act(async () => {
       rerender({ ...initialProps, activeKey: 'session-b', hasMoreBefore: true });

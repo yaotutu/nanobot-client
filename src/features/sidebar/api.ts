@@ -40,18 +40,36 @@ export async function fetchSidebarState(): Promise<SidebarStatePayload> {
   return apiClient.get<SidebarStatePayload>('/api/webui/sidebar-state');
 }
 
+/**
+ * Sidebar mutation 需要复用外部 WebUI 的已认证 WebSocket，而不是 direct HTTP。
+ * 页面层只需要通过这个小型接口注入当前 socket，store 仍然只面向 API 模块，避免 UI 与连接层耦合。
+ */
+interface SidebarMutationTransport {
+  updateSidebarState(state: SidebarStatePayload): Promise<SidebarStatePayload>;
+  deleteSession(key: string): Promise<SessionDeleteResult>;
+}
+
+let getSidebarMutationTransport: (() => SidebarMutationTransport | null) | null = null;
+
+/** 给 sidebar API 注入当前 WebSocket transport；卸载时传 null 清理引用。 */
+export function configureSidebarMutationTransport(
+  provider: (() => SidebarMutationTransport | null) | null,
+): void {
+  getSidebarMutationTransport = provider;
+}
+
+function requireSidebarMutationTransport(): SidebarMutationTransport {
+  const transport = getSidebarMutationTransport?.();
+  if (!transport) throw new Error('sidebar_mutation_transport_unavailable');
+  return transport;
+}
+
 export async function updateSidebarState(state: SidebarStatePayload): Promise<SidebarStatePayload> {
-  return apiClient.request<SidebarStatePayload>(
-    '/api/webui/sidebar-state/update',
-    { method: 'GET', query: { state: JSON.stringify(state) } },
-  );
+  return requireSidebarMutationTransport().updateSidebarState(state);
 }
 
 export async function deleteSession(
   key: string,
 ): Promise<SessionDeleteResult> {
-  return apiClient.request<SessionDeleteResult>(
-    `/api/sessions/${encodeURIComponent(key)}/delete`,
-    { method: 'GET' },
-  );
+  return requireSidebarMutationTransport().deleteSession(key);
 }

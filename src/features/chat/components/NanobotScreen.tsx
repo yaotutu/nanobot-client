@@ -122,7 +122,9 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
   const {
     listRef,
     atBottom,
+    canScrollToTop,
     scrollToBottom,
+    scrollToTop,
     loadEarlier,
     handleThreadScroll,
     handleContentSizeChange,
@@ -175,7 +177,9 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
           threadProps={{
             listRef,
             atBottom,
+            canScrollToTop,
             scrollToBottom,
+            scrollToTop,
             loadEarlier,
             handleThreadScroll,
             handleContentSizeChange,

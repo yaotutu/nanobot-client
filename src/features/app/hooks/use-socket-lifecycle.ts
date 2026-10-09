@@ -5,6 +5,10 @@ import { useChatStore } from '@/features/chat/state';
 import { useWorkspacesStore } from '@/features/workspaces/state';
 import i18n from '@/i18n';
 import { deriveWsUrl } from '@/services/api/bootstrap';
+import {
+  configureSidebarMutationTransport,
+  useSidebarStore,
+} from '@/features/sidebar/state';
 import { getServerUrl } from '@/services/api/config';
 
 import { createNanobotSocket, type NanobotSocket } from '@/features/connection/transport';
@@ -27,6 +31,8 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
   const setConnectionStatus = useConnectionStore((state) => state.setStatus);
 
   const refreshWorkspaces = useWorkspacesStore((state) => state.refresh);
+  const applyRemoteSidebarState = useSidebarStore((state) => state.applyRemoteSidebarState);
+  const refreshSessions = useSidebarStore((state) => state.refresh);
 
   const socketRef = useRef<NanobotSocket | null>(null);
   const refreshCanonicalRef = useRef(refreshCanonical);
@@ -34,6 +40,13 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
   useEffect(() => {
     refreshCanonicalRef.current = refreshCanonical;
   }, [refreshCanonical]);
+
+  // Sidebar 重命名和删除必须复用当前 bootstrap token 建立的 WebUI mutation 通道。
+  // 注入 getter 而不是 socket 实例，可以自然跟随重连时 socketRef 的替换。
+  useEffect(() => {
+    configureSidebarMutationTransport(() => socketRef.current);
+    return () => configureSidebarMutationTransport(null);
+  }, []);
 
   useEffect(() => {
     if (phase !== 'ready') return;
@@ -94,12 +107,28 @@ export function useSocketLifecycle(refreshCanonical: () => Promise<void>) {
       setStreamError(error);
     });
 
+    // 会话行更新可能由其他客户端触发；使用短防抖合并一轮刷新，避免每个 turn 结束都拉接口。
+    let sessionRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleSessionsRefresh = () => {
+      if (sessionRefreshTimer) return;
+      sessionRefreshTimer = setTimeout(() => {
+        sessionRefreshTimer = null;
+        void refreshSessions();
+      }, 250);
+    };
+
     const offEvent = socket.onEvent((event) => {
+      if (event.event === 'sidebar_state_updated') {
+        applyRemoteSidebarState(event.state);
+      } else if (event.event === 'session_updated') {
+        scheduleSessionsRefresh();
+      }
       markActivity();
       applyInboundEvent(event);
     });
 
     return () => {
+      if (sessionRefreshTimer) clearTimeout(sessionRefreshTimer);
       offStatus();
       offRunStatus();
       offTransportError();

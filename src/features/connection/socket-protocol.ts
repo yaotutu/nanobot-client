@@ -14,6 +14,8 @@ export type RunStatusListener = (chatId: string, startedAt: number | null) => vo
 export type TransportErrorListener = (error: StreamError) => void;
 export type Reauthenticate = () => Promise<string | null>;
 
+export type WebuiRequestAction = 'sidebar.update' | 'session.delete';
+
 export type OutboundFrame =
   | { type: 'new_chat'; workspace_scope?: WorkspaceScopePayload }
   | { type: 'fork_chat'; source_chat_id: string; before_user_index: number; title?: string }
@@ -31,7 +33,13 @@ export type OutboundFrame =
       turn_id: string;
       webui: true;
     }
-  | { type: 'transcribe_audio'; request_id: string; data_url: string; duration_ms?: number };
+  | { type: 'transcribe_audio'; request_id: string; data_url: string; duration_ms?: number }
+  | {
+      type: 'webui_request';
+      request_id: string;
+      action: WebuiRequestAction;
+      payload: Record<string, unknown>;
+    };
 
 export interface MessageSendResult {
   turnId: string;
@@ -74,6 +82,11 @@ export function normalizeMaxFrameBytes(value?: number): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
+/** 计算协议帧的真实 UTF-8 字节数；网关限制按 bytes 而不是 JS 字符数计算。 */
+function frameByteLength(frame: OutboundFrame): number {
+  return new TextEncoder().encode(JSON.stringify(frame)).byteLength;
+}
+
 export function frameFitsTransport(frame: OutboundFrame, maxFrameBytes?: number): boolean {
-  return !maxFrameBytes || JSON.stringify(frame).length <= maxFrameBytes;
+  return !maxFrameBytes || frameByteLength(frame) <= maxFrameBytes;
 }

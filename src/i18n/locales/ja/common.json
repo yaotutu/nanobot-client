@@ -391,6 +391,7 @@
         "close": "閉じる"
       }
     },
+    "scrollToTop": "一番上へスクロール",
     "scrollToBottom": "一番下へスクロール",
     "loadEarlier": "以前のメッセージを読み込む",
     "forkedFromHistory": "履歴から分岐",

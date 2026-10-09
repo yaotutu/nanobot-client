@@ -391,6 +391,7 @@
         "close": "Close"
       }
     },
+    "scrollToTop": "Scroll to top",
     "scrollToBottom": "Scroll to bottom",
     "loadEarlier": "Load earlier messages",
     "forkedFromHistory": "Forked from history",

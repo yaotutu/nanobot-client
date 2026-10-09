@@ -28,6 +28,21 @@ export function routeSocketInboundEvent(
 ): void {
   const { listeners, pending, knownChats } = context;
 
+  if (event.event === 'webui_response') {
+    if (!event.request_id) return;
+    if (event.ok) {
+      pending.resolveWebuiRequest(event.request_id, event.result);
+    } else {
+      const status = event.error?.status;
+      const message = event.error?.message;
+      pending.rejectWebuiRequest(
+        event.request_id,
+        new Error(message || `webui_request_failed_${status ?? 'unknown'}`),
+      );
+    }
+    return;
+  }
+
   if (event.event === 'transcription_result') {
     pending.resolveTranscription(event.request_id, event.text);
     return;

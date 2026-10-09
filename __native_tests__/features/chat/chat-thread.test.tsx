@@ -16,6 +16,13 @@ jest.mock('lucide-react-native/icons/arrow-down', () => {
     <MockView testID="scroll-to-bottom-arrow" {...props} />
   );
 });
+jest.mock('lucide-react-native/icons/arrow-up', () => {
+  const { View: MockView } = jest.requireActual<typeof import('react-native')>('react-native');
+  // 与向下箭头使用同样的轻量 mock，保持按钮图标的位置、颜色和尺寸可断言。
+  return (props: { color: string; size: number; strokeWidth: number }) => (
+    <MockView testID="scroll-to-top-arrow" {...props} />
+  );
+});
 jest.mock('@/features/chat/components/activity/AgentActivityCluster', () => {
   const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
   return { AgentActivityCluster: () => <MockText>activity</MockText> };
@@ -57,7 +64,9 @@ describe('倒置消息列表', () => {
       <ChatThread
         listRef={createRef<ChatThreadListRef>()}
         atBottom
+        canScrollToTop={false}
         scrollToBottom={jest.fn()}
+        scrollToTop={jest.fn()}
         loadEarlier={loadEarlier}
         handleThreadScroll={jest.fn()}
         handleContentSizeChange={jest.fn()}
@@ -104,12 +113,14 @@ describe('倒置消息列表', () => {
   });
 });
 
-describe('回到底部悬浮按钮', () => {
+describe('滚动方向悬浮按钮', () => {
   // 使用完整且固定的列表输入，仅切换主题或 atBottom，避免把业务回调变化误判为布局变化。
   const createProps = (dark = false): ChatThreadProps => ({
     listRef: createRef<ChatThreadListRef>(),
     atBottom: false,
+    canScrollToTop: true,
     scrollToBottom: jest.fn(),
+    scrollToTop: jest.fn(),
     loadEarlier: jest.fn(),
     handleThreadScroll: jest.fn(),
     handleContentSizeChange: jest.fn(),
@@ -159,15 +170,32 @@ describe('回到底部悬浮按钮', () => {
     expect(result.queryByText('thread.latestMessages')).toBeNull();
     expect(within(button).queryAllByText(/.+/)).toHaveLength(0);
     expect(within(button).getByTestId('scroll-to-bottom-arrow').props.color).toBe(props.colors.userText);
+    const topButton = result.getByRole('button', { name: 'thread.scrollToTop' });
+    expect(topButton).toHaveStyle({
+      position: 'absolute',
+      width: 44,
+      height: 44,
+      right: 14,
+      top: 116,
+      borderRadius: 22,
+      backgroundColor: props.colors.userBubble,
+    });
+    expect(within(topButton).getByTestId('scroll-to-top-arrow').props.color).toBe(props.colors.userText);
 
     const listStyle = StyleSheet.flatten(list.props.style);
     const contentStyle = StyleSheet.flatten(list.props.contentContainerStyle);
-    await result.rerender(<ChatThread {...props} atBottom />);
+    // 即使上方仍有历史内容，只要已经回到最新消息附近，两个方向入口都应隐藏。
+    await result.rerender(<ChatThread {...props} atBottom canScrollToTop />);
+    expect(result.queryByLabelText('thread.scrollToBottom')).toBeNull();
+    expect(result.queryByLabelText('thread.scrollToTop')).toBeNull();
+
+    await result.rerender(<ChatThread {...props} atBottom canScrollToTop={false} />);
     // 显隐只影响悬浮入口，列表自身的间距和内容布局保持不变。
     const hiddenButtonList = result.getByTestId('chat-thread-list');
     expect(StyleSheet.flatten(hiddenButtonList.props.style)).toEqual(listStyle);
     expect(StyleSheet.flatten(hiddenButtonList.props.contentContainerStyle)).toEqual(contentStyle);
     expect(result.queryByLabelText('thread.scrollToBottom')).toBeNull();
+    expect(result.queryByLabelText('thread.scrollToTop')).toBeNull();
   });
 
   it('点击强制动画滚动到底部，并随 atBottom 更新隐藏或重新显示', async () => {
@@ -185,5 +213,9 @@ describe('回到底部悬浮按钮', () => {
     await result.rerender(<ChatThread {...props} atBottom={false} />);
     expect(result.getByLabelText('thread.scrollToBottom')).toBeTruthy();
     expect(props.scrollToBottom).toHaveBeenCalledTimes(1);
+
+    // 向上入口和向下入口互不抢事件，分别导航到当前加载页的视觉顶部与底部。
+    await fireEvent.press(result.getByLabelText('thread.scrollToTop'));
+    expect(props.scrollToTop).toHaveBeenCalledTimes(1);
   });
 });

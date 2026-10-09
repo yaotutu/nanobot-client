@@ -6,15 +6,19 @@ import {
   frameFitsTransport,
   type MessageSendResult,
   type OutboundFrame,
+  type WebuiRequestAction,
 } from '@/features/connection/socket-protocol';
 import type {
   OutboundMedia,
   UICliAppAttachment,
   UIMcpPresetAttachment,
 } from '@/types/api/chat/media';
+import type { SessionDeleteResult } from '@/types/api/chat/thread';
+import type { SidebarStatePayload } from '@/types/api/sidebar';
 import type { WorkspaceScopePayload } from '@/types/api/workspaces';
 
 const MESSAGE_ACCEPT_TIMEOUT_MS = 20_000;
+const WEBUI_REQUEST_TIMEOUT_MS = 10_000;
 
 export interface SocketSendMessageOptions {
   cliApps?: UICliAppAttachment[];
@@ -62,6 +66,8 @@ export interface SocketCommands {
     options?: { durationMs?: number; timeoutMs?: number },
   ) => Promise<string>;
   setWorkspaceScope: (chatId: string, scope: WorkspaceScopePayload) => void;
+  updateSidebarState: (state: SidebarStatePayload) => Promise<SidebarStatePayload>;
+  deleteSession: (key: string) => Promise<SessionDeleteResult>;
   stopTurn: (chatId: string) => void;
 }
 
@@ -244,6 +250,48 @@ export function createSocketCommands(options: SocketCommandsOptions): SocketComm
     });
   };
 
+  /**
+   * 发送外部 WebUI 使用的 `webui_request` mutation。
+   *
+   * 重命名和删除必须走同一条已认证 WebSocket 通道；direct HTTP 是被外部网关明确拒绝的。
+   * 这里统一处理 request_id、超时、断线清理和帧大小，避免两个调用点重复实现生命周期。
+   */
+  const sendWebuiRequest = <T>(
+    action: WebuiRequestAction,
+    payload: Record<string, unknown>,
+  ): Promise<T> => {
+    if (!options.isNetworkAvailable()) return Promise.reject(new Error('network_unavailable'));
+
+    const requestId = createTurnId();
+    const queueId = `webui-request:${requestId}`;
+    const frame: OutboundFrame = {
+      type: 'webui_request',
+      request_id: requestId,
+      action,
+      payload,
+    };
+    if (!frameFitsTransport(frame, options.maxFrameBytes())) {
+      return Promise.reject(new Error('transport_too_large'));
+    }
+
+    const request = options.pending.createWebuiRequest<T>(
+      requestId,
+      WEBUI_REQUEST_TIMEOUT_MS,
+      'webui_request_timeout',
+      () => options.outbound.remove(queueId),
+    );
+    options.queueSend(queueId, frame);
+    return request;
+  };
+
+  const updateSidebarState = (state: SidebarStatePayload): Promise<SidebarStatePayload> =>
+    sendWebuiRequest<SidebarStatePayload>('sidebar.update', { state });
+
+  const deleteSession = (key: string): Promise<SessionDeleteResult> => {
+    if (!key.trim()) return Promise.reject(new Error('invalid_session_key'));
+    return sendWebuiRequest<SessionDeleteResult>('session.delete', { key });
+  };
+
   const stopTurn = (chatId: string): void => {
     // stop 是尽力而为的 UI 命令；连接层的失败会由状态恢复逻辑处理，不应制造未处理 Promise。
     void sendSystemCommand(chatId, '/stop', 5_000).catch(() => undefined);
@@ -257,6 +305,8 @@ export function createSocketCommands(options: SocketCommandsOptions): SocketComm
     sendSystemCommand,
     transcribeAudio,
     setWorkspaceScope,
+    updateSidebarState,
+    deleteSession,
     stopTurn,
   };
 }

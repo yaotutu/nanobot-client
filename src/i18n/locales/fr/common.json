@@ -391,6 +391,7 @@
         "close": "Fermer"
       }
     },
+    "scrollToTop": "Faire défiler vers le haut",
     "scrollToBottom": "Faire défiler vers le bas",
     "loadEarlier": "Charger les messages précédents",
     "forkedFromHistory": "Bifurqué depuis l'historique",

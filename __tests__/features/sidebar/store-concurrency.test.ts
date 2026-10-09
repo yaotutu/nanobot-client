@@ -107,6 +107,29 @@ describe('sidebar 请求的环境隔离与顺序保存', () => {
     expect(useSidebarStore.getState().sidebarState).toBe(newState);
   });
 
+  it('远端 sidebar 广播在空闲时直接生效', () => {
+    const remoteState = makeState({ pinned_keys: ['remote'] });
+    useSidebarStore.getState().applyRemoteSidebarState(remoteState);
+
+    expect(useSidebarStore.getState().sidebarState).toBe(remoteState);
+  });
+
+  it('远端 sidebar 广播不能覆盖本机正在保存的乐观状态', async () => {
+    const response = deferred<SidebarStatePayload>();
+    vi.mocked(updateSidebarState).mockReturnValueOnce(response.promise);
+    const mutation = useSidebarStore.getState().renameSession(session.key, '本机标题');
+    await Promise.resolve();
+
+    const optimisticState = useSidebarStore.getState().sidebarState;
+    useSidebarStore.getState().applyRemoteSidebarState(makeState({ pinned_keys: ['remote'] }));
+    expect(useSidebarStore.getState().sidebarState).toBe(optimisticState);
+
+    const persisted = makeState({ title_overrides: { [session.key]: '服务端标题' } });
+    response.resolve(persisted);
+    await mutation;
+    expect(useSidebarStore.getState().sidebarState).toEqual(persisted);
+  });
+
   it.each(['togglePinned', 'toggleArchived'] as const)(
     'reset 后旧 %s 成功不回写，也不清除新环境同 key 操作的 pending',
     async (action) => {
