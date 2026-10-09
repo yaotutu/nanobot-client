@@ -566,7 +566,6 @@
     "unknown": "Non vérifié",
     "download": "Télécharger et installer",
     "downloading": "Téléchargement en cours…",
-    "verifying": "Vérification du téléchargement…",
     "install": "Installer la mise à jour",
     "installing": "Ouverture du programme d’installation…",
     "installHint": "Android vous demandera de confirmer l’installation. Votre compte et vos préférences seront conservés lors de la mise à jour.",
@@ -584,7 +583,6 @@
       "rateLimit": "La limite de requêtes GitHub a été atteinte. Réessayez plus tard.",
       "invalid": "Les informations de la version sont incomplètes ou invalides. Réessayez plus tard.",
       "download": "Le téléchargement a échoué. Veuillez réessayer.",
-      "integrity": "Le fichier téléchargé n’a pas passé la vérification. Téléchargez-le à nouveau.",
       "installation": "Impossible d’ouvrir le programme d’installation. Vérifiez l’autorisation d’installation et réessayez.",
       "storage": "L’espace libre est insuffisant pour télécharger la mise à jour."
     }

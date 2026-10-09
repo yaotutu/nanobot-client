@@ -1,5 +1,3 @@
-import { sha256 } from '@noble/hashes/sha2.js';
-import { bytesToHex } from '@noble/hashes/utils.js';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { UPDATE_PACKAGE, UpdateError, type UpdateCandidate } from './model';
@@ -9,36 +7,15 @@ const updateDirectory = () => {
   directory.create({ idempotent: true, intermediates: true });
   return directory;
 };
-const pause = () => new Promise<void>(resolve => setTimeout(resolve, 0));
 const ensureNotCancelled = (signal?: AbortSignal) => { if (signal?.aborted) throw new Error('cancelled'); };
+const updateFileName = (candidate: UpdateCandidate) => candidate.versionCode + '.apk';
 
-/** APK 可超过 100MB：分块计算 SHA-256，禁止整文件 base64/arrayBuffer 占满 JS 堆。 */
-async function verify(file: File, candidate: UpdateCandidate, signal?: AbortSignal) {
-  if (!file.exists || file.size !== candidate.size) throw new UpdateError('integrity');
-  const hash = sha256.create();
-  const handle = file.open();
-  try {
-    while ((handle.offset ?? 0) < candidate.size) {
-      ensureNotCancelled(signal);
-      const bytes = handle.readBytes(Math.min(1024 * 1024, candidate.size - (handle.offset ?? 0)));
-      if (!bytes.length) throw new UpdateError('integrity');
-      hash.update(bytes);
-      await pause(); // 让进度/取消交互能在校验过程中及时响应。
-    }
-    if (bytesToHex(hash.digest()) !== candidate.sha256) throw new UpdateError('integrity');
-  } finally { handle.close(); hash.destroy(); }
-}
-
-export async function downloadUpdate(candidate: UpdateCandidate, signal: AbortSignal, progress: (bytes: number, verifying?: boolean) => void) {
+export async function downloadUpdate(candidate: UpdateCandidate, signal: AbortSignal, progress: (bytes: number) => void) {
   const directory = updateDirectory();
-  const file = new File(directory, candidate.sha256 + '.apk');
-  const partial = new File(directory, candidate.sha256 + '.partial');
-  if (file.exists) {
-    progress(file.size, true);
-    try { await verify(file, candidate, signal); return file.uri; }
-    catch (error) { if (signal.aborted) throw error; file.delete(); }
-  }
+  const file = new File(directory, updateFileName(candidate));
+  const partial = new File(directory, updateFileName(candidate) + '.partial');
   // 下载已串行化，只保留当前版本缓存，防止连续开发构建挤满应用磁盘。
+  if (file.exists) return file.uri;
   for (const old of directory.list()) if (old instanceof File) old.delete();
   if (Paths.availableDiskSpace < candidate.size + 20 * 1024 * 1024) throw new UpdateError('storage');
   try {
@@ -48,9 +25,8 @@ export async function downloadUpdate(candidate: UpdateCandidate, signal: AbortSi
       onProgress: event => progress(event.bytesWritten),
     });
     ensureNotCancelled(signal);
-    progress(partial.size, true);
-    await verify(partial, candidate, signal);
-    ensureNotCancelled(signal);
+    // 下载器成功返回即视为下载完成；不做哈希校验，直接交给系统安装器处理 APK 结构与签名。
+    if (!partial.exists) throw new UpdateError('download');
     await partial.move(file);
     return file.uri;
   } catch (error) {
@@ -61,9 +37,10 @@ export async function downloadUpdate(candidate: UpdateCandidate, signal: AbortSi
 
 export async function installUpdate(candidate: UpdateCandidate, uri: string) {
   const file = new File(uri);
-  // 缓存可能被系统清理/修改，每次启动安装器前重新验证，且仅允许私有缓存中的已知 SHA 路径。
-  if (uri !== new File(updateDirectory(), candidate.sha256 + '.apk').uri) throw new UpdateError('integrity');
-  await verify(file, candidate);
+  // 只允许打开应用私有更新缓存中的本次下载文件；缓存丢失时回到重新下载状态。
+  const expectedUri = new File(updateDirectory(), updateFileName(candidate)).uri;
+  if (uri !== expectedUri) throw new UpdateError('installation');
+  if (!file.exists) throw new UpdateError('download');
   await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
     data: file.contentUri, type: 'application/vnd.android.package-archive', flags: 1,
   });

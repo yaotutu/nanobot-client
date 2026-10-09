@@ -64,7 +64,7 @@ const createUpdates = (overrides: Partial<UpdateState> = {}) => ({
   actionError: null,
   stage: 'idle',
   downloadedBytes: 0,
-  verifiedUri: null,
+  downloadedUri: null,
   check: jest.fn<UpdateState['check']>(async () => undefined),
   download: jest.fn<UpdateState['download']>(async () => undefined),
   install: jest.fn<UpdateState['install']>(async () => undefined),
@@ -77,7 +77,7 @@ const createUpdates = (overrides: Partial<UpdateState> = {}) => ({
 const createCandidate = (): NonNullable<UpdateState['candidate']> => ({
   version: '1.0.7-dev.202', versionCode: 202,
   apkUrl: 'https://github.com/yaotutu/nanobot-client/releases/download/dev-202/nanobot-v1.0.7-dev.202.apk',
-  size: 2 * 1048576, sha256: 'b'.repeat(64), publishedAt: '2026-10-08T08:00:00Z', notes: 'Native 测试用更新说明',
+  size: 2 * 1048576, publishedAt: '2026-10-08T08:00:00Z', notes: 'Native 测试用更新说明',
 });
 
 // 所有自动动作都属于外部 controller；展示、导航和关闭不应检查、下载、安装或取消。
@@ -366,7 +366,7 @@ describe('PreferencesModal', () => {
     { stage: 'ready', label: 'updates.permission', callback: 'permission' },
   ] as const)('$label 仅委派给对应 controller 动作，不关闭弹窗或修改偏好', async ({ stage, label, callback }) => {
     const props = createProps();
-    const updates = createUpdates({ candidate: createCandidate(), stage, verifiedUri: stage === 'ready' ? 'file:///verified-update.apk' : null });
+    const updates = createUpdates({ candidate: createCandidate(), stage, downloadedUri: stage === 'ready' ? 'file:///verified-update.apk' : null });
     const result = await render(preferencesElement({ ...props, updateSection: createUpdateSection(updates) }));
     await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));
     expectNoUpdateActions(updates);
@@ -381,7 +381,7 @@ describe('PreferencesModal', () => {
     expect(props.onLogout).not.toHaveBeenCalled();
   });
 
-  it.each(['downloading', 'verifying'] as const)('%s 阶段显示进度并禁用检查，取消按钮只调用 cancel', async (stage) => {
+  it.each(['downloading'] as const)('%s 阶段显示进度并禁用检查，取消按钮只调用 cancel', async (stage) => {
     const updates = createUpdates({ candidate: createCandidate(), stage, downloadedBytes: 1048576 });
     const result = await render(preferencesElement(createProps(updates)));
     await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));

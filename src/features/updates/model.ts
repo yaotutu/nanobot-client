@@ -4,7 +4,7 @@ export const UPDATE_PACKAGE = 'com.anonymous.nanobotclient';
 export const UPDATE_INFO_URL = 'https://github.com/' + UPDATE_REPOSITORY + '/releases/latest/download/update.json';
 export const CHECK_INTERVAL = 10 * 60 * 1000;
 
-export type UpdateErrorCode = 'network' | 'rateLimit' | 'invalid' | 'download' | 'integrity' | 'installation' | 'storage';
+export type UpdateErrorCode = 'network' | 'rateLimit' | 'invalid' | 'download' | 'installation' | 'storage';
 export class UpdateError extends Error {
   constructor(public code: UpdateErrorCode, public retryAt = 0) {
     super(code);
@@ -17,7 +17,6 @@ export interface UpdateCandidate {
   versionCode: number;
   apkUrl: string;
   size: number;
-  sha256: string;
   publishedAt: string;
   notes: string;
 }
@@ -38,7 +37,7 @@ const positiveInteger = (value: unknown): value is number => Number.isSafeIntege
 export function parseUpdateInfo(value: unknown): UpdateCandidate {
   if (!record(value) || typeof value.version !== 'string' || !value.version.trim()
     || !positiveInteger(value.versionCode) || value.versionCode > 2100000000
-    || !positiveInteger(value.size) || typeof value.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(value.sha256)
+    || !positiveInteger(value.size)
     || typeof value.publishedAt !== 'string' || !Number.isFinite(Date.parse(value.publishedAt))
     || typeof value.notes !== 'string' || typeof value.apkUrl !== 'string') throw new UpdateError('invalid');
   try {
@@ -47,5 +46,5 @@ export function parseUpdateInfo(value: unknown): UpdateCandidate {
       || !apkAssetPath.test(url.pathname)) throw new Error('invalid APK URL');
   } catch { throw new UpdateError('invalid'); }
   return { version: value.version, versionCode: value.versionCode, apkUrl: value.apkUrl, size: value.size,
-    sha256: value.sha256, publishedAt: value.publishedAt, notes: value.notes };
+    publishedAt: value.publishedAt, notes: value.notes };
 }

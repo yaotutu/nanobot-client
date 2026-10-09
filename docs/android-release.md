@@ -54,7 +54,7 @@ APK：nanobot-v1.0.6-dev.243.apk
 https://github.com/yaotutu/nanobot-client/releases/latest/download/update.json
 ```
 
-客户端不遍历历史 Release、不解析 tag、不从资产列表推测版本或下载地址；只按清单中的数值 `versionCode` 判断更新。新的清单仅包含以下七个平铺字段：
+客户端不遍历历史 Release、不解析 tag、不从资产列表推测版本或下载地址；只按清单中的数值 `versionCode` 判断更新。新的清单包含以下八个平铺字段（`sha256` 供已发布的旧版客户端使用，当前客户端不校验）：
 
 ```json
 {

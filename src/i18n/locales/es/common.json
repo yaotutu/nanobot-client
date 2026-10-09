@@ -566,7 +566,6 @@
     "unknown": "Sin comprobar",
     "download": "Descargar e instalar",
     "downloading": "Descargando…",
-    "verifying": "Verificando la descarga…",
     "install": "Instalar actualización",
     "installing": "Abriendo el instalador…",
     "installHint": "Android te pedirá que confirmes la instalación. Tu cuenta y tus preferencias se conservarán al actualizar.",
@@ -584,7 +583,6 @@
       "rateLimit": "Se ha alcanzado el límite de solicitudes de GitHub. Inténtalo más tarde.",
       "invalid": "La información de la versión está incompleta o no es válida. Inténtalo más tarde.",
       "download": "La descarga ha fallado. Inténtalo de nuevo.",
-      "integrity": "El archivo descargado no ha superado la verificación. Descárgalo de nuevo.",
       "installation": "No se pudo abrir el instalador. Comprueba el permiso de instalación e inténtalo de nuevo.",
       "storage": "No hay suficiente espacio libre para descargar la actualización."
     }

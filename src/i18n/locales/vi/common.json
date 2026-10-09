@@ -566,7 +566,6 @@
     "unknown": "Chưa kiểm tra",
     "download": "Tải xuống và cài đặt",
     "downloading": "Đang tải xuống…",
-    "verifying": "Đang xác minh tệp tải xuống…",
     "install": "Cài đặt bản cập nhật",
     "installing": "Đang mở trình cài đặt…",
     "installHint": "Android sẽ yêu cầu bạn xác nhận cài đặt. Tài khoản và tùy chọn của bạn sẽ được giữ lại khi cập nhật.",
@@ -584,7 +583,6 @@
       "rateLimit": "Đã đạt giới hạn yêu cầu của GitHub. Hãy thử lại sau.",
       "invalid": "Thông tin phát hành không đầy đủ hoặc không hợp lệ. Hãy thử lại sau.",
       "download": "Tải xuống thất bại. Vui lòng thử lại.",
-      "integrity": "Tệp đã tải xuống không vượt qua bước xác minh. Vui lòng tải lại.",
       "installation": "Không thể mở trình cài đặt. Hãy kiểm tra quyền cài đặt và thử lại.",
       "storage": "Không đủ dung lượng trống để tải bản cập nhật."
     }

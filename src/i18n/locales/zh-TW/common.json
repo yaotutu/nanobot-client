@@ -566,7 +566,6 @@
     "unknown": "未檢查",
     "download": "下載並安裝",
     "downloading": "正在下載…",
-    "verifying": "正在驗證下載檔案…",
     "install": "安裝更新",
     "installing": "正在開啟安裝程式…",
     "installHint": "Android 會請你確認安裝。更新時會保留你的帳戶和偏好設定。",
@@ -584,7 +583,6 @@
       "rateLimit": "已達到 GitHub 請求次數上限。請稍後再試。",
       "invalid": "版本資訊不完整或無效。請稍後再試。",
       "download": "下載失敗，請再試一次。",
-      "integrity": "下載的檔案未通過驗證，請重新下載。",
       "installation": "無法開啟安裝程式。請檢查安裝權限後再試一次。",
       "storage": "可用儲存空間不足，無法下載更新。"
     }

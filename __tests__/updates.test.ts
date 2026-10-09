@@ -5,12 +5,12 @@ import { createUpdateStore, hasUpdate, type UpdateDependencies } from '@/feature
 
 const candidate = (versionCode = 301): UpdateCandidate => ({ version: '1.0.6-dev.' + versionCode, versionCode,
   apkUrl: 'https://github.com/yaotutu/nanobot-client/releases/download/dev-' + versionCode + '/nanobot.apk',
-  size: 1024, sha256: 'b'.repeat(64), publishedAt: '2026-10-08T00:00:00Z', notes: '改进聊天体验' });
+  size: 1024, publishedAt: '2026-10-08T00:00:00Z', notes: '改进聊天体验' });
 const response = (data: unknown) => new Response(JSON.stringify(data));
 const deps = (overrides: Partial<UpdateDependencies> = {}): UpdateDependencies => ({
   runtime: { version: '1.0.6', versionCode: 201, supported: true, development: false },
   now: () => 10000000, find: vi.fn(async () => candidate()),
-  download: vi.fn(async () => 'file:///cache/verified.apk'), install: vi.fn(async () => {}), permission: vi.fn(async () => {}), ...overrides,
+  download: vi.fn(async () => 'file:///cache/downloaded.apk'), install: vi.fn(async () => {}), permission: vi.fn(async () => {}), ...overrides,
 });
 const deferred = <T,>() => { let resolve!: (value: T) => void; let reject!: (error: unknown) => void; const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; }); return { promise, resolve, reject }; };
 afterEach(() => vi.useRealTimers());
@@ -23,7 +23,7 @@ describe('平铺更新协议', () => {
   it('不兼容旧嵌套清单', () => expect(() => parseUpdateInfo({ schemaVersion: 1, manifest: candidate() })).toThrow(UpdateError));
   it.each([
     { versionCode: 0 }, { versionCode: 1.5 }, { versionCode: 2100000001 }, { versionCode: '302' },
-    { version: '' }, { size: -1 }, { sha256: 'bad' }, { publishedAt: 'bad' }, { notes: null },
+    { version: '' }, { size: -1 }, { apkUrl: '' }, { publishedAt: 'bad' }, { notes: null },
     { apkUrl: 'http://github.com/yaotutu/nanobot-client/releases/download/dev-301/app.apk' },
     { apkUrl: 'https://github.com/other/repo/releases/download/dev-301/app.apk' },
     { apkUrl: candidate().apkUrl + '?token=x' }, { apkUrl: candidate().apkUrl + '#x' },
@@ -119,48 +119,48 @@ describe('更新状态与并发', () => {
     const find = vi.fn().mockResolvedValueOnce(candidate()).mockResolvedValueOnce(candidate(302));
     const store = createUpdateStore(deps({ find }));
     await store.getState().check(); await store.getState().download(); await store.getState().check(true);
-    expect(store.getState()).toMatchObject({ stage: 'idle', verifiedUri: null, candidate: { versionCode: 302 } });
+    expect(store.getState()).toMatchObject({ stage: 'idle', downloadedUri: null, candidate: { versionCode: 302 } });
   });
-  it('下载期间合并请求并冻结版本；校验通过才安装', async () => {
+  it('下载期间合并请求并冻结版本；下载完成才安装', async () => {
     const wait = deferred<string>();
     const d = deps({ download: vi.fn(() => wait.promise) });
     const store = createUpdateStore(d); await store.getState().check();
     const downloading = store.getState().download(); expect(store.getState().download()).toBe(downloading);
     await store.getState().check(true); expect(d.find).toHaveBeenCalledTimes(1); expect(d.install).not.toHaveBeenCalled();
-    wait.resolve('verified'); await downloading;
-    expect(d.install).toHaveBeenCalledWith(candidate(), 'verified'); expect(store.getState().stage).toBe('ready');
+    wait.resolve('downloaded'); await downloading;
+    expect(d.install).toHaveBeenCalledWith(candidate(), 'downloaded'); expect(store.getState().stage).toBe('ready');
     await store.getState().install(); expect(d.download).toHaveBeenCalledTimes(1); expect(d.install).toHaveBeenCalledTimes(2);
   });
-  it('校验失败不打开安装器', async () => {
-    const d = deps({ download: async () => { throw new UpdateError('integrity'); } });
+  it('下载失败不打开安装器', async () => {
+    const d = deps({ download: async () => { throw new UpdateError('download'); } });
     const store = createUpdateStore(d); await store.getState().check(); await store.getState().download();
-    expect(store.getState().actionError).toBe('integrity'); expect(d.install).not.toHaveBeenCalled();
+    expect(store.getState().actionError).toBe('download'); expect(d.install).not.toHaveBeenCalled();
   });
   it('取消下载不报错、不安装、不保留路径', async () => {
     const d = deps({ download: (_c, signal) => new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(new Error('aborted')))) });
     const store = createUpdateStore(d); await store.getState().check(); const downloading = store.getState().download(); store.getState().cancel(); await downloading;
-    expect(store.getState()).toMatchObject({ stage: 'idle', actionError: null, verifiedUri: null }); expect(d.install).not.toHaveBeenCalled();
+    expect(store.getState()).toMatchObject({ stage: 'idle', actionError: null, downloadedUri: null }); expect(d.install).not.toHaveBeenCalled();
   });
   it('安装失败保留已验证文件以便重试/授权', async () => {
     const d = deps({ install: async () => { throw new Error('blocked'); } });
     const store = createUpdateStore(d); await store.getState().check(); await store.getState().download();
-    expect(store.getState()).toMatchObject({ stage: 'ready', verifiedUri: 'file:///cache/verified.apk', actionError: 'installation' });
+    expect(store.getState()).toMatchObject({ stage: 'ready', downloadedUri: 'file:///cache/downloaded.apk', actionError: 'installation' });
     await store.getState().permission(); expect(d.permission).toHaveBeenCalledTimes(1);
   });
   it.each([201, 301, 401])('本机版本码 %s 不允许降级或重复安装', async versionCode => {
     const d = deps({ runtime: { ...deps().runtime, versionCode }, find: async () => candidate(201) });
     const store = createUpdateStore(d); await store.getState().check(); await store.getState().download(); expect(hasUpdate(store.getState())).toBe(false); expect(d.download).not.toHaveBeenCalled();
   });
-  it('安装前缓存损坏时回到可重新下载状态', async () => {
-    const d = deps({ install: async () => { throw new UpdateError('integrity'); } });
+  it('安装前缓存丢失时回到可重新下载状态', async () => {
+    const d = deps({ install: async () => { throw new UpdateError('download'); } });
     const store = createUpdateStore(d); await store.getState().check(); await store.getState().download();
-    expect(store.getState()).toMatchObject({ stage: 'idle', verifiedUri: null, actionError: 'integrity' });
+    expect(store.getState()).toMatchObject({ stage: 'idle', downloadedUri: null, actionError: 'download' });
   });
   it('传输实现未及时响应取消时仍然不能进入安装阶段', async () => {
     const wait = deferred<string>(); const d = deps({ download: () => wait.promise });
     const store = createUpdateStore(d); await store.getState().check(); const pending = store.getState().download();
-    store.getState().cancel(); wait.resolve('verified'); await pending;
-    expect(store.getState()).toMatchObject({ stage: 'idle', verifiedUri: null, actionError: null }); expect(d.install).not.toHaveBeenCalled();
+    store.getState().cancel(); wait.resolve('downloaded'); await pending;
+    expect(store.getState()).toMatchObject({ stage: 'idle', downloadedUri: null, actionError: null }); expect(d.install).not.toHaveBeenCalled();
   });
   it('开发模式可检测但禁安装；非 Android 不请求 GitHub', async () => {
     const d = deps({ runtime: { ...deps().runtime, development: true } });

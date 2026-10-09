@@ -51,8 +51,8 @@ export function UpdateDetails({ colors, updates }: { colors: Palette; updates: U
         <Text selectable style={styles.notesText}>{candidate.notes || t('updates.noNotes')}</Text>
       </View> : null}
       {updates.actionError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{t('updates.errors.' + updates.actionError)}</Text> : null}
-      {stage === 'downloading' || stage === 'verifying' ? <View style={styles.progressSection}>
-        <Text style={styles.label}>{t(stage === 'verifying' ? 'updates.verifying' : 'updates.downloading')}</Text>
+      {stage === 'downloading' ? <View style={styles.progressSection}>
+        <Text style={styles.label}>{t('updates.downloading')}</Text>
         <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: percent }} style={styles.track}>
           <View style={[styles.fill, { width: (percent + '%') as DimensionValue }]} />
         </View>

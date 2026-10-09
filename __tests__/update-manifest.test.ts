@@ -65,15 +65,17 @@ afterEach(() => temporaryDirectories.splice(0).forEach((directory) => {
 }));
 
 describe('Android 开发版更新清单', () => {
-  it('只生成七个平铺字段，实际 APK 提供版本、大小和流式 hash，URL 指向同一 Release', () => {
+  it('生成八个平铺字段，实际 APK 提供版本、大小和 hash，URL 指向同一 Release', () => {
     const fixture = createFixture();
     const startedAt = Date.now();
     fixture.execute();
     const finishedAt = Date.now();
     const manifestText = readFileSync(fixture.manifestPath, 'utf8');
     const manifest = JSON.parse(manifestText);
-    // 用客户端真实解析器验收脚本产物，避免只维护另一份测试契约而掩盖发布端与客户端不一致。
-    expect(parseUpdateInfo(manifest)).toEqual(manifest);
+    // 用客户端真实解析器验收脚本产物；sha256 只服务已发布旧客户端，当前类型会忽略该字段。
+    const clientFields = { ...manifest } as Partial<typeof manifest>;
+    delete clientFields.sha256;
+    expect(parseUpdateInfo(manifest)).toEqual(clientFields);
     expect(manifest).toEqual({
       version,
       versionCode: 243,

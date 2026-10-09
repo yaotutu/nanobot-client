@@ -566,7 +566,6 @@
     "unknown": "Not checked",
     "download": "Download and install",
     "downloading": "Downloading…",
-    "verifying": "Verifying download…",
     "install": "Install update",
     "installing": "Opening installer…",
     "installHint": "Android will ask you to confirm installation. Your account and preferences are kept when updating.",
@@ -584,7 +583,6 @@
       "rateLimit": "GitHub request limit reached. Try again later.",
       "invalid": "The release information is incomplete or invalid. Try again later.",
       "download": "Download failed. Please try again.",
-      "integrity": "The downloaded file failed verification. Please download it again.",
       "installation": "Couldn’t open the installer. Check installation permission and try again.",
       "storage": "Not enough free space to download the update."
     }
