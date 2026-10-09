@@ -40,6 +40,7 @@ export function attachReasoningChunk(
   chunk: string,
   state: StreamFoldState,
   turn: StreamTurnFields,
+  replaceExisting = false,
 ): UIMessage[] {
   if (closeActiveAssistantStream(state)) clearActivitySegment(state);
   for (let index = messages.length - 1; index >= 0; index -= 1) {
@@ -48,6 +49,11 @@ export function attachReasoningChunk(
     if (candidate.role !== 'assistant') continue;
     if (!matchesTurn(candidate, turn) || candidate.content.length > 0) break;
     if (candidate.reasoningStreaming || candidate.reasoning !== undefined || candidate.isStreaming) {
+      // 完整结束文本只能覆盖当前连续推理段；沿用 delta 的边界扫描，不能越过
+      // 用户消息、工具 trace、正文或其他 turn。覆盖时保留原有流状态，随后统一关闭推理。
+      if (replaceExisting) {
+        return replaceMessageAt(messages, index, { ...candidate, reasoning: chunk });
+      }
       return replaceMessageAt(messages, index, {
         ...candidate,
         reasoning: `${candidate.reasoning ?? ''}${chunk}`,

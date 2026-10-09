@@ -6,16 +6,18 @@ import { useChatScroll } from '@/features/chat/hooks/useChatScroll';
 import type { TurnUnit } from '@/features/chat/activity/model/activity-timeline';
 import type { UIMessage } from '@/types/api/chat/messages';
 
-/** 构造倒置 FlatList 的滚动事件，测试只需要这三个几何字段。 */
+/** 构造倒置 FlatList 的几何与松手速度，区分静止松手和后续惯性滚动。 */
 const makeScrollEvent = (
   offset: number,
   contentHeight = 2_000,
   layoutHeight = 500,
+  velocityY = 0,
 ): NativeSyntheticEvent<NativeScrollEvent> => ({
   nativeEvent: {
     contentOffset: { x: 0, y: offset },
     contentSize: { height: contentHeight, width: 390 },
     layoutMeasurement: { height: layoutHeight, width: 390 },
+    velocity: { x: 0, y: velocityY },
   },
 }) as NativeSyntheticEvent<NativeScrollEvent>;
 
@@ -97,12 +99,13 @@ describe('倒置消息列表滚动 hook', () => {
 
   it('切换会话后重置自动跟随状态', async () => {
     const onSessionReset = jest.fn();
+    const onLoadOlder = jest.fn(async () => undefined);
     const initialProps = {
       activeKey: 'session-a',
       units: makeUnits(),
       loadingOlder: false,
       hasMoreBefore: false,
-      onLoadOlder: async () => undefined,
+      onLoadOlder,
       onSessionReset,
     };
     const { rerender, result } = await renderHook(
@@ -124,5 +127,112 @@ describe('倒置消息列表滚动 hook', () => {
     });
     await waitFor(() => expect(onSessionReset).toHaveBeenCalledTimes(2));
     expect(result.current.atBottom).toBe(true);
+    // 旧会话未结束的拖拽不能给新列表初始定位赋予自动分页资格。
+    await act(async () => {
+      rerender({ ...initialProps, activeKey: 'session-b', hasMoreBefore: true });
+    });
+    await act(async () => {
+      result.current.handleThreadScroll(makeScrollEvent(1_450));
+    });
+    expect(onLoadOlder).not.toHaveBeenCalled();
+  });
+
+  it('松手后惯性进入 96px 阈值加载一页，直到下一手势才允许再次自动分页', async () => {
+    const onLoadOlder = jest.fn(async () => undefined);
+    const { result } = await renderChatScroll({ onLoadOlder });
+    await act(async () => {});
+
+    // 手指离开时还距历史边界 100px；分页阈值是在之后的惯性阶段才进入的。
+    await act(async () => {
+      result.current.onScrollBeginDrag();
+      result.current.handleThreadScroll(makeScrollEvent(1_400));
+      result.current.onScrollEndDrag(makeScrollEvent(1_400, 2_000, 500, 1));
+    });
+    expect(onLoadOlder).not.toHaveBeenCalled();
+    await act(async () => {
+      result.current.handleThreadScroll(makeScrollEvent(1_405));
+      result.current.handleThreadScroll(makeScrollEvent(1_450));
+    });
+    expect(onLoadOlder).toHaveBeenCalledTimes(1);
+
+    // Promise 已完成后同一惯性阶段继续滚动，也不能重复请求同一历史页。
+    await act(async () => {
+      result.current.handleThreadScroll(makeScrollEvent(1_451));
+      result.current.onMomentumScrollEnd();
+      result.current.handleThreadScroll(makeScrollEvent(1_460));
+    });
+    expect(onLoadOlder).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      result.current.onScrollBeginDrag();
+      result.current.handleThreadScroll(makeScrollEvent(1_460));
+    });
+    expect(onLoadOlder).toHaveBeenCalledTimes(2);
+  });
+
+  it('同一手势内已有历史请求在途时，请求结束后也不追加分页', async () => {
+    const onLoadOlder = jest.fn(async () => undefined);
+    const onSessionReset = jest.fn();
+    const initialProps = {
+      activeKey: 'session-a',
+      units: makeUnits(),
+      loadingOlder: true,
+      hasMoreBefore: true,
+      onLoadOlder,
+      onSessionReset,
+    };
+    const { rerender, result } = await renderHook(
+      (props: typeof initialProps) => useChatScroll(props),
+      { initialProps },
+    );
+    await waitFor(() => expect(onSessionReset).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      result.current.onScrollBeginDrag();
+      result.current.handleThreadScroll(makeScrollEvent(1_450));
+    });
+    expect(onLoadOlder).not.toHaveBeenCalled();
+
+    // 旧请求结束后，该手势仍在阈值内也不重新获得自动分页资格。
+    await act(async () => {
+      rerender({ ...initialProps, loadingOlder: false });
+      result.current.handleThreadScroll(makeScrollEvent(1_460));
+    });
+    expect(onLoadOlder).not.toHaveBeenCalled();
+  });
+
+  it('初次定位、静止松手和没有用户拖拽的惯性结束不自动分页', async () => {
+    const onLoadOlder = jest.fn(async () => undefined);
+    const { result } = await renderChatScroll({ onLoadOlder });
+    await act(async () => {});
+    await act(async () => {
+      result.current.handleThreadScroll(makeScrollEvent(1_450));
+      // 孤立 end-drag 不能把程序动画误认成用户惯性。
+      result.current.onScrollEndDrag(makeScrollEvent(1_400, 2_000, 500, 1));
+      result.current.handleThreadScroll(makeScrollEvent(1_450));
+      result.current.onMomentumScrollEnd();
+      result.current.onScrollBeginDrag();
+      result.current.handleThreadScroll(makeScrollEvent(1_400));
+      result.current.onScrollEndDrag(makeScrollEvent(1_400));
+      result.current.handleThreadScroll(makeScrollEvent(1_450));
+    });
+    expect(onLoadOlder).not.toHaveBeenCalled();
+  });
+
+  it.each(['prompt', 'bottom', 'retry'] as const)('程序滚动 %s 撤销之前用户惯性的自动分页资格', async (target) => {
+    const onLoadOlder = jest.fn(async () => undefined);
+    const { result, unmount } = await renderChatScroll({ onLoadOlder });
+    await act(async () => {});
+    await act(async () => {
+      result.current.onScrollBeginDrag();
+      result.current.handleThreadScroll(makeScrollEvent(1_400));
+      result.current.onScrollEndDrag(makeScrollEvent(1_400, 2_000, 500, -1));
+      // 直接导航、回到底部与定位补偿都可能在用户惯性尚未结束时发生。
+      if (target === 'prompt') result.current.jumpToPrompt('older-user');
+      if (target === 'bottom') result.current.scrollToBottom(true, true);
+      if (target === 'retry') result.current.handleScrollToIndexFailed({ averageItemLength: 100, index: 1 });
+      result.current.handleThreadScroll(makeScrollEvent(1_450));
+    });
+    expect(onLoadOlder).not.toHaveBeenCalled();
+    await unmount();
   });
 });

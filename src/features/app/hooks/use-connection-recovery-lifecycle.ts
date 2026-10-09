@@ -10,7 +10,8 @@ import type { NanobotSocket } from '@/features/connection/transport';
 import { useConnectionStore } from '@/features/connection/state';
 
 function networkIsAvailable(state: NetInfoState): boolean {
-  return state.isConnected !== false && state.isInternetReachable !== false;
+  // 局域网 gateway 不要求外网可达；只在明确没有网络连接时阻止重连，目标可达性由 socket 判定。
+  return state.isConnected !== false;
 }
 
 export function useConnectionRecoveryLifecycle(

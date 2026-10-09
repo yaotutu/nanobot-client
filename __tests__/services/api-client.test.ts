@@ -72,6 +72,62 @@ describe('createApiClient', () => {
     await expect(client.get('/api/slow')).rejects.toThrow();
   });
 
+  it('rejects a pre-aborted request without calling fetch', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const client = createApiClient({ getBaseUrl: () => 'http://x', getToken: () => '' });
+
+    const error = await client.get('/api/cancelled', undefined, { signal: controller.signal }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).name).toBe('AbortError');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps timeout active while reading the response body', async () => {
+    vi.useFakeTimers();
+    try {
+      fetchMock.mockImplementationOnce(async (_, init) => {
+        const signal = init?.signal as AbortSignal;
+        const response = {
+          ok: true,
+          headers: { get: () => 'application/json' },
+          json: () => new Promise((_resolve, reject) => {
+            signal.addEventListener('abort', () => reject(new Error('body_read_timeout')), { once: true });
+          }),
+        };
+        return response;
+      });
+      const client = createApiClient({ getBaseUrl: () => 'http://x', getToken: () => '' });
+      const request = client.get('/api/slow-body', undefined, { timeoutMs: 20 });
+      const assertion = expect(request).rejects.toThrow('body_read_timeout');
+
+      await vi.advanceTimersByTimeAsync(20);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('forwards external abort and removes the listener after completion', async () => {
+    fetchMock.mockImplementationOnce(async (_, init) => {
+      const signal = init?.signal as AbortSignal;
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new Error('external_abort')), { once: true });
+      });
+    });
+    const external = new AbortController();
+    const addListener = vi.spyOn(external.signal, 'addEventListener');
+    const removeListener = vi.spyOn(external.signal, 'removeEventListener');
+    const client = createApiClient({ getBaseUrl: () => 'http://x', getToken: () => '' });
+    const request = client.get('/api/external-abort', undefined, { signal: external.signal });
+
+    external.abort();
+    await expect(request).rejects.toThrow('external_abort');
+    expect(addListener).toHaveBeenCalledWith('abort', expect.any(Function), { once: true });
+    expect(removeListener).toHaveBeenCalledWith('abort', expect.any(Function));
+  });
+
   it('omits Authorization header when token is empty', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({}));
     const client = createApiClient({ getBaseUrl: () => 'http://x', getToken: () => '' });

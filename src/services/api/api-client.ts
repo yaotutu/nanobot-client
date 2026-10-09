@@ -2,15 +2,15 @@
 /**
  * 统一的 API 客户端。所有 endpoint 通过此客户端发起请求：
  *   - 自动注入 `Authorization: Bearer <token>`
- *   - 统一超时（默认 20s）
- *   - 统一错误处理：401/403 → ApiError(401)；HTML/non-JSON → i18n 翻译后的描述
+ *   - 统一超时（默认 20s，包含响应体读取）和外部取消
+ *   - HTTP 错误保留真实状态码；HTML/non-JSON 返回可识别的 ApiError
  *
  * 每个 feature 在自己的 `api.ts` 持有 `apiClient.request(...)` 调用，组件层不再
  * 直接接触 baseUrl / token。
  */
 export interface ApiClientOptions {
   getBaseUrl: () => string;
-  /** 返回当前可用的 API token；未登录返回空串时客户端会自动抛错 */
+  /** 返回当前可用的 API token；空串表示不发送 Authorization 头 */
   getToken: () => string;
   /** 默认超时，毫秒；0 表示不超时 */
   defaultTimeoutMs?: number;
@@ -99,13 +99,22 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
       }
     }
 
+    const externalSignal = options.signal;
+    // 已取消的任务不应再发起网络请求，尤其是切换会话后才完成准备工作的历史请求。
+    if (externalSignal?.aborted) {
+      const error = new Error('request_aborted');
+      error.name = 'AbortError';
+      throw error;
+    }
+
     const shouldTimeout = (options.timeoutMs ?? defaultTimeoutMs) > 0;
     const controller = shouldTimeout ? new AbortController() : null;
     const timer = controller
       ? setTimeout(() => controller.abort(), options.timeoutMs ?? defaultTimeoutMs)
       : undefined;
-    if (controller && options.signal) {
-      options.signal.addEventListener('abort', () => controller.abort());
+    const forwardAbort = () => controller?.abort();
+    if (controller && externalSignal) {
+      externalSignal.addEventListener('abort', forwardAbort, { once: true });
     }
     try {
       const response = await fetch(url, { ...init, signal: controller?.signal ?? options.signal });
@@ -113,9 +122,13 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
         const message = (await response.text()).trim();
         throw new ApiError(response.status, message || `HTTP ${response.status}`);
       }
-      return parseJsonResponse<T>(response);
+      // 必须在 try 内等待读取完成，否则 finally 会在响应头到达时就撤销超时保护。
+      return await parseJsonResponse<T>(response);
     } finally {
       if (timer !== undefined) clearTimeout(timer);
+      if (controller && externalSignal) {
+        externalSignal.removeEventListener('abort', forwardAbort);
+      }
     }
   };
 

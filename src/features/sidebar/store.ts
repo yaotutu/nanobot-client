@@ -81,21 +81,40 @@ function toggleInSet(list: string[], key: string, present: boolean): string[] {
 
 export const useSidebarStore = create<SidebarStore>()(
   subscribeWithSelector((set, get) => {
+    // 每次 reset 都开启新环境；请求与 pending 清理仅能修改发起时的环境。
+    let generation = 0;
+    let mutationVersion = 0;
+    let writeQueue: Promise<void> = Promise.resolve();
+
     async function mutateSidebar(
       updater: (current: SidebarStatePayload) => SidebarStatePayload,
     ): Promise<void> {
+      const requestGeneration = generation;
+      const requestVersion = ++mutationVersion;
       const next = updater(get().sidebarState);
+      // 立即展示操作后的完整快照；排队期间后续操作仍从最新乐观状态计算。
       set({ sidebarState: next });
-      try {
-        const persisted = await apiUpdateSidebarState(next);
-        set({ sidebarState: persisted });
-      } catch (caught) {
-        const message = caught instanceof Error
-          ? caught.message
-          : i18n.t('sidebar.saveStateFailed', { defaultValue: 'Could not save sidebar state' });
-        set({ error: message });
-        // 不抛 —— sidebar state 失败不应阻塞聊天
-      }
+      const task = writeQueue.then(async () => {
+        // 尚未发送的旧环境快照直接失效，不能用新环境的连接继续保存。
+        if (requestGeneration !== generation) return;
+        try {
+          const persisted = await apiUpdateSidebarState(next);
+          // 旧响应不能覆盖后续操作的乐观状态，也不能回写 reset 后的新环境。
+          if (requestGeneration === generation && requestVersion === mutationVersion) {
+            set({ sidebarState: persisted });
+          }
+        } catch (caught) {
+          if (requestGeneration !== generation) return;
+          const message = caught instanceof Error
+            ? caught.message
+            : i18n.t('sidebar.saveStateFailed', { defaultValue: 'Could not save sidebar state' });
+          set({ error: message });
+          // 不抛 —— sidebar state 失败不应阻塞聊天或后续排队的保存。
+        }
+      });
+      // 队尾始终恢复为可继续的 Promise；单个任务失败不会阻断后续发送。
+      writeQueue = task.catch(() => {});
+      await task;
     }
 
     return {
@@ -106,25 +125,30 @@ export const useSidebarStore = create<SidebarStore>()(
       pending: new Set<string>(),
 
       async refresh() {
+        const requestGeneration = generation;
         set({ loading: true });
         try {
           const sessions = await apiListSessions();
-          set({ sessions, loading: false, error: null });
+          if (requestGeneration === generation) {
+            set({ sessions, loading: false, error: null });
+          }
         } catch {
-          set({ loading: false });
+          if (requestGeneration === generation) set({ loading: false });
         }
       },
 
       async refreshSidebarState() {
+        const requestGeneration = generation;
         try {
           const state = await apiFetchSidebarState();
-          set({ sidebarState: state });
+          if (requestGeneration === generation) set({ sidebarState: state });
         } catch {
           // sidebar state 缺失时不影响功能
         }
       },
 
       async togglePinned(key) {
+        const requestGeneration = generation;
         const set2 = new Set(get().pending);
         set2.add(key);
         set({ pending: set2 });
@@ -134,13 +158,17 @@ export const useSidebarStore = create<SidebarStore>()(
             return { ...current, pinned_keys: toggleInSet(current.pinned_keys, key, present) };
           });
         } finally {
-          const s = new Set(get().pending);
-          s.delete(key);
-          set({ pending: s });
+          // 新环境可能已对相同 key 发起操作，旧任务不能替它解除 pending。
+          if (requestGeneration === generation) {
+            const s = new Set(get().pending);
+            s.delete(key);
+            set({ pending: s });
+          }
         }
       },
 
       async toggleArchived(key) {
+        const requestGeneration = generation;
         const s = new Set(get().pending);
         s.add(key);
         set({ pending: s });
@@ -154,9 +182,11 @@ export const useSidebarStore = create<SidebarStore>()(
             return { ...current, archived_keys: archived, pinned_keys: pinned };
           });
         } finally {
-          const s2 = new Set(get().pending);
-          s2.delete(key);
-          set({ pending: s2 });
+          if (requestGeneration === generation) {
+            const s2 = new Set(get().pending);
+            s2.delete(key);
+            set({ pending: s2 });
+          }
         }
       },
 
@@ -198,8 +228,11 @@ export const useSidebarStore = create<SidebarStore>()(
       },
 
       async removeSession(key) {
+        const requestGeneration = generation;
         try {
           const result = await apiDeleteSession(key);
+          // 保留删除接口的原始结果，但旧环境删除不能清理新环境同 key 的会话或元数据。
+          if (requestGeneration !== generation) return result;
           if (!result.deleted) return result;
           set((s) => ({ sessions: s.sessions.filter((sess) => sess.key !== key) }));
           await mutateSidebar((current) => {
@@ -220,7 +253,9 @@ export const useSidebarStore = create<SidebarStore>()(
           });
           return { deleted: true };
         } catch (error: unknown) {
-          set({ error: error instanceof Error ? error.message : i18n.t('settings.status.loadError') });
+          if (requestGeneration === generation) {
+            set({ error: error instanceof Error ? error.message : i18n.t('settings.status.loadError') });
+          }
           throw error;
         }
       },
@@ -236,6 +271,9 @@ export const useSidebarStore = create<SidebarStore>()(
       },
 
       resetAll() {
+        generation += 1;
+        // 新环境不等待旧请求结束；旧队列仍会自行完成，但发送前检查会跳过旧任务。
+        writeQueue = Promise.resolve();
         set({
           sessions: [],
           sidebarState: DEFAULT_SIDEBAR_STATE,

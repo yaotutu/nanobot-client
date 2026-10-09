@@ -45,7 +45,7 @@ export interface UseChatScrollResult {
   }) => void;
   onMomentumScrollEnd: () => void;
   onScrollBeginDrag: () => void;
-  onScrollEndDrag: () => void;
+  onScrollEndDrag: (event?: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }
 
 /**
@@ -64,6 +64,7 @@ export function useChatScroll({
   const autoFollowRef = useRef(true);
   const pendingPromptIndexRef = useRef<number | null>(null);
   const userScrollingRef = useRef(false);
+  const olderLoadRequestedForGestureRef = useRef(false);
   const olderLoadInFlightRef = useRef(false);
   const [atBottom, setAtBottom] = useState(true);
 
@@ -72,6 +73,8 @@ export function useChatScroll({
   const scrollToBottom = useCallback((animated = true, force = false) => {
     if (force) autoFollowRef.current = true;
     if (autoFollowRef.current || force) {
+      // 程序滚动不能继承尚未结束的用户惯性，否则回零后的布局事件可能误加载历史。
+      userScrollingRef.current = false;
       listRef.current?.scrollToOffset({ animated, offset: 0 });
       setAtBottom(true);
     }
@@ -82,6 +85,8 @@ export function useChatScroll({
   useEffect(() => {
     autoFollowRef.current = true;
     pendingPromptIndexRef.current = null;
+    userScrollingRef.current = false;
+    olderLoadRequestedForGestureRef.current = false;
     // 会话切换后的默认“在底部”与新列表的初始渲染同步；异步批处理避免级联 render。
     const resetTimer = setTimeout(() => {
       setAtBottom(true);
@@ -112,11 +117,20 @@ export function useChatScroll({
         0,
         contentSize.height - layoutMeasurement.height - contentOffset.y,
       );
-      if (userScrollingRef.current && distanceToOlderEnd <= OLDER_HISTORY_THRESHOLD_PX) {
-        loadEarlier();
+      // 一次拖拽及其后续惯性最多请求一页；即使请求已经完成、阈值内继续收到
+      // onScroll 或布局补偿事件，也必须等下一次用户拖拽才能再自动分页。
+      if (
+        userScrollingRef.current &&
+        !olderLoadRequestedForGestureRef.current &&
+        hasMoreBefore &&
+        distanceToOlderEnd <= OLDER_HISTORY_THRESHOLD_PX
+      ) {
+        // 先消耗本次手势资格；如果当前已有历史请求在途，也等下一次用户手势。
+        olderLoadRequestedForGestureRef.current = true;
+        if (!olderLoadInFlightRef.current && !loadingOlder) loadEarlier();
       }
     },
-    [loadEarlier],
+    [hasMoreBefore, loadEarlier, loadingOlder],
   );
 
   const handleContentSizeChange = useCallback(() => {
@@ -135,6 +149,8 @@ export function useChatScroll({
       if (chronologicalIndex < 0) return;
       // 展示数组为“新到旧”，点击导航时要把时间线索引翻转成 FlatList 索引。
       const displayIndex = units.length - 1 - chronologicalIndex;
+      // 导航产生的动画滚动不是用户继续查看历史，立即撤销自动分页资格。
+      userScrollingRef.current = false;
       autoFollowRef.current = false;
       setAtBottom(false);
       pendingPromptIndexRef.current = displayIndex;
@@ -150,6 +166,8 @@ export function useChatScroll({
 
   const handleScrollToIndexFailed = useCallback(
     (info: { averageItemLength: number; index: number }) => {
+      // 定位失败后的补偿与重试同样属于程序滚动，不能延续之前手势的分页资格。
+      userScrollingRef.current = false;
       pendingPromptIndexRef.current = info.index;
       listRef.current?.scrollToOffset({
         animated: false,
@@ -174,9 +192,13 @@ export function useChatScroll({
   }, []);
   const onScrollBeginDrag = useCallback(() => {
     userScrollingRef.current = true;
+    olderLoadRequestedForGestureRef.current = false;
   }, []);
-  const onScrollEndDrag = useCallback(() => {
-    userScrollingRef.current = false;
+  const onScrollEndDrag = useCallback((event?: NativeSyntheticEvent<NativeScrollEvent>) => {
+    // Native end-drag 携带松手速度：有纵向速度时用户滚动继续进入惯性阶段，
+    // 直到 momentum-end 才清除；静止松手不会收到该事件，必须在这里立即结束。
+    // 只延续既有用户手势，不让程序滚动或孤立的 end-drag 获得自动分页资格。
+    userScrollingRef.current = userScrollingRef.current && Boolean(event?.nativeEvent.velocity?.y);
   }, []);
 
   return {

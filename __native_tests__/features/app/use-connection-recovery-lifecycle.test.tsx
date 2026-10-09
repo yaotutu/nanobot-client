@@ -82,11 +82,11 @@ jest.mock('@/features/connection/store', () => ({
   ),
 }));
 
-function connectedState(available: boolean): NetInfoState {
+function connectedState(available: boolean, internetReachable = available): NetInfoState {
   return {
     type: available ? 'wifi' : 'none',
     isConnected: available,
-    isInternetReachable: available,
+    isInternetReachable: internetReachable,
     details: null,
   } as NetInfoState;
 }
@@ -133,6 +133,19 @@ describe('useConnectionRecoveryLifecycle', () => {
     expect(setNetworkAvailable).toHaveBeenLastCalledWith(true);
     expect(mockConnectionState.setReconnectReason).toHaveBeenCalledWith('network-restored');
     expect(reconnectNow).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the network available when a LAN has no general internet access', async () => {
+    await renderHook(() => useConnectionRecoveryLifecycle(socketRef, true));
+    mockConnectionState.setNetworkAvailable.mockClear();
+    setNetworkAvailable.mockClear();
+
+    await act(async () => {
+      mockNetInfoListener?.(connectedState(true, false));    });
+
+    expect(mockConnectionState.setNetworkAvailable).toHaveBeenLastCalledWith(true);
+    expect(setNetworkAvailable).toHaveBeenLastCalledWith(true);
+    expect(reconnectNow).not.toHaveBeenCalled();
   });
 
   it('checks connectivity and reconnects a stale socket on foreground', async () => {

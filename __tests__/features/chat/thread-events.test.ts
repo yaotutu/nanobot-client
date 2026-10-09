@@ -42,6 +42,49 @@ describe('current event history projection', () => {
     expect(result.messages[1]).toMatchObject({ reasoning: 'complete thought', content: 'Answer' });
   });
 
+  it.each([false, true])('keeps reasoning segments separated by a tool trace (second delta: %s)', (withDelta) => {
+    // 第一段只有完整结束事件；工具之后可有或没有 delta，均不能覆盖工具之前的推理。
+    const payload = thread([
+      user,
+      event('r1', { event: 'reasoning_end', chat_id: 'c1', text: 'First thought' }),
+      event('tool', { event: 'message', chat_id: 'c1', kind: 'progress', text: 'Read file' }),
+      ...(withDelta ? [event('r2-delta', { event: 'reasoning_delta', chat_id: 'c1', text: 'Second partial' })] : []),
+      event('r2', { event: 'reasoning_end', chat_id: 'c1', text: 'Second complete thought' }),
+      answer, end,
+    ]);
+    const result = projectThreadEvents(payload);
+    expect(result.messages).toHaveLength(4);
+    expect(result.messages[1]).toMatchObject({
+      id: 'reasoning-r1', reasoning: 'First thought', content: '', reasoningStreaming: false,
+    });
+    expect(result.messages[2]).toMatchObject({ kind: 'trace', content: 'Read file' });
+    expect(result.messages[3]).toMatchObject({
+      id: withDelta ? 'reasoning-r2-delta' : 'reasoning-r2',
+      reasoning: 'Second complete thought', content: 'Answer', reasoningStreaming: false,
+    });
+    // 同一分页快照重新回放必须保留两段文本及其 projection_id 派生身份。
+    expect(projectThreadEvents(payload)).toEqual(result);
+  });
+
+  it.each([undefined, ''])('preserves reasoning ending semantics for text %s', (text) => {
+    // 缺少完整文本只关闭流；显式空文本覆盖同段 delta，而不是保留旧片段。
+    const result = projectThreadEvents(thread([
+      user,
+      event('r0', { event: 'reasoning_delta', chat_id: 'c1', text: 'Partial thought' }),
+      event('r1', { event: 'reasoning_end', chat_id: 'c1', ...(text === undefined ? {} : { text }) }),
+    ], { active_turn_id: 't1' }));
+    expect(result.messages[1]).toMatchObject({
+      id: 'reasoning-r0', reasoning: text ?? 'Partial thought', reasoningStreaming: false,
+    });
+  });
+
+  it('does not duplicate a replayed full ending in the same reasoning segment', () => {
+    const reasoning = event('r1', { event: 'reasoning_end', chat_id: 'c1', text: 'Full thought' });
+    const result = projectThreadEvents(thread([user, reasoning, reasoning, answer, end]));
+    expect(result.messages).toHaveLength(2);
+    expect(result.messages[1]).toMatchObject({ id: 'reasoning-r1', reasoning: 'Full thought', content: 'Answer' });
+  });
+
   it('keeps replay identities stable across reload and overlapping pages', () => {
     const payload = thread([user, answer, end]);
     const first = projectThreadEvents(payload);

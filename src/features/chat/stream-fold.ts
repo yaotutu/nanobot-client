@@ -65,18 +65,12 @@ export function foldStreamEvent(
   }
   if (event.event === 'stream_end') return applyStreamEnd(messages, event, state);
   if (event.event === 'reasoning_end') {
-    // 持久化的结束事件可能只有完整文本，没有前面的 delta；完整文本覆盖而不是再次拼接。
-    let next = messages;
-    if (typeof event.text === 'string') {
-      const turn = turnFields(event, 'reasoning');
-      const target = next.findLastIndex((message) =>
-        message.role === 'assistant' && message.content === '' && message.reasoning !== undefined
-        && (!turn.turnId || message.turnId === turn.turnId),
-      );
-      next = target >= 0
-        ? next.map((message, index) => index === target ? { ...message, reasoning: event.text } : message)
-        : attachReasoningChunk(next, event.text, state, turn);
-    }
+    if (typeof event.text === 'string' && state.fileEditSegmentId) clearActivitySegment(state);
+    // 无 delta 的历史结束事件也遵守增量推理的分段边界；同段完整文本覆盖而非拼接。
+    // 缺少 text 时仅关闭推理，显式空字符串则仍是该段的权威完整文本。
+    const next = typeof event.text === 'string'
+      ? attachReasoningChunk(messages, event.text, state, turnFields(event, 'reasoning'), true)
+      : messages;
     return closeReasoningStream(next, currentEventTime(state));
   }
   if (event.event === 'file_edit') return mergeFileEditTrace(messages, event, state);
