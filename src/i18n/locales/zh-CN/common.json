@@ -86,7 +86,8 @@
       "currentModel": "当前配置",
       "selectedPreset": "选中的预设",
       "theme": "主题",
-      "server": "服务器"
+      "server": "服务器",
+      "defaultSession": "默认会话"
     },
     "skills": {
       "openDetails": "查看 {{name}} 详情"
@@ -112,6 +113,11 @@
       "placeholder": "http://192.168.1.10:8765",
       "invalid": "请输入有效的 http:// 或 https:// 服务器地址。",
       "save": "保存并切换"
+    },
+    "defaultSession": {
+      "title": "默认会话",
+      "hint": "选择应用启动或当前会话丢失时自动打开的会话。",
+      "none": "未设置"
     }
   },
   "chat": {

@@ -19,6 +19,7 @@ jest.mock('lucide-react-native/icons/chevron-right', () => () => null);
 jest.mock('lucide-react-native/icons/server', () => () => null);
 jest.mock('lucide-react-native/icons/download', () => () => null);
 jest.mock('lucide-react-native/icons/languages', () => () => null);
+jest.mock('lucide-react-native/icons/message-circle', () => () => null);
 jest.mock('lucide-react-native/icons/log-out', () => () => null);
 jest.mock('lucide-react-native/icons/moon', () => () => null);
 jest.mock('lucide-react-native/icons/sun', () => () => null);
@@ -46,11 +47,17 @@ jest.mock('@/services/api/api', () => ({
 
 // 仅提供当前支持的主题与语言；冻结对象，确保单项更新保留另一项且不直接修改入参。
 const serverUrl = 'http://example.test:8765';
+const defaultSessionOptions = [
+  { key: 'websocket:main', title: 'Main conversation', preview: 'Main preview' },
+  { key: 'websocket:work', title: 'Work conversation', preview: 'Work preview' },
+];
 const preferences = Object.freeze<LocalPreferences>({
   theme: 'light',
   language: 'en',
   serverUrl,
   serverConfigured: true,
+  defaultSessionKey: null,
+  defaultSessionServerUrl: '',
 });
 
 // 只导入状态类型，不加载原生 runtime 或真实 store；每次构造独立 controller，
@@ -102,7 +109,9 @@ const createProps = (updates: UpdateState = createUpdates()) => ({
   updates,
   updateSection: createUpdateSection(updates),
   visible: true,
+  defaultSessionOptions,
   onChange: jest.fn<(next: LocalPreferences) => void>(),
+  onDefaultSessionChange: jest.fn<(sessionKey: string | null) => void>(),
   onServerChange: jest.fn(async () => undefined),
   onClose: jest.fn<() => void>(),
   onLogout: jest.fn(async () => undefined),
@@ -115,7 +124,9 @@ const preferencesElement = (props: ReturnType<typeof createProps>, overrides: Pa
     updateSection={overrides.updateSection ?? props.updateSection}
     preferences={overrides.preferences ?? props.preferences}
     visible={overrides.visible ?? props.visible}
+    defaultSessionOptions={overrides.defaultSessionOptions ?? props.defaultSessionOptions}
     onChange={props.onChange}
+    onDefaultSessionChange={props.onDefaultSessionChange}
     onServerChange={props.onServerChange}
     onClose={props.onClose}
     onLogout={props.onLogout}
@@ -158,17 +169,19 @@ describe('PreferencesModal', () => {
     expect(result.getAllByText(/.+/).map((node) => node.props.children)).toEqual([
       'sidebar.settings', 'settings.preferences.note', 'settings.preferences.group',
       'settings.rows.theme', 'settings.values.light', 'sidebar.language.label', 'English',
+      'settings.defaultSession.title', 'settings.defaultSession.none',
       'settings.preferences.connectionGroup', 'settings.rows.server', serverUrl,
       'updates.appGroup', 'updates.title', 'updates.unknown',
       'settings.preferences.account', 'app.account.logout',
     ]);
     expect(result.queryAllByRole('radio')).toHaveLength(0);
-    expect(result.getAllByRole('button')).toHaveLength(6);
+    expect(result.getAllByRole('button')).toHaveLength(7);
     expect(result.getByRole('button', { name: 'settings.rows.server' })).toHaveAccessibilityValue({ text: serverUrl });
     expect(result.getByRole('button', { name: 'updates.title' })).toHaveAccessibilityValue({ text: 'updates.unknown' });
     expect(result.queryByTestId('settings-update-badge')).toBeNull();
     expect(result.getByRole('button', { name: 'settings.rows.theme' })).toHaveAccessibilityValue({ text: 'settings.values.light' });
     expect(result.getByRole('button', { name: 'sidebar.language.label' })).toHaveAccessibilityValue({ text: 'English' });
+    expect(result.getByRole('button', { name: 'settings.defaultSession.title' })).toHaveAccessibilityValue({ text: 'settings.defaultSession.none' });
   });
 
   it('服务器地址只提交规范化结果，非法输入阻止保存', async () => {
@@ -236,16 +249,36 @@ describe('PreferencesModal', () => {
     expect(result.getByRole('button', { name: 'sidebar.language.label' })).toHaveAccessibilityValue({ text: locale.nativeLabel });
   });
 
-  it.each(['theme', 'language', 'server', 'updates'] as const)('系统返回先退出 %s 详情，首页再返回才关闭', async (page) => {
+  it('默认会话详情只写本地偏好，选择后不切换当前聊天', async () => {
+    const props = createProps();
+    const result = await render(preferencesElement(props));
+    await fireEvent.press(result.getByRole('button', { name: 'settings.defaultSession.title' }));
+    expect(result.getByRole('header', { name: 'settings.defaultSession.title' })).toBeTruthy();
+    expect(result.getAllByRole('radio')).toHaveLength(3);
+    await fireEvent.press(result.getByRole('radio', { name: 'Main conversation' }));
+    expect(props.onDefaultSessionChange).toHaveBeenCalledWith('websocket:main');
+    expect(props.onChange).not.toHaveBeenCalled();
+    await result.rerender(preferencesElement(props, {
+      preferences: { ...preferences, defaultSessionKey: 'websocket:main', defaultSessionServerUrl: serverUrl },
+    }));
+    expect(result.getByRole('radio', { name: 'Main conversation', checked: true })).toBeTruthy();
+    await fireEvent.press(result.getByRole('radio', { name: 'settings.defaultSession.none' }));
+    expect(props.onDefaultSessionChange).toHaveBeenLastCalledWith(null);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it.each(['theme', 'language', 'defaultSession', 'server', 'updates'] as const)('系统返回先退出 %s 详情，首页再返回才关闭', async (page) => {
     const props = createProps();
     const result = await render(preferencesElement(props));
     const title = page === 'updates'
       ? 'updates.title'
       : page === 'theme'
         ? 'settings.rows.theme'
-        : page === 'server'
-          ? 'settings.rows.server'
-          : 'sidebar.language.label';
+        : page === 'defaultSession'
+          ? 'settings.defaultSession.title'
+          : page === 'server'
+            ? 'settings.rows.server'
+            : 'sidebar.language.label';
     await fireEvent.press(result.getByRole('button', { name: title }));
     await fireEvent(result.getByRole('header', { name: title }), 'requestClose');
     expect(result.getByRole('header', { name: 'sidebar.settings' })).toBeTruthy();
@@ -255,11 +288,12 @@ describe('PreferencesModal', () => {
     expect(props.onChange).not.toHaveBeenCalled();
   });
 
-  it.each(['home', 'theme', 'language', 'server', 'updates'] as const)('在 %s 页面点击关闭仅触发 onClose', async (page) => {
+  it.each(['home', 'theme', 'language', 'defaultSession', 'server', 'updates'] as const)('在 %s 页面点击关闭仅触发 onClose', async (page) => {
     const props = createProps();
     const result = await render(preferencesElement(props));
     if (page === 'theme') await fireEvent.press(result.getByRole('button', { name: 'settings.rows.theme' }));
     if (page === 'language') await fireEvent.press(result.getByRole('button', { name: 'sidebar.language.label' }));
+    if (page === 'defaultSession') await fireEvent.press(result.getByRole('button', { name: 'settings.defaultSession.title' }));
     if (page === 'server') await fireEvent.press(result.getByRole('button', { name: 'settings.rows.server' }));
     if (page === 'updates') await fireEvent.press(result.getByRole('button', { name: 'updates.title' }));
     await fireEvent.press(result.getByRole('button', { name: 'common.dismiss' }));

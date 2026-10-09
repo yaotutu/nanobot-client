@@ -86,7 +86,8 @@
       "currentModel": "Cấu hình hiện tại",
       "selectedPreset": "Preset đã chọn",
       "theme": "Chủ đề",
-      "server": "Máy chủ"
+      "server": "Máy chủ",
+      "defaultSession": "Cuộc trò chuyện mặc định"
     },
     "skills": {
       "openDetails": "Mở chi tiết {{name}}"
@@ -112,6 +113,11 @@
       "placeholder": "http://192.168.1.10:8765",
       "invalid": "Nhập địa chỉ máy chủ http:// hoặc https:// hợp lệ.",
       "save": "Lưu và chuyển"
+    },
+    "defaultSession": {
+      "title": "Cuộc trò chuyện mặc định",
+      "hint": "Chọn cuộc trò chuyện sẽ mở khi khởi động hoặc khi cuộc trò chuyện hiện tại biến mất.",
+      "none": "Chưa đặt"
     }
   },
   "chat": {

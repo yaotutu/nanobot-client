@@ -34,6 +34,7 @@ export function useAppController() {
   const sessions = useSidebarStore(selectSessions);
   const sidebarState = useSidebarStore(selectSidebarState);
   const sessionsLoading = useSidebarStore((state) => state.loading);
+  const sessionsError = useSidebarStore((state) => state.error);
   const togglePinned = useSidebarStore((state) => state.togglePinned);
   const toggleArchived = useSidebarStore((state) => state.toggleArchived);
   const toggleSidebarGroup = useSidebarStore((state) => state.toggleGroup);
@@ -184,6 +185,7 @@ export function useAppController() {
       sessions,
       state: sidebarState,
       loading: sessionsLoading,
+      error: sessionsError,
       selectSession,
       togglePinned,
       toggleArchived,

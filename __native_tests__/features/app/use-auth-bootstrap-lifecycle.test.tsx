@@ -12,6 +12,8 @@ const createPreferences = (serverConfigured: boolean): LocalPreferences => ({
   language: 'en',
   serverUrl: 'http://example.test:8765',
   serverConfigured,
+  defaultSessionKey: null,
+  defaultSessionServerUrl: '',
 });
 let mockPreferenceState = {
   preferences: createPreferences(true),

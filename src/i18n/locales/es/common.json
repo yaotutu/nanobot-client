@@ -86,7 +86,8 @@
       "currentModel": "Configuración actual",
       "selectedPreset": "Preajuste seleccionado",
       "theme": "Tema",
-      "server": "Servidor"
+      "server": "Servidor",
+      "defaultSession": "Conversación predeterminada"
     },
     "skills": {
       "openDetails": "Abrir detalles de {{name}}"
@@ -112,6 +113,11 @@
       "placeholder": "http://192.168.1.10:8765",
       "invalid": "Introduce una dirección de servidor http:// o https:// válida.",
       "save": "Guardar y cambiar"
+    },
+    "defaultSession": {
+      "title": "Conversación predeterminada",
+      "hint": "Elige la conversación que se abre al iniciar o cuando desaparece la actual.",
+      "none": "Sin definir"
     }
   },
   "chat": {

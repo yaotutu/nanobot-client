@@ -86,7 +86,8 @@
       "currentModel": "현재 구성",
       "selectedPreset": "선택한 프리셋",
       "theme": "테마",
-      "server": "서버"
+      "server": "서버",
+      "defaultSession": "기본 대화"
     },
     "skills": {
       "openDetails": "{{name}} 상세 열기"
@@ -112,6 +113,11 @@
       "placeholder": "http://192.168.1.10:8765",
       "invalid": "유효한 http:// 또는 https:// 서버 주소를 입력하세요.",
       "save": "저장하고 전환"
+    },
+    "defaultSession": {
+      "title": "기본 대화",
+      "hint": "시작하거나 현재 대화가 사라졌을 때 열릴 대화를 선택하세요.",
+      "none": "설정 안 함"
     }
   },
   "chat": {

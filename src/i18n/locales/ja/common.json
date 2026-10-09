@@ -86,7 +86,8 @@
       "currentModel": "現在の設定",
       "selectedPreset": "選択中のプリセット",
       "theme": "テーマ",
-      "server": "サーバー"
+      "server": "サーバー",
+      "defaultSession": "既定の会話"
     },
     "skills": {
       "openDetails": "{{name}} の詳細を開く"
@@ -112,6 +113,11 @@
       "placeholder": "http://192.168.1.10:8765",
       "invalid": "有効な http:// または https:// のサーバーアドレスを入力してください。",
       "save": "保存して切り替える"
+    },
+    "defaultSession": {
+      "title": "既定の会話",
+      "hint": "起動時や現在の会話が失われたときに開く会話を選択します。",
+      "none": "未設定"
     }
   },
   "chat": {

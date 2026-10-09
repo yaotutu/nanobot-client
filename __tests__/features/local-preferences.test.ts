@@ -11,7 +11,7 @@ vi.mock('expo-localization', () => ({ getLocales: () => [{ languageTag: 'en' }] 
 
 const storageKey = 'nanobot-native.local-preferences';
 
-// 同时检查内存和写入内容，确保更新后的持久化对象严格只包含主题、语言和服务器地址。
+// 同时检查内存和写入内容，确保更新后的持久化对象包含主题、语言、服务器与默认会话配置。
 const expectPersistedPreferences = (preferences: LocalPreferences) => {
   expect(useLocalPreferencesStore.getState().preferences).toEqual(preferences);
   expect(useLocalPreferencesStore.getState().hydrated).toBe(true);
@@ -27,11 +27,11 @@ describe('本地主题、语言与服务器偏好', () => {
   });
 
   it('默认偏好包含主题、设备语言和默认服务器', () => {
-    expect(DEFAULT_LOCAL_PREFS).toEqual({ theme: 'light', language: 'en', serverUrl: DEFAULT_SERVER_URL, serverConfigured: false });
+    expect(DEFAULT_LOCAL_PREFS).toEqual({ theme: 'light', language: 'en', serverUrl: DEFAULT_SERVER_URL, serverConfigured: false, defaultSessionKey: null, defaultSessionServerUrl: '' });
   });
 
   it('替换主题与语言并写入现有存储 key', () => {
-    const preferences: LocalPreferences = { theme: 'dark', language: 'zh-CN', serverUrl: 'http://example.test:8765', serverConfigured: true };
+    const preferences: LocalPreferences = { theme: 'dark', language: 'zh-CN', serverUrl: 'http://example.test:8765', serverConfigured: true, defaultSessionKey: 'websocket:main', defaultSessionServerUrl: 'http://example.test:8765' };
     useLocalPreferencesStore.getState().replace(preferences);
     expectPersistedPreferences(preferences);
   });
@@ -66,7 +66,7 @@ describe('本地主题、语言与服务器偏好', () => {
   });
 
   it('从现有存储 key 读取当前主题与语言', async () => {
-    const preferences: LocalPreferences = { ...DEFAULT_LOCAL_PREFS, theme: 'dark', language: 'ko', serverUrl: 'http://example.test:8765', serverConfigured: true };
+    const preferences: LocalPreferences = { ...DEFAULT_LOCAL_PREFS, theme: 'dark', language: 'ko', serverUrl: 'http://example.test:8765', serverConfigured: true, defaultSessionKey: 'websocket:main', defaultSessionServerUrl: 'http://example.test:8765' };
     vi.mocked(SecureStore.getItemAsync).mockResolvedValue(JSON.stringify(preferences));
 
     await useLocalPreferencesStore.getState().hydrate();
@@ -77,9 +77,28 @@ describe('本地主题、语言与服务器偏好', () => {
     expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
   });
 
+  it('更新服务器地址时自动失效跨网关的默认会话', () => {
+    useLocalPreferencesStore.getState().update({
+      serverUrl: 'http://example.test:8765',
+      serverConfigured: true,
+      defaultSessionKey: 'websocket:main',
+      defaultSessionServerUrl: ' http://example.test:8765/ ',
+    });
+    expectPersistedPreferences({
+      ...DEFAULT_LOCAL_PREFS,
+      serverUrl: 'http://example.test:8765',
+      serverConfigured: true,
+      defaultSessionKey: 'websocket:main',
+      defaultSessionServerUrl: 'http://example.test:8765',
+    });
+
+    useLocalPreferencesStore.getState().update({ serverUrl: 'http://example.test:9999', serverConfigured: true });
+    expectPersistedPreferences({ ...DEFAULT_LOCAL_PREFS, serverUrl: 'http://example.test:9999', serverConfigured: true });
+  });
+
   it('更新服务器地址时先规范化，再同步 API 运行时配置', () => {
     useLocalPreferencesStore.getState().update({ serverUrl: ' http://example.test:9999/ ', serverConfigured: true });
-    expectPersistedPreferences({ ...DEFAULT_LOCAL_PREFS, serverUrl: 'http://example.test:9999', serverConfigured: true });
+    expectPersistedPreferences({ ...DEFAULT_LOCAL_PREFS, serverUrl: 'http://example.test:9999', serverConfigured: true, defaultSessionKey: null, defaultSessionServerUrl: '' });
     expect(getServerUrl()).toBe('http://example.test:9999');
   });
 
@@ -96,4 +115,13 @@ describe('本地主题、语言与服务器偏好', () => {
       expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
     },
   );
+
+  it('默认会话缺失服务器绑定或承载非法值时被清空', () => {
+    useLocalPreferencesStore.getState().update({
+      defaultSessionKey: ' websocket:main ',
+      defaultSessionServerUrl: 'http://other.test:8765',
+    } as Partial<LocalPreferences>);
+
+    expectPersistedPreferences(DEFAULT_LOCAL_PREFS);
+  });
 });

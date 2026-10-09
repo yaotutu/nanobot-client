@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppModals } from '@/features/app/components/AppModals';
@@ -6,10 +6,12 @@ import { useAppController } from '@/features/app/hooks/use-app-controller';
 import { useAppModelSelection } from '@/features/app/hooks/use-app-model-selection';
 import { useAppNavigation } from '@/features/app/hooks/use-app-navigation';
 import { useAppPreferences } from '@/features/app/hooks/use-app-preferences';
+import { useDefaultSessionStartup } from '@/features/app/hooks/use-default-session-startup';
 import { chatPaletteForTheme, NanobotScreen } from '@/features/chat/screen';
 import { useUpdates, hasUpdate, UpdateDetails, updateSummaryKey } from '@/features/updates';
 import { PreferencesModal } from '@/features/settings';
 import { markStartup } from '@/services/runtime/startup-performance';
+import { sessionTitle, visibleSessionPreview } from '@/services/text/format';
 import { DARK_COLORS, LIGHT_COLORS } from '@/ui/colors';
 
 /**
@@ -26,7 +28,7 @@ export function ReadyAppShell() {
   useEffect(() => {
     markStartup('ready_shell_mounted');
   }, []);
-  const { preferences, changePreferences, changeServerUrl } = useAppPreferences();
+  const { preferences, changePreferences, changeDefaultSession, changeServerUrl } = useAppPreferences();
   const dark = preferences.theme === 'dark';
   const colors = dark ? DARK_COLORS : LIGHT_COLORS;
   const bootstrap = app.auth.bootstrap!;
@@ -41,6 +43,15 @@ export function ReadyAppShell() {
 
   const chatController = app.chat!;
   const { logout } = app.runtime;
+  const clearDefaultSession = useCallback(() => changeDefaultSession(null), [changeDefaultSession]);
+  const defaultSessionOptions = useMemo(
+    () => app.sidebar.sessions.map((session) => ({
+      key: session.key,
+      title: app.sidebar.state.title_overrides[session.key]?.trim() || sessionTitle(session),
+      preview: visibleSessionPreview(session.preview),
+    })),
+    [app.sidebar.sessions, app.sidebar.state.title_overrides],
+  );
   const { openConversations, openSearch } = navigation;
   const refreshSessions = app.sidebar.refreshSessions;
 
@@ -89,6 +100,18 @@ export function ReadyAppShell() {
     changeServerUrl(serverUrl);
   }, [changeServerUrl, logout]);
 
+  // 默认会话是启动与异常恢复的锚点；手动新建会话不会被这里重新抢回。
+  useDefaultSessionStartup({
+    activeKey: chatController.session.activeKey,
+    clearDefaultSession,
+    defaultSessionKey: preferences.defaultSessionKey,
+    enabled: true,
+    error: app.sidebar.error,
+    loading: app.sidebar.loading,
+    selectSession: app.sidebar.selectSession,
+    sessions: app.sidebar.sessions,
+  });
+
   return (
     <View style={styles.root}>
       <NanobotScreen
@@ -106,7 +129,9 @@ export function ReadyAppShell() {
         colors={colors}
         preferences={preferences}
         visible={navigation.preferencesOpen}
+        defaultSessionOptions={defaultSessionOptions}
         onChange={changePreferences}
+        onDefaultSessionChange={changeDefaultSession}
         onServerChange={switchServer}
         onClose={() => navigation.setPreferencesOpen(false)}
         onLogout={logout}

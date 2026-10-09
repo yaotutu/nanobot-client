@@ -86,7 +86,8 @@
       "currentModel": "目前設定",
       "selectedPreset": "已選預設",
       "theme": "主題",
-      "server": "伺服器"
+      "server": "伺服器",
+      "defaultSession": "預設會話"
     },
     "skills": {
       "openDetails": "開啟 {{name}} 的詳細資料"
@@ -112,6 +113,11 @@
       "placeholder": "http://192.168.1.10:8765",
       "invalid": "請輸入有效的 http:// 或 https:// 伺服器地址。",
       "save": "儲存並切換"
+    },
+    "defaultSession": {
+      "title": "預設會話",
+      "hint": "選擇應用程式啟動或目前會話消失時自動開啟的會話。",
+      "none": "未設定"
     }
   },
   "chat": {

@@ -24,9 +24,17 @@ export function useAppPreferences() {
     void setAppLanguage(normalizeLocale(next.language));
   }, [replace]);
 
+  // 服务器切换由 LocalPreferences.normalize 清空默认会话，避免不同网关的会话 ID 混用。
   const changeServerUrl = useCallback((serverUrl: string) => {
     useLocalPreferencesStore.getState().update({ serverUrl, serverConfigured: true });
   }, []);
 
-  return { changePreferences, changeServerUrl, preferences };
+  const changeDefaultSession = useCallback((sessionKey: string | null) => {
+    useLocalPreferencesStore.getState().update({
+      defaultSessionKey: sessionKey,
+      defaultSessionServerUrl: sessionKey ? preferences.serverUrl : '',
+    });
+  }, [preferences.serverUrl]);
+
+  return { changeDefaultSession, changePreferences, changeServerUrl, preferences };
 }

@@ -4,6 +4,7 @@ import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import Download from 'lucide-react-native/icons/download';
 import Languages from 'lucide-react-native/icons/languages';
 import LogOut from 'lucide-react-native/icons/log-out';
+import MessageCircle from 'lucide-react-native/icons/message-circle';
 import Moon from 'lucide-react-native/icons/moon';
 import Server from 'lucide-react-native/icons/server';
 import Sun from 'lucide-react-native/icons/sun';
@@ -42,18 +43,26 @@ interface PreferencesUpdateSection {
   renderDetails: (colors: Palette) => ReactNode;
 }
 
+export interface DefaultSessionOption {
+  key: string;
+  title: string;
+  preview: string;
+}
+
 interface PreferencesModalProps {
   colors: Palette;
   updateSection: PreferencesUpdateSection;
   preferences: LocalPreferences;
   visible: boolean;
+  defaultSessionOptions: DefaultSessionOption[];
   onChange: (next: LocalPreferences) => void;
+  onDefaultSessionChange: (sessionKey: string | null) => void;
   onServerChange: (serverUrl: string) => Promise<void> | void;
   onClose: () => void;
   onLogout: () => Promise<void>;
 }
 
-type PreferencesPage = 'home' | 'theme' | 'language' | 'server' | 'updates';
+type PreferencesPage = 'home' | 'theme' | 'language' | 'defaultSession' | 'server' | 'updates';
 
 /**
  * 关闭时卸载内部页面状态，重新打开始终回到设置首页。
@@ -67,7 +76,9 @@ function PreferencesContent({
   colors,
   preferences,
   updateSection,
+  defaultSessionOptions,
   onChange,
+  onDefaultSessionChange,
   onServerChange,
   onClose,
   onLogout,
@@ -79,6 +90,9 @@ function PreferencesContent({
   const [savingServer, setSavingServer] = useState(false);
   const styles = createPreferencesStyles(colors);
   const normalizedServerUrl = normalizeServerUrl(serverDraft);
+  const selectedDefaultSession = defaultSessionOptions.find(
+    (option) => option.key === preferences.defaultSessionKey,
+  );
   const ThemeIcon = preferences.theme === 'light' ? Sun : Moon;
 
   const title = page === 'updates'
@@ -87,18 +101,22 @@ function PreferencesContent({
       ? t('sidebar.settings')
       : page === 'theme'
         ? t('settings.rows.theme')
-        : page === 'server'
-          ? t('settings.rows.server')
-          : t('sidebar.language.label');
+        : page === 'defaultSession'
+          ? t('settings.defaultSession.title')
+          : page === 'server'
+            ? t('settings.rows.server')
+            : t('sidebar.language.label');
   const hint = page === 'updates'
     ? t(updateSection.hintKey)
     : page === 'home'
       ? t('settings.preferences.note')
       : page === 'theme'
         ? t('settings.preferences.themeHint')
-        : page === 'server'
-          ? t('settings.server.hint')
-          : t('settings.preferences.languageHint');
+        : page === 'defaultSession'
+          ? t('settings.defaultSession.hint')
+          : page === 'server'
+            ? t('settings.server.hint')
+            : t('settings.preferences.languageHint');
   // 系统返回与左上角返回遵循相同层级：选择页返回首页，首页才关闭弹窗。
   const goBack = () => (page === 'home' ? onClose() : setPage('home'));
   const submitServer = async () => {
@@ -148,6 +166,13 @@ function PreferencesContent({
                       <Text numberOfLines={1} style={styles.value}>{localeOption(normalizeLocale(preferences.language)).nativeLabel}</Text>
                       <ChevronRight size={18} color={colors.subtle} />
                     </Pressable>
+                    <View style={styles.divider} />
+                    <Pressable accessibilityRole="button" accessibilityLabel={t('settings.defaultSession.title')} accessibilityValue={{ text: selectedDefaultSession?.title ?? t('settings.defaultSession.none') }} onPress={() => setPage('defaultSession')} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+                      <View style={styles.iconTile}><MessageCircle size={20} color={colors.foreground} /></View>
+                      <Text style={styles.rowLabel}>{t('settings.defaultSession.title')}</Text>
+                      <Text numberOfLines={1} style={styles.value}>{selectedDefaultSession?.title ?? t('settings.defaultSession.none')}</Text>
+                      <ChevronRight size={18} color={colors.subtle} />
+                    </Pressable>
                   </View>
                 </View>
                 <View style={styles.section}>
@@ -183,7 +208,39 @@ function PreferencesContent({
                   </View>
                 </View>
               </>
-            ) : page === 'updates' ? updateSection.renderDetails(colors) : page === 'server' ? (
+            ) : page === 'updates' ? updateSection.renderDetails(colors) : page === 'defaultSession' ? (
+              <View style={styles.group}>
+                {/* 默认会话只写本地偏好，不切换聊天页；用户可手动回到当前正在编辑的会话。 */}
+                {[
+                  {
+                    key: 'none',
+                    title: t('settings.defaultSession.none'),
+                    preview: '',
+                    checked: preferences.defaultSessionKey === null,
+                    icon: null,
+                    select: () => onDefaultSessionChange(null),
+                  },
+                  ...defaultSessionOptions.map((option) => ({
+                    ...option,
+                    checked: preferences.defaultSessionKey === option.key,
+                    icon: MessageCircle,
+                    select: () => onDefaultSessionChange(option.key),
+                  })),
+                ].map((option, index) => (
+                  <View key={option.key}>
+                    {index > 0 && <View style={styles.divider} />}
+                    <Pressable accessibilityRole="radio" accessibilityLabel={option.title} accessibilityState={{ checked: option.checked }} onPress={option.select} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+                      {option.icon && <View style={styles.iconTile}><option.icon size={20} color={colors.foreground} /></View>}
+                      <View style={styles.sessionContent}>
+                        <Text numberOfLines={1} style={styles.rowLabel}>{option.title}</Text>
+                        {!!option.preview && <Text numberOfLines={1} style={styles.sessionPreview}>{option.preview}</Text>}
+                      </View>
+                      {option.checked && <Check size={20} color={colors.foreground} />}
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            ) : page === 'server' ? (
               <View style={styles.group}>
                 <TextInput
                   autoCapitalize="none"

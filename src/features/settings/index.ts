@@ -1,1 +1,1 @@
-export { PreferencesModal } from './components/PreferencesModal';
+export { PreferencesModal, type DefaultSessionOption } from './components/PreferencesModal';

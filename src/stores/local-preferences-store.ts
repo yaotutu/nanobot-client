@@ -13,6 +13,10 @@ export interface LocalPreferences {
   serverUrl: string;
   /** 是否已经由用户确认过地址；首次安装时先进入服务器配置，不默认要求输入密码。 */
   serverConfigured: boolean;
+  /** 默认会话 key；只作为启动/异常恢复的本地选择，不跟随用户手动切换变化。 */
+  defaultSessionKey: string | null;
+  /** 默认会话归属的服务器地址，用于切换网关后自动失效旧会话。 */
+  defaultSessionServerUrl: string;
 }
 
 const STORAGE_KEY = 'nanobot-native.local-preferences';
@@ -22,11 +26,17 @@ export const DEFAULT_LOCAL_PREFS: LocalPreferences = {
   language: resolveDeviceLocale(),
   serverUrl: DEFAULT_SERVER_URL,
   serverConfigured: false,
+  defaultSessionKey: null,
+  defaultSessionServerUrl: '',
 };
 
 function normalize(raw: unknown): LocalPreferences {
   const value = raw && typeof raw === 'object' ? (raw as Partial<LocalPreferences>) : {};
   const serverUrl = normalizeServerUrl(value.serverUrl ?? '');
+  const rawDefaultSessionKey = typeof value.defaultSessionKey === 'string' ? value.defaultSessionKey.trim() : '';
+  const defaultSessionServerUrl = normalizeServerUrl(value.defaultSessionServerUrl ?? '') ?? '';
+  // 默认会话必须同时具备合法 key 并绑定当前服务器，否则视为不存在，避免跨网关误选会话。
+  const defaultSessionKey = rawDefaultSessionKey && defaultSessionServerUrl === serverUrl ? rawDefaultSessionKey : null;
   // 显式构造当前偏好，统一规范化主题、语言和服务器地址，避免旧字段或非法输入进入持久化结构。
   return {
     theme: value.theme === 'dark' ? 'dark' : 'light',
@@ -34,6 +44,8 @@ function normalize(raw: unknown): LocalPreferences {
     serverUrl: serverUrl ?? '',
     // 只有存在合法地址时才允许已配置状态，避免损坏的持久化数据跳过服务器配置页。
     serverConfigured: value.serverConfigured === true && serverUrl !== null,
+    defaultSessionKey,
+    defaultSessionServerUrl: defaultSessionKey ? serverUrl ?? '' : '',
   };
 }
 

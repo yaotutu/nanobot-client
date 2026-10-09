@@ -22,6 +22,8 @@ export function createPreferencesStyles(colors: Palette) {
     row: { minHeight: 61, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 10 },
     iconTile: { width: 29, height: 29, borderRadius: 7, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
     rowLabel: { flex: 1, fontSize: 15, lineHeight: 23, color: colors.foreground },
+    sessionContent: { flex: 1, gap: 1 },
+    sessionPreview: { fontSize: 12, lineHeight: 18, color: colors.muted },
     value: { maxWidth: '44%', flexShrink: 1, fontSize: 13, lineHeight: 21, textAlign: 'right', color: colors.muted },
     updateBadge: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#208AEF' },
     serverInput: {

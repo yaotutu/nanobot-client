@@ -86,7 +86,8 @@
       "currentModel": "Konfigurasi saat ini",
       "selectedPreset": "Preset terpilih",
       "theme": "Tema",
-      "server": "Server"
+      "server": "Server",
+      "defaultSession": "Percakapan utama"
     },
     "skills": {
       "openDetails": "Buka detail {{name}}"
@@ -112,6 +113,11 @@
       "placeholder": "http://192.168.1.10:8765",
       "invalid": "Masukkan alamat server http:// atau https:// yang valid.",
       "save": "Simpan dan ganti"
+    },
+    "defaultSession": {
+      "title": "Percakapan utama",
+      "hint": "Pilih percakapan yang dibuka saat mulai atau setelah percakapan saat ini hilang.",
+      "none": "Belum diatur"
     }
   },
   "chat": {
