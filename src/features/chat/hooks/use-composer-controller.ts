@@ -1,6 +1,4 @@
 import { useCallback } from 'react';
-import { Alert } from 'react-native';
-import { useTranslation } from 'react-i18next';
 
 import { activeCapabilityMentionPayloads } from '@/features/chat/composer/model/capability-mentions';
 import { useComposerDraft } from '@/features/chat/composer/hooks/use-composer-draft';
@@ -56,7 +54,6 @@ export function useComposerController(options: UseComposerControllerOptions) {
     slashCommands,
     turnActive,
   } = options;
-  const { t } = useTranslation();
   const draft = useComposerDraft();
   // 输入侧只保留文本与图片/文件附件，不再读取录音设置或装配转写回调。
   // 附件仍使用网关下发的上传限制，音视频附件的展示与播放由消息组件负责。
@@ -161,14 +158,6 @@ export function useComposerController(options: UseComposerControllerOptions) {
     turnActive,
   ]);
 
-  const openAttachmentMenu = useCallback(() => {
-    Alert.alert(t('thread.composer.attachImage'), t('thread.composer.attachImage'), [
-      { text: t('settings.actions.cancel'), style: 'cancel' },
-      { text: t('settings.nav.image'), onPress: () => void attachments.pickImages() },
-      { text: t('message.fileEditOpenFile'), onPress: () => void attachments.pickDocuments() },
-    ]);
-  }, [attachments, t]);
-
   const clearAttachments = attachments.clear;
   const clearDraft = draft.clear;
   const clearQueue = queue.clear;
@@ -186,7 +175,6 @@ export function useComposerController(options: UseComposerControllerOptions) {
     inputRef: draft.inputRef,
     onChangeText: draft.onChangeText,
     onCursorChange: draft.onCursorChange,
-    openAttachmentMenu,
     queuedPrompts: queue.queuedPrompts,
     removeQueuedPrompt: queue.remove,
     reset,

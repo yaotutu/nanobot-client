@@ -374,7 +374,16 @@
         "fullShort": "Penuh"
       },
       "placeholder": "Pesan…",
-      "options": "Opsi percakapan"
+      "options": "Opsi percakapan",
+      "attachmentPicker": {
+        "title": "Tambahkan lampiran",
+        "subtitle": "Pilih konten untuk disertakan dalam pesan ini",
+        "imageTitle": "Foto",
+        "imageHint": "Pilih gambar dari galeri",
+        "fileTitle": "Berkas",
+        "fileHint": "Pilih dokumen atau media dari aplikasi Berkas",
+        "close": "Tutup"
+      }
     },
     "scrollToBottom": "Gulir ke bawah",
     "loadEarlier": "Muat pesan sebelumnya",

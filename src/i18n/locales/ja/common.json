@@ -374,7 +374,16 @@
         "fullShort": "フル"
       },
       "placeholder": "メッセージ…",
-      "options": "チャットの設定"
+      "options": "チャットの設定",
+      "attachmentPicker": {
+        "title": "添付ファイルを追加",
+        "subtitle": "このメッセージに含める内容を選択します",
+        "imageTitle": "写真",
+        "imageHint": "ライブラリから画像を選択します",
+        "fileTitle": "ファイル",
+        "fileHint": "ファイルアプリからドキュメントやメディアを選択します",
+        "close": "閉じる"
+      }
     },
     "scrollToBottom": "一番下へスクロール",
     "loadEarlier": "以前のメッセージを読み込む",

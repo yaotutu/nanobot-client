@@ -374,7 +374,16 @@
         "fullShort": "Toàn quyền"
       },
       "placeholder": "Tin nhắn…",
-      "options": "Tùy chọn trò chuyện"
+      "options": "Tùy chọn trò chuyện",
+      "attachmentPicker": {
+        "title": "Thêm tệp đính kèm",
+        "subtitle": "Chọn nội dung sẽ đưa vào tin nhắn này",
+        "imageTitle": "Ảnh",
+        "imageHint": "Chọn ảnh từ thư viện",
+        "fileTitle": "Tệp",
+        "fileHint": "Chọn tài liệu hoặc phương tiện từ ứng dụng Tệp",
+        "close": "Đóng"
+      }
     },
     "scrollToBottom": "Cuộn xuống cuối",
     "loadEarlier": "Tải tin nhắn trước đó",

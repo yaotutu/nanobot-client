@@ -374,7 +374,16 @@
         "fullShort": "Completo"
       },
       "placeholder": "Mensaje…",
-      "options": "Opciones del chat"
+      "options": "Opciones del chat",
+      "attachmentPicker": {
+        "title": "Añadir adjuntos",
+        "subtitle": "Elige qué incluir en este mensaje",
+        "imageTitle": "Fotos",
+        "imageHint": "Selecciona imágenes de tu biblioteca",
+        "fileTitle": "Archivos",
+        "fileHint": "Elige documentos o medios de la app Archivos",
+        "close": "Cerrar"
+      }
     },
     "scrollToBottom": "Desplazarse al final",
     "loadEarlier": "Cargar mensajes anteriores",

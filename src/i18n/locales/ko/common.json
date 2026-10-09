@@ -374,7 +374,16 @@
         "fullShort": "전체"
       },
       "placeholder": "메시지…",
-      "options": "채팅 옵션"
+      "options": "채팅 옵션",
+      "attachmentPicker": {
+        "title": "첨부파일 추가",
+        "subtitle": "이 메시지에 포함할 내용을 선택하세요",
+        "imageTitle": "사진",
+        "imageHint": "라이브러리에서 이미지를 선택하세요",
+        "fileTitle": "파일",
+        "fileHint": "파일 앱에서 문서나 미디어를 선택하세요",
+        "close": "닫기"
+      }
     },
     "scrollToBottom": "맨 아래로 스크롤",
     "loadEarlier": "이전 메시지 불러오기",

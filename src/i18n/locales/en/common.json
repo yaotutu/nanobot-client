@@ -374,7 +374,16 @@
         "fullShort": "Full"
       },
       "placeholder": "Message…",
-      "options": "Chat options"
+      "options": "Chat options",
+      "attachmentPicker": {
+        "title": "Add attachments",
+        "subtitle": "Choose what to include in this message",
+        "imageTitle": "Photos",
+        "imageHint": "Pick images from your library",
+        "fileTitle": "Files",
+        "fileHint": "Choose documents or media from Files",
+        "close": "Close"
+      }
     },
     "scrollToBottom": "Scroll to bottom",
     "loadEarlier": "Load earlier messages",

@@ -374,7 +374,16 @@
         "fullShort": "Total"
       },
       "placeholder": "Mensagem…",
-      "options": "Opções da conversa"
+      "options": "Opções da conversa",
+      "attachmentPicker": {
+        "title": "Adicionar anexos",
+        "subtitle": "Escolha o que incluir nesta mensagem",
+        "imageTitle": "Fotos",
+        "imageHint": "Escolha imagens da sua biblioteca",
+        "fileTitle": "Arquivos",
+        "fileHint": "Escolha documentos ou mídias do app Arquivos",
+        "close": "Fechar"
+      }
     },
     "scrollToBottom": "Rolar para o final",
     "loadEarlier": "Carregar mensagens anteriores",

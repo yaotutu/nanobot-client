@@ -374,7 +374,16 @@
         "fullShort": "Complet"
       },
       "placeholder": "Message…",
-      "options": "Options du chat"
+      "options": "Options du chat",
+      "attachmentPicker": {
+        "title": "Ajouter des pièces jointes",
+        "subtitle": "Choisissez le contenu à inclure dans ce message",
+        "imageTitle": "Photos",
+        "imageHint": "Choisissez des images dans votre photothèque",
+        "fileTitle": "Fichiers",
+        "fileHint": "Choisissez des documents ou médias dans Fichiers",
+        "close": "Fermer"
+      }
     },
     "scrollToBottom": "Faire défiler vers le bas",
     "loadEarlier": "Charger les messages précédents",

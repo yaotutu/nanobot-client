@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
 import { Composer } from '@/features/chat/components/Composer';
 import { ChatOptionsModal } from '@/features/chat/components/modals/ChatOptionsModal';
+import { AttachmentPickerSheet } from '@/features/chat/components/modals/AttachmentPickerSheet';
 import { StreamErrorNotice } from '@/features/chat/components/widgets/stream-error-notice';
 import type { ComposerController } from '@/features/chat/hooks/use-composer-controller';
 import type {
@@ -34,6 +36,9 @@ export function ChatComposerContainer({
   onCloseOptions,
 }: ChatComposerContainerProps) {
   // 所有配置沿用原来的连接／发送禁用规则；权限和工作区另外禁止在回合执行中修改。
+  const [attachmentPickerOpen, setAttachmentPickerOpen] = useState(false);
+  // 附件来源改为应用内底部弹窗；点击按钮只负责打开，具体选择动作由弹窗分发。
+  const closeAttachmentPicker = () => setAttachmentPickerOpen(false);
   const disabled = composer.sending
     || controller.runtime.connectionSyncing
     || !controller.runtime.networkAvailable
@@ -59,7 +64,7 @@ export function ChatComposerContainer({
           error: composer.attachments.error,
           full: composer.attachments.full,
           readyCount: composer.attachments.readyAttachments.length,
-          onAdd: composer.openAttachmentMenu,
+          onAdd: () => setAttachmentPickerOpen(true),
           onRemove: composer.attachments.remove,
         }}
         draft={{
@@ -93,6 +98,13 @@ export function ChatComposerContainer({
           {controller.workspace.error}
         </Text>
       ) : null}
+      <AttachmentPickerSheet
+        colors={colors}
+        visible={attachmentPickerOpen}
+        onClose={closeAttachmentPicker}
+        onPickImages={() => void composer.attachments.pickImages()}
+        onPickDocuments={() => void composer.attachments.pickDocuments()}
+      />
       {/* 弹窗独立挂载，开关配置不会卸载输入区，也不会丢失草稿或附件。 */}
       {optionsOpen ? (
         <ChatOptionsModal
