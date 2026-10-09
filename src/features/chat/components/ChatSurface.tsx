@@ -88,13 +88,14 @@ function ThreadLoading({ colors, label }: { colors: Palette; label: string }) {
 
 const styles = StyleSheet.create({
   content: { minHeight: 0, flex: 1, width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center' },
-  emptyContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22, paddingVertical: 34, gap: 15 },
+  // 空态只保持原视觉重心；有消息时文本允许进入顶部浮层的空白区域。
+  emptyContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22, paddingTop: 92, paddingBottom: 24, gap: 15 },
   greeting: { maxWidth: 350, fontSize: 28, lineHeight: 36, fontWeight: '400', letterSpacing: -1, textAlign: 'center' },
   subtitle: { maxWidth: 320, fontSize: 14, lineHeight: 23, textAlign: 'center' },
   emptyPrompts: { width: '100%', maxWidth: 380, gap: 9 },
   emptyPromptButton: { minHeight: 42, justifyContent: 'center', borderRadius: 21, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 9 },
   emptyPromptText: { fontSize: 13.5, lineHeight: 19, textAlign: 'center' },
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 72, gap: 12 },
   loadingText: { fontSize: 14 },
   composerDock: { width: '100%', maxWidth: chatLayout.maxWidth, alignSelf: 'center', paddingHorizontal: chatLayout.horizontalInset, paddingTop: 0 },
 });

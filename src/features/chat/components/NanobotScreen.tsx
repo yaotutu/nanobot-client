@@ -164,88 +164,93 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
     >
       {/* 显式跟随应用主题，不能让系统浅色模式把暗色页面的状态栏文字变成黑色。 */}
       <StatusBar style={dark ? 'light' : 'dark'} />
-      <View style={{ height: insets.top, backgroundColor: colors.background }} />
-      <ChatHeader
-        colors={colors}
-        onOpenConversations={shell.onOpenConversations}
-        onOpenChatOptions={shell.onOpenChatOptions}
-        onOpenAgentActivity={() => setAgentActivitySheetOpen(true)}
-        headerActivity={headerActivity}
-      />
+      {/* 内容层占满安全区；顶部不再为 Header 预留固定高度，让历史消息可以进入原空白区域。 */}
+      <View style={[styles.contentLayer, { paddingTop: insets.top }]}>
+        <ChatSurface
+          colors={colors}
+          composer={composer}
+          hasMessages={hasMessages}
+          onUsePrompt={handleUsePrompt}
+          threadLoading={thread.loading}
+          threadProps={{
+            listRef,
+            atBottom,
+            scrollToBottom,
+            loadEarlier,
+            handleThreadScroll,
+            handleContentSizeChange,
+            handleScrollToIndexFailed,
+            onMomentumScrollEnd,
+            onScrollBeginDrag,
+            onScrollEndDrag,
+            units: threadModel.units,
+            unitKeys: threadModel.unitKeys,
+            forkIndexes: threadModel.forkIndexes,
+            forkBoundaryAfterUnitIndex: threadModel.forkBoundaryAfterUnitIndex,
+            liveActivityClusterIndices: threadModel.liveActivityClusterIndices,
+            forkingMessageId: messageActions.forkingMessageId,
+            retryingMessageId: messageActions.retryingMessageId,
+            colors,
+            dark,
+            cliApps: capabilities.cliApps,
+            mcpPresets: capabilities.mcpPresets,
+            slashCommands: capabilities.slashCommands,
+            hasMoreBefore: thread.hasMoreBefore,
+            loadingOlder: thread.loadingOlder,
+            canRetryFromMessage: threadModel.canRetryFromMessage,
+            forkFromMessage: messageActions.forkFromMessage,
+            retryFromMessage: messageActions.retryFromMessage,
+            resolveFilePreviewAvailability,
+            onOpenFilePreview: session.activeKey ? setFilePreviewPath : undefined,
+            onQuote: setAssistantQuoteSource,
+          }}
+        />
+      </View>
+      {/* 悬浮层只拦截按钮和提示条自身；空白区域继续把触摸与滚动交给下面的消息列表。 */}
+      <View pointerEvents="box-none" style={styles.floatingHeaderLayer}>
+        <View pointerEvents="none" style={{ height: insets.top }} />
+        <ChatHeader
+          colors={colors}
+          onOpenConversations={shell.onOpenConversations}
+          onOpenChatOptions={shell.onOpenChatOptions}
+          onOpenAgentActivity={() => setAgentActivitySheetOpen(true)}
+          headerActivity={headerActivity}
+        />
 
-      {!runtime.networkAvailable || runtime.connectionStatus !== 'open' || runtime.connectionSyncing ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void runtime.reconnect()}
-          style={[styles.connectionBanner, { backgroundColor: !runtime.networkAvailable ? colors.errorBackground : colors.pressed }]}
-        >
-          <Text style={[styles.connectionText, { color: !runtime.networkAvailable ? colors.errorText : colors.muted }]}>
-            {t(!runtime.networkAvailable
-              ? 'connection.offline'
-              : runtime.connectionSyncing
-                ? 'connection.syncing'
-                : `connection.${runtime.connectionStatus}`)}
-          </Text>
-          <Text style={[styles.connectionAction, { color: colors.foreground }]}>
-            {t('settings.channels.reconnect')}
-          </Text>
-        </Pressable>
-      ) : null}
-
-      {errors.current ? (
-        <View style={[styles.errorBanner, { backgroundColor: colors.errorBackground }]}>
-          <Text numberOfLines={2} style={[styles.errorText, { color: colors.errorText }]}>
-            {errors.current}
-          </Text>
+        {!runtime.networkAvailable || runtime.connectionStatus !== 'open' || runtime.connectionSyncing ? (
           <Pressable
-            accessibilityLabel={t('common.dismiss')}
-            hitSlop={8}
-            onPress={errors.clear}
+            accessibilityRole="button"
+            onPress={() => void runtime.reconnect()}
+            style={[styles.connectionBanner, { backgroundColor: !runtime.networkAvailable ? colors.errorBackground : colors.pressed }]}
           >
-            <X color={colors.errorText} size={16} />
+            <Text style={[styles.connectionText, { color: !runtime.networkAvailable ? colors.errorText : colors.muted }]}>
+              {t(!runtime.networkAvailable
+                ? 'connection.offline'
+                : runtime.connectionSyncing
+                  ? 'connection.syncing'
+                  : `connection.${runtime.connectionStatus}`)}
+            </Text>
+            <Text style={[styles.connectionAction, { color: colors.foreground }]}>
+              {t('settings.channels.reconnect')}
+            </Text>
           </Pressable>
-        </View>
-      ) : null}
+        ) : null}
 
-      <ChatSurface
-        colors={colors}
-        composer={composer}
-        hasMessages={hasMessages}
-        onUsePrompt={handleUsePrompt}
-        threadLoading={thread.loading}
-        threadProps={{
-          listRef,
-          atBottom,
-          scrollToBottom,
-          loadEarlier,
-          handleThreadScroll,
-          handleContentSizeChange,
-          handleScrollToIndexFailed,
-          onMomentumScrollEnd,
-          onScrollBeginDrag,
-          onScrollEndDrag,
-          units: threadModel.units,
-          unitKeys: threadModel.unitKeys,
-          forkIndexes: threadModel.forkIndexes,
-          forkBoundaryAfterUnitIndex: threadModel.forkBoundaryAfterUnitIndex,
-          liveActivityClusterIndices: threadModel.liveActivityClusterIndices,
-          forkingMessageId: messageActions.forkingMessageId,
-          retryingMessageId: messageActions.retryingMessageId,
-          colors,
-          dark,
-          cliApps: capabilities.cliApps,
-          mcpPresets: capabilities.mcpPresets,
-          slashCommands: capabilities.slashCommands,
-          hasMoreBefore: thread.hasMoreBefore,
-          loadingOlder: thread.loadingOlder,
-          canRetryFromMessage: threadModel.canRetryFromMessage,
-          forkFromMessage: messageActions.forkFromMessage,
-          retryFromMessage: messageActions.retryFromMessage,
-          resolveFilePreviewAvailability,
-          onOpenFilePreview: session.activeKey ? setFilePreviewPath : undefined,
-          onQuote: setAssistantQuoteSource,
-        }}
-      />
+        {errors.current ? (
+          <View style={[styles.errorBanner, { backgroundColor: colors.errorBackground }]}>
+            <Text numberOfLines={2} style={[styles.errorText, { color: colors.errorText }]}>
+              {errors.current}
+            </Text>
+            <Pressable
+              accessibilityLabel={t('common.dismiss')}
+              hitSlop={8}
+              onPress={errors.clear}
+            >
+              <X color={colors.errorText} size={16} />
+            </Pressable>
+          </View>
+        ) : null}
+      </View>
 
       <ChatModals
         activeKey={session.activeKey}
@@ -278,7 +283,11 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, position: 'relative' },
+  // 消息层占满屏幕；安全区只阻止内容顶到系统栏，不保留 Header 高度。
+  contentLayer: { minHeight: 0, flex: 1 },
+  // Header 与提示条作为浮层叠在消息上；box-none 由 JSX 属性控制命中区域。
+  floatingHeaderLayer: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1 },
   connectionBanner: {
     marginHorizontal: 18,
     marginTop: 4,
