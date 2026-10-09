@@ -13,6 +13,17 @@ import { chatPaletteForTheme } from '@/features/chat/ui/chat-theme';
 import { AgentActivityCluster } from '@/features/chat/components/activity/AgentActivityCluster';
 import { MessageRow } from '@/features/chat/components/messages/MessageRow';
 
+// 头像未来会接入 expo-video；测试中只验证布局和状态，不启动原生播放器。
+jest.mock('expo-video', () => ({
+  useVideoPlayer: jest.fn(() => ({
+    loop: false,
+    muted: false,
+    play: jest.fn(async () => undefined),
+    pause: jest.fn(),
+  })),
+  VideoView: () => null,
+}));
+
 // 复制仍走真实按钮逻辑，仅隔离系统剪贴板，避免 Native 测试调用设备能力。
 jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn(async () => undefined) }));
 // 本组不测试视频播放，只隔离原生播放器的加载，媒体画廊与消息正文仍使用真实组件。
@@ -103,7 +114,7 @@ describe('聊天页唯一布局', () => {
   });
 
   it('顶部菜单、会话选项、头像区域可操作，不再提供主题快捷按钮', async () => {
-    const props = { colors: chatPaletteForTheme(false), chatTitle: 'demo', hasUserPrompts: true, onOpenConversations: jest.fn(), onOpenChatOptions: jest.fn(), onOpenAgentActivity: jest.fn() };
+    const props = { colors: chatPaletteForTheme(false), onOpenConversations: jest.fn(), onOpenChatOptions: jest.fn(), onOpenAgentActivity: jest.fn() };
     const result = await render(<ChatHeader {...props} />);
     await fireEvent.press(result.getByRole('button', { name: 'thread.header.openConversations' }));
     await fireEvent.press(result.getByRole('button', { name: 'thread.composer.options' }));
@@ -112,11 +123,13 @@ describe('聊天页唯一布局', () => {
     expect(props.onOpenChatOptions).toHaveBeenCalledTimes(1);
     expect(props.onOpenAgentActivity).toHaveBeenCalledTimes(1);
     expect(result.getAllByRole('button')).toHaveLength(3);
+    // 空闲头部不渲染话题/新话题胶囊，话题信息只留在会话面板。
     expect(result.queryByRole('button', { name: 'sidebar.newChat' })).toBeNull();
+    expect(result.queryByText('demo')).toBeNull();
+    expect(result.queryByText('sidebar.newChat')).toBeNull();
     expect(result.getByRole('button', { name: 'thread.composer.options' })).toHaveStyle({ right: 20, width: 44, height: 44 });
     expect(result.getByText('app.brand')).toBeTruthy();
     expect(result.getByText('thread.header.subtitle')).toBeTruthy();
-    expect(result.getByText('demo')).toBeTruthy();
   });
 
   it('Agent 运行时头像区域仍打开活动面板', async () => {
@@ -124,8 +137,6 @@ describe('聊天页唯一布局', () => {
     const result = await render(
       <ChatHeader
         colors={chatPaletteForTheme(false)}
-        chatTitle="demo"
-        hasUserPrompts
         headerActivity={{ phase: 'thinking', elapsedMs: 1000, reasoningStepCount: 1, toolCallCount: 0, fileEditCount: 0 }}
         onOpenAgentActivity={onOpenAgentActivity}
         onOpenChatOptions={jest.fn()}
@@ -139,7 +150,7 @@ describe('聊天页唯一布局', () => {
 
   it.each([false, true])('空会话也可从右上角打开选项（深色主题：%s）', async (dark) => {
     const onOpenChatOptions = jest.fn();
-    const result = await render(<ChatHeader colors={chatPaletteForTheme(dark)} chatTitle="" hasUserPrompts={false}
+    const result = await render(<ChatHeader colors={chatPaletteForTheme(dark)}
       onOpenConversations={jest.fn()} onOpenChatOptions={onOpenChatOptions} onOpenAgentActivity={jest.fn()} />);
     // 空会话仍可点击头像区域查看活动面板；配置入口也可先选模型和工作区。
     await fireEvent.press(result.getByRole('button', { name: 'thread.composer.options' }));

@@ -17,30 +17,18 @@ import type { Palette } from '@/ui/palette';
 
 interface HeaderActivityPillProps {
   activity: HeaderActivity;
-  chatTitle: string;
   colors: Palette;
-  hasUserPrompts: boolean;
 }
 
 /** 顶部 Agent 状态标签；点击行为由外层头像区域统一处理。 */
 export function HeaderActivityPill({
   activity,
-  chatTitle,
   colors,
-  hasUserPrompts,
 }: HeaderActivityPillProps) {
   const { t } = useTranslation();
-  const isIdle = activity.phase === 'idle';
 
-  if (isIdle) {
-    return (
-      <View style={[styles.pill, { backgroundColor: colors.pressed }]}>
-        <Text numberOfLines={1} style={[styles.text, { color: colors.muted }]}>
-          {hasUserPrompts ? chatTitle : t('sidebar.newChat')}
-        </Text>
-      </View>
-    );
-  }
+  // 空闲时不显示“新话题/话题名”，头部只保留品牌信息；话题身份由会话面板负责。
+  if (activity.phase === 'idle') return null;
 
   const label = activityLabel(activity, t);
   const dotColor = headerActivityDotColor(activity.phase, colors);

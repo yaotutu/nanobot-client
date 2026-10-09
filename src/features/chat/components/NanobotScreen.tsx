@@ -27,7 +27,6 @@ import type {
   ChatScreenController,
 } from '@/features/chat/model/chat-screen-contract';
 import { useChatStore } from '@/features/chat/store';
-import { sessionTitle } from '@/services/text/format';
 import { chatPaletteForTheme } from '@/features/chat/ui/chat-theme';
 
 interface NanobotScreenProps {
@@ -104,11 +103,6 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
     revision: messages.length,
   });
 
-  const chatTitle = session.activeSession
-    ? session.sidebarState.title_overrides[session.activeSession.key]
-      || sessionTitle(session.activeSession)
-    : t('app.brand');
-
   // 空状态引导只改变输入草稿并聚焦，不触碰发送队列，保持聊天核心行为不变。
   const handleUsePrompt = useCallback((prompt: string) => {
     changeComposerText(prompt);
@@ -173,8 +167,6 @@ export function NanobotScreen({ controller, ...shell }: NanobotScreenProps) {
       <View style={{ height: insets.top, backgroundColor: colors.background }} />
       <ChatHeader
         colors={colors}
-        chatTitle={chatTitle}
-        hasUserPrompts={hasUserPrompts}
         onOpenConversations={shell.onOpenConversations}
         onOpenChatOptions={shell.onOpenChatOptions}
         onOpenAgentActivity={() => setAgentActivitySheetOpen(true)}

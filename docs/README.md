@@ -6,6 +6,7 @@
 
 - [`architecture.md`](architecture.md) — 分层规则、feature 公共接口、认证代次、连接恢复、WebSocket 拆分和验证矩阵。
 - [`android-release.md`](android-release.md) — Android Release APK 打包、GitHub Release 发布、缓存和清理说明。
+- [`header-avatar.md`](header-avatar.md) — 顶部头像状态动画、动态图和短视频素材替换约定。
 - `verification/` — 清洗后的设备验收证据；每个子目录代表一次验证，例如 `acceptance-2026-08-03-lan/`。
 
 ## 仅保留在本地的产物
