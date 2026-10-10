@@ -1,5 +1,4 @@
 import ArrowDown from 'lucide-react-native/icons/arrow-down';
-import ArrowUp from 'lucide-react-native/icons/arrow-up';
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 import {
@@ -33,9 +32,7 @@ export interface ChatThreadProps {
   // Inverted FlatList 的滚动回调。offset 0 是视觉底部，也就是最新消息。
   listRef: React.RefObject<ChatThreadListRef>;
   atBottom: boolean;
-  canScrollToTop: boolean;
   scrollToBottom: (animated?: boolean, force?: boolean) => void;
-  scrollToTop: () => void;
   loadEarlier: () => void;
   handleThreadScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   handleContentSizeChange: () => void;
@@ -72,9 +69,7 @@ export interface ChatThreadProps {
 export function ChatThread({
   listRef,
   atBottom,
-  canScrollToTop,
   scrollToBottom,
-  scrollToTop,
   loadEarlier,
   handleThreadScroll,
   handleContentSizeChange,
@@ -219,24 +214,8 @@ export function ChatThread({
         }}
         showsVerticalScrollIndicator={false}
       />
-      {/* 向上入口需要同时满足两个条件：上方确实还有已加载的更早消息，
-          当前也确实离开了最新消息位置；避免回到底部后仍常驻一个多余箭头。 */}
-      {!atBottom && canScrollToTop ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('thread.scrollToTop')}
-          onPress={scrollToTop}
-          style={({ pressed }) => [
-            styles.scrollToTopButton,
-            {
-              backgroundColor: colors.userBubble,
-              opacity: pressed ? 0.72 : 1,
-            },
-          ]}
-        >
-          <ArrowUp color={colors.userText} size={20} strokeWidth={1.7} />
-        </Pressable>
-      ) : null}
+      {/* 聊天离开底部后只提供“回到最新消息”这一个方向入口；查看更早消息
+          继续交给上滑手势和分页加载，避免中间状态同时出现两个强按钮。 */}
       {!atBottom ? (
         <Pressable
           accessibilityRole="button"
@@ -261,22 +240,7 @@ const styles = StyleSheet.create({
   threadListArea: { minHeight: 0, flex: 1 },
   list: { flex: 1 },
   messagesContent: { flexGrow: 1, paddingHorizontal: chatLayout.horizontalInset },
-  // 两个滚动入口都绝对定位在消息区内，不占据列表与输入框之间的布局空间。
-  scrollToTopButton: {
-    position: 'absolute',
-    right: 14,
-    top: chatLayout.headerHeight + 12,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+  // 滚动入口绝对定位在消息区内，不占据列表与输入框之间的布局空间。
   scrollToBottomButton: {
     position: 'absolute',
     right: 14,

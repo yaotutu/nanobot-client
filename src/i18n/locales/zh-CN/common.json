@@ -391,7 +391,6 @@
         "close": "关闭"
       }
     },
-    "scrollToTop": "滚动到顶部",
     "scrollToBottom": "滚动到底部",
     "loadEarlier": "加载更早消息",
     "forkedFromHistory": "从历史消息分叉",

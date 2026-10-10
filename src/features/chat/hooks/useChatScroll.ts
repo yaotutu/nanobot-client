@@ -8,7 +8,6 @@ import {
 import type { TurnUnit } from '@/features/chat/activity/model/activity-timeline';
 
 const BOTTOM_THRESHOLD_PX = 72;
-const TOP_THRESHOLD_PX = 72;
 const OLDER_HISTORY_THRESHOLD_PX = 96;
 
 /**
@@ -35,9 +34,7 @@ export interface UseChatScrollOptions {
 export interface UseChatScrollResult {
   listRef: React.RefObject<ChatThreadListRef>;
   atBottom: boolean;
-  canScrollToTop: boolean;
   scrollToBottom: (animated?: boolean, force?: boolean) => void;
-  scrollToTop: () => void;
   loadEarlier: () => void;
   handleThreadScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   handleContentSizeChange: () => void;
@@ -70,8 +67,6 @@ export function useChatScroll({
   const olderLoadRequestedForGestureRef = useRef(false);
   const olderLoadInFlightRef = useRef(false);
   const [atBottom, setAtBottom] = useState(true);
-  // 只有实际收到非顶部的滚动几何后才显示“回到更早消息”入口，避免初始底部视图被常驻箭头打扰。
-  const [canScrollToTop, setCanScrollToTop] = useState(false);
 
   // Inverted 列表的最新消息固定在 offset 0，因此“到底”就是回零，无需
   // 在首屏渲染完成后做一次昂贵的 scrollToEnd。
@@ -85,16 +80,6 @@ export function useChatScroll({
     }
   }, []);
 
-  // 倒置列表的虚拟 end 是视觉顶部；scrollToEnd 可以复用 FlatList 的边界计算，
-  // 不需要客户端自行估算 max content offset。
-  const scrollToTop = useCallback(() => {
-    if (!canScrollToTop) return;
-    userScrollingRef.current = false;
-    autoFollowRef.current = false;
-    setAtBottom(false);
-    listRef.current?.scrollToEnd({ animated: true });
-  }, [canScrollToTop]);
-
   // Reset scroll state when the active session changes. The list starts at the
   // visual bottom by construction, so there is intentionally no deferred scroll.
   useEffect(() => {
@@ -105,7 +90,6 @@ export function useChatScroll({
     // 会话切换后的默认“在底部”与新列表的初始渲染同步；异步批处理避免级联 render。
     const resetTimer = setTimeout(() => {
       setAtBottom(true);
-      setCanScrollToTop(false);
       onSessionReset?.();
     }, 0);
     if (!activeKey) return () => clearTimeout(resetTimer);
@@ -133,9 +117,6 @@ export function useChatScroll({
         0,
         contentSize.height - layoutMeasurement.height - contentOffset.y,
       );
-      // 距离视觉顶部仍有内容时显示向上入口；贴近分页边界时隐藏，避免重复表达“加载更早消息”。
-      const canScrollToTop = distanceToOlderEnd > TOP_THRESHOLD_PX;
-      setCanScrollToTop((current) => (current === canScrollToTop ? current : canScrollToTop));
       // 一次拖拽及其后续惯性最多请求一页；即使请求已经完成、阈值内继续收到
       // onScroll 或布局补偿事件，也必须等下一次用户拖拽才能再自动分页。
       if (
@@ -223,9 +204,7 @@ export function useChatScroll({
   return {
     listRef,
     atBottom,
-    canScrollToTop,
     scrollToBottom,
-    scrollToTop,
     loadEarlier,
     handleThreadScroll,
     handleContentSizeChange,
